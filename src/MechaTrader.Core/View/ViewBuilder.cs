@@ -222,6 +222,23 @@ public static class ViewBuilder
 
     private static readonly double[] OrderSizes = { 1.0, 0.75, 0.5, 0.3, 0.15 };
 
+    /// <summary>
+    /// The map, in the projected kilometre coordinates the loader already computed.
+    /// Normalising to a viewport is the front-end's business, not the simulation's.
+    /// </summary>
+    public static MapView BuildMap(WorldData world)
+    {
+        var cities = world.Cities
+            .Select(c => new MapCityView(c.Id, c.Name, c.Region, Math.Round(c.X, 1), Math.Round(c.Y, 1)))
+            .ToList();
+
+        var roads = world.Routes.All
+            .Select(r => new MapRoadView(r.FromId, r.ToId, r.Terrain.Id, r.Terrain.Name))
+            .ToList();
+
+        return new MapView(cities, roads);
+    }
+
     private static List<TruckOfferView> BuildShipyard(WorldData world)
         => world.Trucks
             .Select(t => new TruckOfferView(

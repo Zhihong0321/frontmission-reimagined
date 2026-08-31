@@ -191,3 +191,31 @@ td.acts { white-space: nowrap; text-align: right; }
 td.acts button { margin-left: 4px; }
 #routes-body td:first-child { min-width: 150px; }
 #routes-body .sub { line-height: 1.35; }
+
+
+/* ---------- map ---------- */
+
+#map-body svg { display: block; width: 100%; height: auto; }
+
+.road { stroke: #2b3644; stroke-width: 1.6; }
+.road.alpine { stroke: #4a3a52; stroke-dasharray: 5 3; }
+.road.strait { stroke: #26414f; stroke-dasharray: 2 4; }
+.road.here { stroke: var(--accent); stroke-width: 2.4; opacity: .85; }
+
+.city-dot { fill: #47525f; stroke: none; }
+.city-dot.reachable { fill: var(--good); }
+.city-dot.here { fill: var(--accent); }
+.city-label { fill: var(--muted); font-size: 9px; font-family: inherit; }
+.city-label.here, .city-label.reachable { fill: var(--text); }
+
+.city-hit { fill: transparent; cursor: default; }
+.city-hit.reachable { cursor: pointer; }
+.city-hit.reachable:hover + .city-dot { r: 6; }
+
+.convoy { fill: var(--warn); stroke: var(--bg); stroke-width: 1.5; }
+.convoy-line { stroke: var(--warn); stroke-width: 1.8; stroke-dasharray: 4 3; }
+
+/* main is a two-column grid, so the left-hand stack needs its own container or each
+   panel would claim a grid cell of its own. */
+.main-col { display: flex; flex-direction: column; min-width: 0; }
+.main-col .panel:last-child { margin-bottom: 0; }

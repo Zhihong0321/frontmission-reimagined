@@ -8,18 +8,15 @@ Alpha 1 exists to answer one question — **is the trade loop actually a game?**
 any effort goes into art, map rendering or an engine. The answer is checked by machine,
 not by opinion: see [Acceptance](#acceptance).
 
-## Run it
+## Play it
+
+Double-click **`Play.cmd`**. It builds if needed, starts the server, and opens your
+browser at <http://localhost:5080>. Close the window to stop the game.
+
+From a terminal, if you prefer:
 
 ```bash
 dotnet run --project src/MechaTrader.Host
-```
-
-Then open <http://localhost:5080>.
-
-If `dotnet` is not found, the SDK is installed user-scope and is not on PATH:
-
-```bash
-$env:PATH = "$env:LOCALAPPDATA\Microsoft\dotnet;$env:PATH"
 ```
 
 ## Acceptance
@@ -41,7 +38,7 @@ in-process later. Neither is allowed to own a rule.
 MechaTrader.Core       pure C# simulation - no filesystem, no console, no engine, no clock
 MechaTrader.Content    the only project that touches disk; hands Core plain JSON strings
 MechaTrader.Host       ASP.NET minimal API; parses requests into commands, serves web/
-web/                   plain HTML/CSS/JS, no framework, no build step
+web/                   plain HTML/CSS/JS, no framework, no build step - map, market, roads
 MechaTrader.BalanceSim headless economy gate; exits non-zero if the economy stops working
 MechaTrader.Core.Tests 44 tests, including a grep that enforces Core's purity
 data/                  all game content as JSON

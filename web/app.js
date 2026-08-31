@@ -8,6 +8,7 @@
 const el = (id) => document.getElementById(id);
 
 let state = null;
+let map = null;   // static road network, fetched once
 
 /* ---------- transport ---------- */
 
@@ -65,11 +66,79 @@ function render() {
       ? `${v.location.name}, ${v.location.region}`
       : '—';
 
+  renderMap(v);
   renderMarket(v);
   renderRoutes(v);
   renderCargo(v);
   renderShipyard(v);
   renderLog();
+}
+
+/* ---------- map ---------- */
+
+/* Projects the loader's kilometre coordinates into the viewbox. The simulation stays
+ * in kilometres; fitting them to a picture is purely a front-end concern. */
+function renderMap(v) {
+  const body = el('map-body');
+  if (!map) { body.innerHTML = '<div class="empty">Loading map…</div>'; return; }
+
+  const W = 900, H = 520, PAD = 34;
+  const xs = map.cities.map((c) => c.x);
+  const ys = map.cities.map((c) => c.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+  const sx = (x) => PAD + ((x - minX) / (maxX - minX)) * (W - PAD * 2);
+  const sy = (y) => PAD + ((y - minY) / (maxY - minY)) * (H - PAD * 2);
+
+  const hereId = v.location ? v.location.id : null;
+  const reachable = new Set(v.routes.map((r) => r.toId));
+  const pos = Object.fromEntries(map.cities.map((c) => [c.id, [sx(c.x), sy(c.y)]]));
+
+  const roads = map.roads.map((r) => {
+    const [x1, y1] = pos[r.fromId];
+    const [x2, y2] = pos[r.toId];
+    const touching = hereId && (r.fromId === hereId || r.toId === hereId);
+    return `<line class="road ${r.terrainId}${touching ? ' here' : ''}"
+              x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>`;
+  }).join('');
+
+  const cities = map.cities.map((c) => {
+    const [x, y] = pos[c.id];
+    const state_ = c.id === hereId ? 'here' : reachable.has(c.id) ? 'reachable' : '';
+    const r = c.id === hereId ? 5.5 : 3.5;
+    return `
+      <g>
+        <circle class="city-hit ${state_}" cx="${x}" cy="${y}" r="13"
+                ${state_ === 'reachable' ? `data-go="${c.id}"` : ''}>
+          <title>${c.name} — ${c.region}</title>
+        </circle>
+        <circle class="city-dot ${state_}" cx="${x}" cy="${y}" r="${r}"></circle>
+        <text class="city-label ${state_}" x="${x}" y="${y - 8}" text-anchor="middle">${c.name}</text>
+      </g>`;
+  }).join('');
+
+  // On the road, draw the convoy partway along the leg it is actually travelling.
+  let convoy = '';
+  if (v.travel) {
+    const from = map.cities.find((c) => c.name === v.travel.fromName);
+    const to = map.cities.find((c) => c.name === v.travel.toName);
+    if (from && to) {
+      const [x1, y1] = pos[from.id];
+      const [x2, y2] = pos[to.id];
+      const done = (v.travel.totalDays - v.travel.daysRemaining) / v.travel.totalDays;
+      const cx = x1 + (x2 - x1) * done;
+      const cy = y1 + (y2 - y1) * done;
+      convoy = `<line class="convoy-line" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
+                <circle class="convoy" cx="${cx}" cy="${cy}" r="5"></circle>`;
+    }
+  }
+
+  body.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trade map of Europe">
+    ${roads}${convoy}${cities}</svg>`;
+
+  body.querySelectorAll('[data-go]').forEach((n) =>
+    n.addEventListener('click', () => send({ type: 'depart', toCityId: n.dataset.go })));
 }
 
 function renderMarket(v) {
@@ -258,4 +327,7 @@ el('btn-new').addEventListener('click', async () => {
   apply(await call('/api/new', { seed: Math.floor(Math.random() * 1e9) }));
 });
 
-call('/api/state').then(apply).catch((err) => showError(err.message));
+call('/api/map')
+  .then((m) => { map = m; return call('/api/state'); })
+  .then(apply)
+  .catch((err) => showError(err.message));

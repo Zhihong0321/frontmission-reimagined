@@ -25,6 +25,10 @@ app.UseStaticFiles();
 
 app.MapGet("/api/state", (GameSession session) => Results.Ok(session.Current()));
 
+// The map never changes for a given world, so it is served once and cached by the client.
+app.MapGet("/api/map", (GameSession session) =>
+    Results.Ok(MechaTrader.Core.View.ViewBuilder.BuildMap(session.World)));
+
 app.MapPost("/api/command", (GameSession session, CommandRequest request) =>
     Results.Ok(session.Execute(request)));
 
