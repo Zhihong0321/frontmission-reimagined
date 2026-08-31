@@ -40,3 +40,59 @@ days, all 8 goods hold a 50-78% cross-city spread, tick cost 15.5 ms for 160,000
 
 TUNING NOTE for review: a greedy bot more than triples its money in 60 days. Good enough
 to prove the loop, but likely too generous once rivals and depot costs land.
+
+### Milestone 2 — tests green
+
+44 tests: economy properties, command validation and its no-partial-mutation guarantee,
+travel timing, save/load round trip, skill expression, and an architecture grep that
+enforces Core's purity (no filesystem, console, wall clock or ambient randomness).
+
+The architecture test initially fired a false positive: the substring `File.` matched
+`industryFile.`. Switched to word-boundary regex.
+
+### Milestone 3 — web host + browser UI
+
+`MechaTrader.Host` (ASP.NET minimal API) serves `web/` and exposes three endpoints:
+`GET /api/state`, `POST /api/command`, `POST /api/new`. No rules live at this layer —
+it parses JSON into a `Command` and keeps a display log, nothing else.
+
+`web/` is plain HTML/CSS/JS: no framework, no bundler, no npm. Verified in a real browser:
+market board with surplus/deficit tags, roads panel with distance/time/fuel, hold,
+depot, and event log. Clicking through buy -> depart -> arrive works; DOM checked clean
+(one header, five panels, no horizontal overflow).
+
+### Milestone 4 — ALPHA 1 ACCEPTED
+
+`.\check.ps1` runs all four acceptance criteria and prints one verdict line. All green:
+
+    PASS  Solution builds in Release with no warnings
+    PASS  Unit tests pass                          (44 tests)
+    PASS  Balance harness green                    (tick 20.3 ms; skilled +46,534 cr;
+                                                    careless -17,106 cr)
+    PASS  Web host serves a playable buy-haul-sell cycle
+
+One fix needed here: `Invoke-WebRequest` under Windows PowerShell 5.1 routes through the
+IE engine and cannot initialise non-interactively. Added `-UseBasicParsing`.
+
+---
+
+## Morning summary
+
+Alpha 1 is done and verified. To see it:
+
+    .\check.ps1                                    # 30s, prints one verdict line
+    dotnet run --project src/MechaTrader.Host      # then open http://localhost:5080
+
+Written this session: `README.md` (orientation), `SPEC.md` (exact formulas and schema),
+`ACCEPTANCE.md` (what each gate asserts and why).
+
+Two things worth your judgement:
+
+1. **The economy is too generous.** A greedy bot triples its money in 60 days. Fine for
+   proving the loop, likely wrong once rivals and depot costs exist. Noted in
+   ACCEPTANCE.md under "Known tuning debt"; the harness will tell you if a fix goes
+   too far.
+2. **Rivals are the next thing, not visuals.** A trade sim with no competitor is
+   solitaire — the AI policy in `Core/Ai` is already the seed of one. Recommend rivals
+   plus depot ownership before any Godot work, since both change balance and the map is
+   already data-real.

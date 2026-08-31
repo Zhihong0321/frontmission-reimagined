@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>MechaTrader.Host</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MechaTrader.Core\MechaTrader.Core.csproj" />
+    <ProjectReference Include="..\MechaTrader.Content\MechaTrader.Content.csproj" />
+  </ItemGroup>
+</Project>
