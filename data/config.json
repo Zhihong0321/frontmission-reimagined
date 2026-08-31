@@ -1,0 +1,16 @@
+{
+  "startCash": 20000,
+  "startCityId": "munchen",
+  "startTruckIds": ["mule"],
+  "economy": {
+    "driftRate": 0.08,
+    "equilibriumDays": 30.0,
+    "minEquilibrium": 150.0,
+    "minStock": 5.0,
+    "noiseSigma": 0.02,
+    "spread": 0.045,
+    "minPriceMult": 0.4,
+    "maxPriceMult": 2.5,
+    "roadDetourFactor": 1.25
+  }
+}

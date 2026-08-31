@@ -1,0 +1,25 @@
+{
+  "_comment": "lon/lat are real coordinates; the loader projects them to a kilometre grid. population is a scale factor applied to industry output.",
+  "cities": [
+    { "id": "london",    "name": "London",    "region": "Britannia",   "lon": -0.13, "lat": 51.51, "population": 1.5, "industries": ["assembly", "hub", "precision"] },
+    { "id": "paris",     "name": "Paris",     "region": "Francia",     "lon":  2.35, "lat": 48.86, "population": 1.4, "industries": ["precision", "hub", "assembly"] },
+    { "id": "amsterdam", "name": "Amsterdam", "region": "Lowlands",    "lon":  4.90, "lat": 52.37, "population": 1.1, "industries": ["refining", "hub"] },
+    { "id": "bruxelles", "name": "Bruxelles", "region": "Lowlands",    "lon":  4.35, "lat": 50.85, "population": 0.9, "industries": ["precision", "refining"] },
+    { "id": "hamburg",   "name": "Hamburg",   "region": "Nordmark",    "lon": 10.00, "lat": 53.55, "population": 1.1, "industries": ["refining", "salvage", "hub"] },
+    { "id": "berlin",    "name": "Berlin",    "region": "Nordmark",    "lon": 13.40, "lat": 52.52, "population": 1.3, "industries": ["assembly", "precision"] },
+    { "id": "praha",     "name": "Praha",     "region": "Bohemia",     "lon": 14.42, "lat": 50.08, "population": 0.9, "industries": ["refining", "ceramics"] },
+    { "id": "wien",      "name": "Wien",      "region": "Ostmark",     "lon": 16.37, "lat": 48.21, "population": 1.0, "industries": ["precision", "hub"] },
+    { "id": "munchen",   "name": "Munchen",   "region": "Bayern",      "lon": 11.58, "lat": 48.14, "population": 1.1, "industries": ["assembly", "precision"] },
+    { "id": "zurich",    "name": "Zurich",    "region": "Helvetia",    "lon":  8.54, "lat": 47.37, "population": 0.9, "industries": ["precision", "energy"] },
+    { "id": "milano",    "name": "Milano",    "region": "Padania",     "lon":  9.19, "lat": 45.46, "population": 1.2, "industries": ["assembly", "ceramics"] },
+    { "id": "venezia",   "name": "Venezia",   "region": "Padania",     "lon": 12.33, "lat": 45.44, "population": 0.8, "industries": ["ceramics", "hub"] },
+    { "id": "roma",      "name": "Roma",      "region": "Latium",      "lon": 12.50, "lat": 41.90, "population": 1.1, "industries": ["hub", "agriculture"] },
+    { "id": "marseille", "name": "Marseille", "region": "Provence",    "lon":  5.37, "lat": 43.30, "population": 0.9, "industries": ["refining", "hub"] },
+    { "id": "lyon",      "name": "Lyon",      "region": "Francia",     "lon":  4.83, "lat": 45.76, "population": 0.9, "industries": ["energy", "agriculture"] },
+    { "id": "barcelona", "name": "Barcelona", "region": "Catalonia",   "lon":  2.17, "lat": 41.39, "population": 1.0, "industries": ["ceramics", "agriculture"] },
+    { "id": "madrid",    "name": "Madrid",    "region": "Iberia",      "lon": -3.70, "lat": 40.42, "population": 1.1, "industries": ["mining", "agriculture", "hub"] },
+    { "id": "lisboa",    "name": "Lisboa",    "region": "Iberia",      "lon": -9.14, "lat": 38.72, "population": 0.8, "industries": ["mining", "salvage"] },
+    { "id": "warszawa",  "name": "Warszawa",  "region": "Sarmatia",    "lon": 21.01, "lat": 52.23, "population": 1.0, "industries": ["salvage", "mining"] },
+    { "id": "budapest",  "name": "Budapest",  "region": "Pannonia",    "lon": 19.04, "lat": 47.50, "population": 0.9, "industries": ["agriculture", "salvage"] }
+  ]
+}

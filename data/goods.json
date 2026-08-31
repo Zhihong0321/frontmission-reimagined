@@ -1,0 +1,12 @@
+{
+  "goods": [
+    { "id": "scrap",    "name": "Scrap Alloy",     "tier": "raw",       "basePrice": 12,  "unitVolume": 1.0, "elasticity": 0.55 },
+    { "id": "ore",      "name": "Rare Earth Ore",  "tier": "raw",       "basePrice": 42,  "unitVolume": 0.8, "elasticity": 0.62 },
+    { "id": "rations",  "name": "Rations",         "tier": "raw",       "basePrice": 20,  "unitVolume": 0.6, "elasticity": 0.50 },
+    { "id": "steel",    "name": "Refined Steel",   "tier": "refined",   "basePrice": 58,  "unitVolume": 1.0, "elasticity": 0.60 },
+    { "id": "ceramics", "name": "Ceramic Plating", "tier": "refined",   "basePrice": 95,  "unitVolume": 0.7, "elasticity": 0.62 },
+    { "id": "cells",    "name": "Power Cells",     "tier": "refined",   "basePrice": 150, "unitVolume": 0.5, "elasticity": 0.65 },
+    { "id": "servos",   "name": "Actuator Servos", "tier": "component", "basePrice": 230, "unitVolume": 0.5, "elasticity": 0.68 },
+    { "id": "optics",   "name": "Optical Sensors", "tier": "component", "basePrice": 340, "unitVolume": 0.3, "elasticity": 0.70 }
+  ]
+}

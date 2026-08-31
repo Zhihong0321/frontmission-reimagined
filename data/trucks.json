@@ -1,0 +1,7 @@
+{
+  "trucks": [
+    { "id": "mule", "name": "Mule-class Hauler",   "capacity": 200, "speedKmPerDay": 220, "upkeepPerDay": 45,  "fuelPerKm": 0.85, "price": 12000 },
+    { "id": "ox",   "name": "Ox-class Freighter",  "capacity": 520, "speedKmPerDay": 175, "upkeepPerDay": 105, "fuelPerKm": 1.90, "price": 34000 },
+    { "id": "kite", "name": "Kite-class Runner",   "capacity": 95,  "speedKmPerDay": 330, "upkeepPerDay": 38,  "fuelPerKm": 0.70, "price": 16000 }
+  ]
+}
