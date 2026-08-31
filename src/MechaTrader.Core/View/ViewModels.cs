@@ -68,7 +68,14 @@ public sealed record RouteView(
     double DistanceKm,
     string TerrainName,
     int Days,
-    double EstimatedFuel);
+    double EstimatedFuel,
+    // Scouting report: the best cargo to run down this road right now, what it would
+    // clear after fuel and upkeep, and how many units the convoy could actually afford.
+    // Without this the player is reading one city's prices with no way to judge a road.
+    string? BestGoodId,
+    string? BestGoodName,
+    int BestUnits,
+    long BestProfit);
 
 public sealed record TruckOfferView(
     string Id,

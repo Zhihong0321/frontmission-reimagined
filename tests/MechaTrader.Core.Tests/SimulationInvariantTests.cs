@@ -7,18 +7,30 @@ namespace MechaTrader.Core.Tests;
 
 public class DeterminismTests
 {
-    private static readonly Command[] Script =
+    // Built from the actual road network so the script stays valid if the opening
+    // city is retuned.
+    private static readonly Command[] Script = BuildScript();
+
+    private static Command[] BuildScript()
     {
-        new BuyCommand("steel", 25),
-        new DepartCommand("zurich"),
-        new WaitCommand(4),
-        new SellCommand("steel", 25),
-        new BuyCommand("cells", 30),
-        new DepartCommand("milano"),
-        new WaitCommand(5),
-        new SellCommand("cells", 30),
-        new WaitCommand(12)
-    };
+        var world = TestWorld.Shipping;
+        var start = world.Config.StartCityId;
+        var first = world.Routes.From(start)[0].Other(start);
+        var second = world.Routes.From(first).First(r => r.Other(first) != start).Other(first);
+
+        return new Command[]
+        {
+            new BuyCommand("steel", 25),
+            new DepartCommand(first),
+            new WaitCommand(4),
+            new SellCommand("steel", 25),
+            new BuyCommand("cells", 30),
+            new DepartCommand(second),
+            new WaitCommand(5),
+            new SellCommand("cells", 30),
+            new WaitCommand(12)
+        };
+    }
 
     private static string RunScript(ulong seed)
     {

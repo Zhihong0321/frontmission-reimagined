@@ -9,12 +9,6 @@
 
 $ErrorActionPreference = 'Continue'
 
-# The SDK was installed user-scope and is not on PATH.
-$localDotnet = Join-Path $env:LOCALAPPDATA 'Microsoft\dotnet'
-if (Test-Path (Join-Path $localDotnet 'dotnet.exe')) {
-    $env:PATH = "$localDotnet;$env:PATH"
-    $env:DOTNET_ROOT = $localDotnet
-}
 $env:DOTNET_NOLOGO = '1'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 
@@ -89,18 +83,32 @@ try {
         # -UseBasicParsing: Windows PowerShell 5.1 otherwise routes through the IE engine,
         # which cannot initialise in a non-interactive session.
         $page = Invoke-WebRequest $base -TimeoutSec 5 -UseBasicParsing
-        $buy = Cmd '{"type":"buy","goodId":"cells","units":30}'
-        $go = Cmd '{"type":"depart","toCityId":"praha"}'
-        $wait = Cmd '{"type":"wait","days":3}'
-        $sell = Cmd '{"type":"sell","goodId":"cells","units":30}'
-        $bad = Cmd '{"type":"depart","toCityId":"lisboa"}'
 
-        $hostOk = ($page.StatusCode -eq 200) -and
-                  (-not $buy.error) -and (-not $go.error) -and (-not $wait.error) -and
-                  (-not $sell.error) -and ($bad.error) -and
-                  ($wait.view.location.id -eq 'praha')
+        # Take the run the game itself recommends, so this stays valid when content
+        # is retuned rather than asserting against hardcoded city names.
+        $state = Invoke-RestMethod "$base/api/state"
+        $run = $state.view.routes | Where-Object { $_.bestProfit -gt 0 } | Select-Object -First 1
+        $noRoad = 'atlantis'
 
-        $hostDetail = "page=$($page.StatusCode); buy/depart/wait/sell ok; arrived=$($wait.view.location.id); illegal move refused=$([bool]$bad.error)"
+        if (-not $run) {
+            $hostDetail = 'no profitable opening run - the first turn would be a dead end'
+        }
+        else {
+            $buy = Cmd ("{`"type`":`"buy`",`"goodId`":`"$($run.bestGoodId)`",`"units`":$($run.bestUnits)}")
+            $go = Cmd ("{`"type`":`"depart`",`"toCityId`":`"$($run.toId)`"}")
+            $wait = Cmd ("{`"type`":`"wait`",`"days`":$($run.days)}")
+            $sell = Cmd ("{`"type`":`"sell`",`"goodId`":`"$($run.bestGoodId)`",`"units`":$($run.bestUnits)}")
+            $bad = Cmd ("{`"type`":`"depart`",`"toCityId`":`"$noRoad`"}")
+
+            $profit = $sell.view.cash - $state.view.cash
+
+            $hostOk = ($page.StatusCode -eq 200) -and
+                      (-not $buy.error) -and (-not $go.error) -and (-not $wait.error) -and
+                      (-not $sell.error) -and ($bad.error) -and
+                      ($wait.view.location.id -eq $run.toId) -and ($profit -gt 0)
+
+            $hostDetail = "hauled $($run.bestUnits) $($run.bestGoodName) to $($run.toName) in $($run.days)d for $profit cr; illegal move refused=$([bool]$bad.error)"
+        }
     }
 }
 catch {

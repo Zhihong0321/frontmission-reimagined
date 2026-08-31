@@ -128,6 +128,18 @@ function renderMarket(v) {
     b.addEventListener('click', () => trade('sell', b.dataset.sell)));
 }
 
+/* Buy the scouted cargo and set off in one action. Kept as two separate commands so
+ * the simulation still sees an ordinary buy followed by an ordinary departure. */
+async function loadAndGo(goodId, units, toCityId) {
+  try {
+    const bought = await call('/api/command', { type: 'buy', goodId, units });
+    if (bought.error) { apply(bought); return; }
+    apply(await call('/api/command', { type: 'depart', toCityId }));
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
 function trade(type, goodId) {
   const input = document.querySelector(`[data-qty="${goodId}"]`);
   const units = Math.max(1, parseInt(input.value, 10) || 1);
@@ -142,23 +154,38 @@ function renderRoutes(v) {
     return;
   }
 
-  const rows = v.routes.map((r) => `
+  const rows = v.routes.map((r) => {
+    const worth = r.bestProfit > 0;
+    const cargo = worth
+      ? `<span class="profit">${r.bestGoodName}</span> <span class="sub">×${num(r.bestUnits)}</span>`
+      : '<span class="sub">nothing pays</span>';
+
+    return `
     <tr>
-      <td class="name">${r.toName}<div class="sub">${r.toRegion} · ${r.terrainName}</div></td>
-      <td class="num sub">${num(r.distanceKm)} km</td>
-      <td class="num">${r.days}d</td>
-      <td class="num sub">${num(r.estimatedFuel)} cr</td>
-      <td><button class="go" data-depart="${r.toId}">Go</button></td>
-    </tr>`).join('');
+      <td class="name">${r.toName}<div class="sub">${r.toRegion} · ${r.terrainName} ·
+        ${num(r.distanceKm)} km · ${r.days}d · ${num(r.estimatedFuel)} cr fuel</div></td>
+      <td>${cargo}</td>
+      <td class="num ${worth ? 'profit' : 'sub'}">${worth ? '+' + num(r.bestProfit) : '—'}</td>
+      <td class="acts">
+        ${worth ? `<button class="go" data-run="${r.toId}" data-good="${r.bestGoodId}" data-units="${r.bestUnits}">Load &amp; go</button>` : ''}
+        <button data-depart="${r.toId}">Empty</button>
+      </td>
+    </tr>`;
+  }).join('');
 
   body.innerHTML = `
     <table>
-      <thead><tr><th>Destination</th><th>Dist</th><th>Time</th><th>Fuel</th><th></th></tr></thead>
+      <thead><tr><th>Destination</th><th>Best cargo</th><th>Est. profit</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    <div class="sub" style="margin-top:8px">Estimates price both legs against the depth your
+      order consumes, then deduct fuel and upkeep. Markets move while you travel.</div>`;
 
   body.querySelectorAll('[data-depart]').forEach((b) =>
     b.addEventListener('click', () => send({ type: 'depart', toCityId: b.dataset.depart })));
+
+  body.querySelectorAll('[data-run]').forEach((b) =>
+    b.addEventListener('click', () => loadAndGo(b.dataset.good, +b.dataset.units, b.dataset.run)));
 }
 
 function renderCargo(v) {

@@ -10,19 +10,29 @@ public class CommandTests
 
     private static Game NewGame() => Game.New(TestWorld.Shipping, Seed);
 
+    // Derived from content rather than hardcoded, so retuning the opening city does not
+    // silently invalidate the suite.
+    private static readonly string Start = TestWorld.Shipping.Config.StartCityId;
+
+    private static readonly string Neighbour =
+        TestWorld.Shipping.Routes.From(Start)[0].Other(Start);
+
+    private static readonly string NoRoadTo = TestWorld.Shipping.Cities
+        .First(c => c.Id != Start && !TestWorld.Shipping.Routes.AreAdjacent(Start, c.Id)).Id;
+
     [Fact]
     public void BuyingMovesCashCargoAndLocalStock()
     {
         var game = NewGame();
         var cashBefore = game.State.Cash;
-        var stockBefore = game.State.StockOf("munchen", "steel");
+        var stockBefore = game.State.StockOf(Start, "steel");
 
         var result = game.Apply(new BuyCommand("steel", 20));
 
         Assert.True(result.Ok, result.Error);
         Assert.Equal(20, game.State.Caravan.Held("steel"));
         Assert.True(game.State.Cash < cashBefore, "Buying should cost money.");
-        Assert.True(game.State.StockOf("munchen", "steel") < stockBefore, "Buying should drain local stock.");
+        Assert.True(game.State.StockOf(Start, "steel") < stockBefore, "Buying should drain local stock.");
     }
 
     [Fact]
@@ -93,7 +103,7 @@ public class CommandTests
         var game = NewGame();
 
         var cash = game.State.Cash;
-        var stock = game.State.StockOf("munchen", "scrap");
+        var stock = game.State.StockOf(Start, "scrap");
         var day = game.State.Day;
 
         Assert.False(game.Apply(new BuyCommand("scrap", 500)).Ok);
@@ -102,7 +112,7 @@ public class CommandTests
         Assert.False(game.Apply(new DepartCommand("atlantis")).Ok);
 
         Assert.Equal(cash, game.State.Cash);
-        Assert.Equal(stock, game.State.StockOf("munchen", "scrap"));
+        Assert.Equal(stock, game.State.StockOf(Start, "scrap"));
         Assert.Equal(day, game.State.Day);
         Assert.Empty(game.State.Caravan.Cargo);
     }
@@ -130,7 +140,7 @@ public class CommandTests
     public void TradingIsRejectedWhileOnTheRoad()
     {
         var game = NewGame();
-        Assert.True(game.Apply(new DepartCommand("zurich")).Ok);
+        Assert.True(game.Apply(new DepartCommand(Neighbour)).Ok);
 
         Assert.False(game.Apply(new BuyCommand("steel", 1)).Ok);
         Assert.False(game.Apply(new SellCommand("steel", 1)).Ok);
@@ -142,7 +152,7 @@ public class CommandTests
     {
         var game = NewGame();
 
-        var result = game.Apply(new DepartCommand("lisboa"));
+        var result = game.Apply(new DepartCommand(NoRoadTo));
 
         Assert.False(result.Ok);
         Assert.Contains("road", result.Error!, StringComparison.OrdinalIgnoreCase);
@@ -154,11 +164,11 @@ public class CommandTests
         var game = NewGame();
         var world = TestWorld.Shipping;
 
-        var route = world.Routes.Between("munchen", "zurich")!;
+        var route = world.Routes.Between(Start, Neighbour)!;
         var expected = CaravanMath.TravelDays(game.State.Caravan, world, route);
 
         var startDay = game.State.Day;
-        Assert.True(game.Apply(new DepartCommand("zurich")).Ok);
+        Assert.True(game.Apply(new DepartCommand(Neighbour)).Ok);
         Assert.Null(game.State.Caravan.LocationId);
 
         // One day short: still on the road.
@@ -166,7 +176,7 @@ public class CommandTests
         Assert.Null(game.State.Caravan.LocationId);
 
         game.Apply(new WaitCommand(1));
-        Assert.Equal("zurich", game.State.Caravan.LocationId);
+        Assert.Equal(Neighbour, game.State.Caravan.LocationId);
         Assert.Null(game.State.Caravan.Travel);
         Assert.Equal(startDay + expected, game.State.Day);
     }

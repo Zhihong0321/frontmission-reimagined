@@ -149,18 +149,78 @@ public static class ViewBuilder
             var otherId = route.Other(city.Id);
             var other = world.City(otherId);
 
+            var days = CaravanMath.TravelDays(state.Caravan, world, route);
+            var fuel = CaravanMath.TravelFuel(state.Caravan, world, route);
+            var best = BestCargoFor(state, world, city, other, days, fuel);
+
             rows.Add(new RouteView(
                 ToId: otherId,
                 ToName: other.Name,
                 ToRegion: other.Region,
                 DistanceKm: route.DistanceKm,
                 TerrainName: route.Terrain.Name,
-                Days: CaravanMath.TravelDays(state.Caravan, world, route),
-                EstimatedFuel: Math.Round(CaravanMath.TravelFuel(state.Caravan, world, route))));
+                Days: days,
+                EstimatedFuel: Math.Round(fuel),
+                BestGoodId: best.GoodId,
+                BestGoodName: best.GoodName,
+                BestUnits: best.Units,
+                BestProfit: best.Profit));
         }
 
-        return rows.OrderBy(r => r.Days).ThenBy(r => r.ToName, StringComparer.Ordinal).ToList();
+        return rows.OrderByDescending(r => r.BestProfit).ThenBy(r => r.Days).ToList();
     }
+
+    private readonly record struct CargoAdvice(string? GoodId, string? GoodName, int Units, long Profit);
+
+    /// <summary>
+    /// What is worth hauling down one road, sized to what the convoy can actually pay
+    /// for and carry.
+    ///
+    /// The player can only see the market they are standing in, so without this they
+    /// would be choosing roads blind. Both legs are priced against the depth the order
+    /// consumes, and fuel and upkeep are deducted, so the number shown is what the run
+    /// would really clear rather than a headline margin.
+    /// </summary>
+    private static CargoAdvice BestCargoFor(
+        GameState state, WorldData world, City origin, City destination, int days, double fuel)
+    {
+        if (days <= 0 || days == int.MaxValue) return new CargoAdvice(null, null, 0, 0);
+
+        var eco = world.Config.Economy;
+        var free = CaravanMath.FreeVolume(state.Caravan, world);
+        var fixedCost = fuel + CaravanMath.DailyUpkeep(state.Caravan, world) * days;
+
+        var best = new CargoAdvice(null, null, 0, 0);
+
+        foreach (var good in world.Goods)
+        {
+            var originProfile = origin.Market[good.Id];
+            var originStock = state.StockOf(origin.Id, good.Id);
+
+            var destinationProfile = destination.Market[good.Id];
+            var destinationStock = state.StockOf(destination.Id, good.Id);
+
+            var maxUnits = Economy.MaxAffordableUnits(good, originProfile, originStock, state.Cash, free, eco);
+            if (maxUnits <= 0) continue;
+
+            foreach (var fraction in OrderSizes)
+            {
+                var units = (int)(maxUnits * fraction);
+                if (units <= 0) continue;
+
+                var cost = Economy.ApproximateBuyCost(good, originProfile, originStock, units, eco);
+                var revenue = Economy.ApproximateSellRevenue(good, destinationProfile, destinationStock, units, eco);
+
+                var profit = (long)Math.Round(revenue - cost - fixedCost);
+                if (profit > best.Profit)
+                    best = new CargoAdvice(good.Id, good.Name, units, profit);
+            }
+        }
+
+        return best;
+    }
+
+    private static readonly double[] OrderSizes = { 1.0, 0.75, 0.5, 0.3, 0.15 };
 
     private static List<TruckOfferView> BuildShipyard(WorldData world)
         => world.Trucks

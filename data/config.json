@@ -1,6 +1,6 @@
-{
+﻿{
   "startCash": 20000,
-  "startCityId": "munchen",
+  "startCityId": "praha",
   "startTruckIds": ["mule"],
   "economy": {
     "driftRate": 0.08,
