@@ -96,12 +96,7 @@ restart.
 | `terrain.json` | speed and fuel multipliers — alpine passes and the Channel are chokepoints |
 | `trucks.json` | capacity, speed, upkeep, fuel burn, price |
 
-## Next
+## For AI sessions
 
-Out of scope here, in rough priority order:
-
-1. **Rival trading houses.** `GreedyTrader` in `Core/Ai` is already the seed of one. A
-   trade sim with no competitor is solitaire; rivals make opportunity itself scarce.
-2. **Depot investment and ownership** — the mechanic *大航海時代IV* is actually built on.
-3. Save/load to disk (the state already round-trips through JSON).
-4. Godot 4 front-end, then art, then Steam.
+`CLAUDE.md` is the onboarding brief: architecture, file map, invariants, how to extend
+things, and the environment gotchas. Claude Code loads it automatically.
