@@ -139,6 +139,32 @@ public class WorldLoaderTests
     }
 
     [Fact]
+    public void CrewSkillWiredToAnUnknownLeverIsRejected()
+    {
+        // A lever typo would otherwise ship as a stat the player pays for that quietly
+        // does nothing.
+        var files = MinimalWorld.With(WorldLoader.CrewKey,
+            MinimalWorld.Files[WorldLoader.CrewKey].Replace("\"lever\": \"buy\"", "\"lever\": \"telepathy\""));
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("telepathy", error.Message);
+    }
+
+    [Fact]
+    public void TwoCrewSkillsClaimingOneLeverAreRejected()
+    {
+        // Two skills on one lever would make the effective bonus depend on declaration
+        // order, which is exactly the kind of silent tuning bug content should not allow.
+        var second = "{ \"id\": \"barter\", \"name\": \"Barter\", \"lever\": \"buy\", \"maxEffect\": 0.5 }";
+
+        var files = MinimalWorld.With(WorldLoader.CrewKey,
+            MinimalWorld.Files[WorldLoader.CrewKey].Replace("\"skills\": [ ", "\"skills\": [ " + second + ", "));
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("lever", error.Message);
+    }
+
+    [Fact]
     public void MissingContentFileIsRejected()
     {
         var files = MinimalWorld.Files.Where(kv => kv.Key != WorldLoader.GoodsKey)
@@ -182,6 +208,16 @@ internal static class MinimalWorld
         """,
         [WorldLoader.RoutesKey] = """
         { "routes": [ { "from": "alpha", "to": "beta", "terrain": "plain" } ] }
+        """,
+        [WorldLoader.CrewKey] = """
+        { "maxSkill": 10, "crewCapacity": 2, "refreshDays": 10, "signingFeeDays": 20, "severanceDays": 5,
+          "wage": { "base": 5, "perSkillPoint": 6 },
+          "skills": [ { "id": "haggling", "name": "Haggling", "lever": "buy", "maxEffect": 0.5 } ],
+          "roles": [ { "id": "hand", "name": "Hand", "primary": "haggling" } ],
+          "candidates": { "basePerCity": 1, "perPopulation": 1, "maxPerCity": 3,
+                          "primaryMin": 4, "primaryMax": 9, "secondaryMin": 1, "secondaryMax": 4 },
+          "industryAffinity": { "works": { "haggling": 1 } },
+          "firstNames": [ "Ada" ], "surnames": [ "Brandt" ] }
         """
     };
 

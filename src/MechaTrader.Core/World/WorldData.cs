@@ -18,6 +18,7 @@ public sealed class WorldData
     public required IReadOnlyDictionary<string, TruckDef> TrucksById { get; init; }
     public required IReadOnlyList<IndustryDef> Industries { get; init; }
     public required RouteGraph Routes { get; init; }
+    public required CrewConfig Crew { get; init; }
 
     public GoodDef Good(string id) => GoodsById.TryGetValue(id, out var g)
         ? g : throw new KeyNotFoundException($"Unknown good '{id}'.");

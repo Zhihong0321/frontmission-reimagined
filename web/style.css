@@ -183,6 +183,7 @@ input[type="number"]:focus { outline: none; border-color: var(--accent); }
 #log-body li.Trade { color: var(--text); }
 #log-body li.Arrival, #log-body li.Travel { color: var(--accent); }
 #log-body li.Warning { color: var(--warn); }
+#log-body li.Crew { color: var(--good); }
 
 .empty { color: var(--muted); padding: 8px 2px; }
 
@@ -219,3 +220,44 @@ td.acts button { margin-left: 4px; }
    panel would claim a grid cell of its own. */
 .main-col { display: flex; flex-direction: column; min-width: 0; }
 .main-col .panel:last-child { margin-bottom: 0; }
+
+
+/* ---------- crew ---------- */
+
+#crew-body h3 {
+  margin: 16px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+#crew-body table.skills td.name { min-width: 140px; }
+#crew-body td.acts button { padding: 3px 8px; }
+
+/* Level bar. Filled against maxSkill, which the view supplies - the browser is not
+   allowed to know what the ceiling is. */
+.pipcell { width: 78px; }
+
+.pips {
+  display: block;
+  height: 6px;
+  width: 72px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pips span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Goods a caravan has unloaded here, waiting to be shelved. */
+.intake {
+  color: var(--warn);
+  font-size: 10px;
+  letter-spacing: .02em;
+}

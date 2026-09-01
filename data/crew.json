@@ -1,0 +1,66 @@
+{
+  "_comment": "Crew content. Skills are declared here, not in C#: each one names a lever the simulation already has, and 'maxEffect' is what that lever gives at maxSkill. A skill with lever 'none' is carried, paid for and displayed but does nothing yet - that is how a future stat gets introduced before the system behind it exists.",
+
+  "maxSkill": 10,
+  "crewCapacity": 4,
+  "refreshDays": 10,
+  "signingFeeDays": 20,
+  "severanceDays": 5,
+
+  "wage": { "base": 5, "perSkillPoint": 6 },
+
+  "skills": [
+    { "id": "navigation",  "name": "Navigation",  "lever": "speed",  "maxEffect": 0.35,
+      "blurb": "Reads the road. Raises convoy speed, which only pays when it saves a whole day." },
+    { "id": "negotiation", "name": "Negotiation", "lever": "buy",    "maxEffect": 0.80,
+      "blurb": "Argues the buy price down. Erodes the market's cut on everything you purchase." },
+    { "id": "sales",       "name": "Sales",       "lever": "sell",   "maxEffect": 0.80,
+      "blurb": "Argues the sale price up. Erodes the market's cut on everything you unload." },
+    { "id": "accounting",  "name": "Accounting",  "lever": "upkeep", "maxEffect": 0.40,
+      "blurb": "Runs the books. Cuts truck upkeep and fuel; worth more the bigger the convoy." }
+  ],
+
+  "roles": [
+    { "id": "navigator", "name": "Navigator",     "primary": "navigation" },
+    { "id": "broker",    "name": "Broker",        "primary": "negotiation" },
+    { "id": "factor",    "name": "Factor",        "primary": "sales" },
+    { "id": "purser",    "name": "Purser",        "primary": "accounting" },
+    { "id": "hand",      "name": "Freelance Hand", "primary": "" }
+  ],
+
+  "candidates": {
+    "basePerCity": 1,
+    "perPopulation": 2.0,
+    "maxPerCity": 5,
+    "primaryMin": 5,
+    "primaryMax": 10,
+    "secondaryMin": 1,
+    "secondaryMax": 5
+  },
+
+  "_affinityComment": "A city's industries shape who walks into its recruitment centre. Trade hubs breed talkers; refineries and plants breed bookkeepers.",
+  "industryAffinity": {
+    "hub":         { "negotiation": 1, "sales": 1 },
+    "agriculture": { "sales": 1 },
+    "salvage":     { "negotiation": 1 },
+    "mining":      { "navigation": 1 },
+    "energy":      { "accounting": 1 },
+    "precision":   { "accounting": 1 },
+    "assembly":    { "accounting": 1 },
+    "refining":    { "navigation": 1 },
+    "ceramics":    { "sales": 1 }
+  },
+
+  "firstNames": [
+    "Ada", "Bruno", "Celia", "Dmitri", "Elke", "Farid", "Greta", "Halvor",
+    "Ilse", "Janek", "Katrin", "Lorenz", "Mira", "Nils", "Odile", "Piotr",
+    "Rosa", "Samir", "Tilda", "Ulrich", "Vera", "Willem", "Yara", "Zeno"
+  ],
+
+  "surnames": [
+    "Almqvist", "Brandt", "Castellan", "Dubois", "Eriksen", "Ferrante",
+    "Gruber", "Haldane", "Ibarra", "Jansen", "Kovac", "Lindqvist",
+    "Moreau", "Novak", "Oster", "Pankratov", "Quirin", "Reiter",
+    "Solano", "Thorne", "Ulmann", "Varga", "Weiss", "Zeller"
+  ]
+}

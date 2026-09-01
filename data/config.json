@@ -1,4 +1,4 @@
-﻿{
+{
   "startCash": 20000,
   "startCityId": "praha",
   "startTruckIds": ["mule"],
@@ -11,6 +11,7 @@
     "spread": 0.045,
     "minPriceMult": 0.4,
     "maxPriceMult": 2.5,
-    "roadDetourFactor": 1.25
+    "roadDetourFactor": 1.25,
+    "restockRate": 0.35
   }
 }

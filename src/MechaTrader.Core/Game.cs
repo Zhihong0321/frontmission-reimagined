@@ -48,10 +48,12 @@ public sealed class Game
         // play already has real price gradients to read.
         foreach (var city in world.Cities)
         {
-            var market = new Dictionary<string, double>(world.Goods.Count);
+            var market = new Dictionary<string, CityStock>(world.Goods.Count);
             foreach (var good in world.Goods)
             {
-                market[good.Id] = Economy.InitialStock(city.Market[good.Id], eco);
+                // A new world opens with nothing in any city's intake: nobody has sold
+                // into these markets yet.
+                market[good.Id] = CityStock.Shelved(Economy.InitialStock(city.Market[good.Id], eco));
             }
             state.Stock[city.Id] = market;
         }

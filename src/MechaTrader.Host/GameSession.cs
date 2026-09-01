@@ -13,7 +13,9 @@ public sealed record CommandRequest(
     int? Units,
     string? ToCityId,
     int? Days,
-    string? TruckTypeId);
+    string? TruckTypeId,
+    string? CandidateId,
+    string? CrewId);
 
 public sealed record LogEntry(int Day, string Kind, string Message);
 
@@ -115,6 +117,18 @@ public sealed class GameSession
                 if (request.TruckTypeId is null)
                     return Reject("buyTruck needs a truckTypeId.", out error);
                 command = new BuyTruckCommand(request.TruckTypeId);
+                return true;
+
+            case "hirecrew":
+                if (request.CandidateId is null)
+                    return Reject("hireCrew needs a candidateId.", out error);
+                command = new HireCrewCommand(request.CandidateId);
+                return true;
+
+            case "dismisscrew":
+                if (request.CrewId is null)
+                    return Reject("dismissCrew needs a crewId.", out error);
+                command = new DismissCrewCommand(request.CrewId);
                 return true;
 
             default:

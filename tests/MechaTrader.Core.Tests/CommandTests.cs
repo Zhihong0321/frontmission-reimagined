@@ -25,14 +25,14 @@ public class CommandTests
     {
         var game = NewGame();
         var cashBefore = game.State.Cash;
-        var stockBefore = game.State.StockOf(Start, "steel");
+        var stockBefore = game.State.ShelfOf(Start, "steel");
 
         var result = game.Apply(new BuyCommand("steel", 20));
 
         Assert.True(result.Ok, result.Error);
         Assert.Equal(20, game.State.Caravan.Held("steel"));
         Assert.True(game.State.Cash < cashBefore, "Buying should cost money.");
-        Assert.True(game.State.StockOf(Start, "steel") < stockBefore, "Buying should drain local stock.");
+        Assert.True(game.State.ShelfOf(Start, "steel") < stockBefore, "Buying should drain the shelf.");
     }
 
     [Fact]
@@ -67,12 +67,51 @@ public class CommandTests
     public void BuyIsRejectedWithoutEnoughCash()
     {
         var game = NewGame();
+        var world = TestWorld.Shipping;
 
-        // Optics are small but expensive: the hold would take them, the wallet will not.
-        var result = game.Apply(new BuyCommand("optics", 600));
+        // Optics are small but expensive: the hold would take them and the shelf holds
+        // them, but the wallet will not. Sized to the shelf rather than hardcoded, so
+        // this keeps testing the cash gate rather than tripping the shelf one.
+        var good = world.Good("optics");
+        var units = Economy.UnitsOnTheShelf(game.State.StockOf(Start, good.Id), world.Config.Economy);
+
+        var result = game.Apply(new BuyCommand(good.Id, units));
 
         Assert.False(result.Ok);
         Assert.Contains("credits", result.Error!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuyIsRejectedForMoreThanTheCityHasOnTheShelf()
+    {
+        var game = NewGame();
+        var world = TestWorld.Shipping;
+
+        var good = world.Good("optics");
+        var onTheShelf = Economy.UnitsOnTheShelf(game.State.StockOf(Start, good.Id), world.Config.Economy);
+
+        var result = game.Apply(new BuyCommand(good.Id, onTheShelf + 1));
+
+        Assert.False(result.Ok);
+        Assert.Contains("shelf", result.Error!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SoldGoodsLandInTheCityIntakeAndNotOnItsShelf()
+    {
+        // The rule that makes a sell/buy-back loop impossible rather than merely
+        // unprofitable: what the convoy unloads is not what the city is selling.
+        var game = NewGame();
+
+        game.Apply(new BuyCommand("steel", 20));
+        var shelfAfterBuying = game.State.ShelfOf(Start, "steel");
+
+        game.Apply(new SellCommand("steel", 20));
+        var stock = game.State.StockOf(Start, "steel");
+
+        Assert.Equal(shelfAfterBuying, stock.Out);
+        Assert.Equal(20.0, stock.In, 6);
+        Assert.Equal(stock.Out + stock.In, stock.Total, 6);
     }
 
     [Fact]
@@ -104,6 +143,7 @@ public class CommandTests
 
         var cash = game.State.Cash;
         var stock = game.State.StockOf(Start, "scrap");
+
         var day = game.State.Day;
 
         Assert.False(game.Apply(new BuyCommand("scrap", 500)).Ok);

@@ -59,6 +59,7 @@ function render() {
   el('stat-worth').textContent = num(v.netWorth) + ' cr';
   el('stat-hold').textContent = `${num(v.convoy.used, 1)} / ${num(v.convoy.capacity)}`;
   el('stat-upkeep').textContent = num(v.convoy.dailyUpkeep) + ' cr/day';
+  el('stat-payroll').textContent = `${num(v.crew.dailyWages)} cr/day · ${v.crew.size}/${v.crew.capacity}`;
 
   el('stat-where').textContent = v.travel
     ? `${v.travel.fromName} → ${v.travel.toName} · ${v.travel.daysRemaining} day(s) out`
@@ -70,6 +71,7 @@ function render() {
   renderMarket(v);
   renderRoutes(v);
   renderCargo(v);
+  renderCrew(v);
   renderShipyard(v);
   renderLog();
 }
@@ -168,7 +170,9 @@ function renderMarket(v) {
         <td class="num">${num(g.buy, 1)}</td>
         <td class="num">${num(g.sell, 1)}</td>
         <td class="num sub">${num(g.basePrice)}</td>
-        <td class="num sub">${num(g.stock)}</td>
+        <td class="num sub">${num(g.shelf)}${g.intake > 0
+              ? `<div class="intake" title="Unloaded here by caravans; not for sale until the city shelves it">+${num(g.intake)} intake</div>`
+              : ''}</td>
         <td class="num ${g.held > 0 ? 'held' : 'sub'}">${g.held > 0 ? num(g.held) : '—'}</td>
         <td class="num sub">${g.held > 0 ? num(g.averageCost, 1) : '—'}</td>
         <td>
@@ -185,10 +189,14 @@ function renderMarket(v) {
     <table>
       <thead><tr>
         <th>Commodity</th><th>Buy</th><th>Sell</th><th>Base</th>
-        <th>Stock</th><th>Held</th><th>Avg cost</th><th></th>
+        <th>Shelf</th><th>Held</th><th>Avg cost</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    <div class="sub" style="margin-top:8px">A city keeps two stores. <strong>Shelf</strong> is
+      what it will sell you and all you can buy. What you unload goes into its intake instead,
+      so it is not back on sale the same day — but the city counts it when deciding what to
+      pay you.</div>`;
 
   body.querySelectorAll('[data-buy]').forEach((b) =>
     b.addEventListener('click', () => trade('buy', b.dataset.buy)));
@@ -278,6 +286,87 @@ function renderCargo(v) {
       </tbody>
     </table>`;
 }
+
+/* ---------- crew ---------- */
+
+/* Every number here arrives pre-resolved from ViewBuilder: the level bars are drawn
+ * from level/maxLevel and the effect lines are strings the simulation wrote. This
+ * panel knows that crew exist, not what any of them do. */
+function renderCrew(v) {
+  const body = el('crew-body');
+  const c = v.crew;
+
+  const bar = (level, max) => {
+    const pct = max > 0 ? Math.round((level / max) * 100) : 0;
+    return `<span class="pips"><span style="width:${pct}%"></span></span>`;
+  };
+
+  const skills = c.skills.map((s) => `
+    <tr>
+      <td class="name">${s.name}<div class="sub">${s.effectText}</div></td>
+      <td class="num ${s.level > 0 ? 'held' : 'sub'}">${s.level}/${s.maxLevel}</td>
+      <td class="pipcell">${bar(s.level, s.maxLevel)}</td>
+      <td class="sub">${s.leaderName || '—'}</td>
+    </tr>`).join('');
+
+  const roster = c.roster.length
+    ? `<table>
+        <thead><tr><th>Aboard</th><th>Wage</th><th>Skills</th><th></th></tr></thead>
+        <tbody>${c.roster.map((m) => `
+          <tr>
+            <td class="name">${m.name}<div class="sub">${m.roleName} · signed d${m.hiredDay}${m.hiredAt ? ' at ' + m.hiredAt : ''}</div></td>
+            <td class="num">${num(m.dailyWage)}<div class="sub">cr/day</div></td>
+            <td class="sub">${skillLine(m.skills)}</td>
+            <td class="acts"><button data-dismiss="${m.id}" title="Severance ${num(m.severance)} cr">Pay off</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`
+    : '<div class="empty">Nobody but you. Every seat is worth its wage or it is not.</div>';
+
+  let hiring = '<div class="empty">The recruitment centre is back in a city.</div>';
+
+  if (c.recruitment) {
+    const r = c.recruitment;
+    hiring = r.candidates.length
+      ? `<table>
+          <thead><tr><th>Available</th><th>Wage</th><th>Signing</th><th>Skills</th><th></th></tr></thead>
+          <tbody>${r.candidates.map((k) => `
+            <tr>
+              <td class="name">${k.name}<div class="sub">${k.roleName}</div></td>
+              <td class="num sub">${num(k.dailyWage)}</td>
+              <td class="num ${k.affordable ? '' : 'loss'}">${num(k.signingFee)}</td>
+              <td class="sub">${skillLine(k.skills)}</td>
+              <td class="acts">
+                <button data-hire="${k.id}" ${k.affordable && k.roomAboard ? '' : 'disabled'}>Sign on</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="sub" style="margin-top:8px">${r.cityName} recruitment centre ·
+          new faces in ${r.refreshInDays} day(s) · ${c.size}/${c.capacity} seats taken ·
+          wages are charged every day, hired or idle.</div>`
+      : `<div class="empty">Nobody is looking for work in ${r.cityName} this round.</div>`;
+  }
+
+  body.innerHTML = `
+    <table class="skills">
+      <thead><tr><th>Skill</th><th>Level</th><th></th><th>Best hand</th></tr></thead>
+      <tbody>${skills}</tbody>
+    </table>
+    <h3>Payroll · ${num(c.dailyWages)} cr/day</h3>
+    ${roster}
+    <h3>Recruitment</h3>
+    ${hiring}`;
+
+  body.querySelectorAll('[data-hire]').forEach((b) =>
+    b.addEventListener('click', () => send({ type: 'hireCrew', candidateId: b.dataset.hire })));
+
+  body.querySelectorAll('[data-dismiss]').forEach((b) =>
+    b.addEventListener('click', () => send({ type: 'dismissCrew', crewId: b.dataset.dismiss })));
+}
+
+const skillLine = (skills) =>
+  skills.map((s) => `${s.name.slice(0, 3)} ${s.level}`).join(' · ');
 
 function renderShipyard(v) {
   const body = el('shipyard-body');

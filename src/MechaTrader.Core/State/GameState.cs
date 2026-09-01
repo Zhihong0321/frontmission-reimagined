@@ -28,6 +28,9 @@ public sealed class CaravanState
 {
     public List<string> TruckTypeIds { get; set; } = new();
 
+    /// <summary>Everyone on the payroll. Travels with the convoy; hired and paid off in cities.</summary>
+    public List<CrewMember> Crew { get; set; } = new();
+
     /// <summary>Current city, or null while on the road.</summary>
     public string? LocationId { get; set; }
 
@@ -53,18 +56,33 @@ public sealed class GameState
     public long Cash { get; set; }
     public bool Bankrupt { get; set; }
 
-    /// <summary>cityId to goodId to current stock level.</summary>
-    public Dictionary<string, Dictionary<string, double>> Stock { get; set; } = new();
+    /// <summary>cityId to goodId to what the city holds, shelf and intake.</summary>
+    public Dictionary<string, Dictionary<string, CityStock>> Stock { get; set; } = new();
 
     public CaravanState Caravan { get; set; } = new();
 
-    public double StockOf(string cityId, string goodId)
-        => Stock.TryGetValue(cityId, out var market) && market.TryGetValue(goodId, out var s) ? s : 0.0;
+    /// <summary>
+    /// Candidate ids already taken out of the market. Recruitment pools are re-derived
+    /// from the seed rather than stored, so this is the only record that someone was
+    /// hired; it also stops a dismissed hand reappearing in the same pool.
+    /// </summary>
+    public HashSet<string> RecruitedIds { get; set; } = new();
 
-    public void SetStock(string cityId, string goodId, double value)
+    public CityStock StockOf(string cityId, string goodId)
+        => Stock.TryGetValue(cityId, out var market) && market.TryGetValue(goodId, out var s)
+            ? s
+            : default;
+
+    /// <summary>Everything the city owns of a good. This is what the sell price reads.</summary>
+    public double TotalStockOf(string cityId, string goodId) => StockOf(cityId, goodId).Total;
+
+    /// <summary>What is on the shelf, and so all a convoy can buy and all the buy price reads.</summary>
+    public double ShelfOf(string cityId, string goodId) => StockOf(cityId, goodId).Out;
+
+    public void SetStock(string cityId, string goodId, CityStock value)
     {
         if (!Stock.TryGetValue(cityId, out var market))
-            Stock[cityId] = market = new Dictionary<string, double>();
+            Stock[cityId] = market = new Dictionary<string, CityStock>();
         market[goodId] = value;
     }
 }

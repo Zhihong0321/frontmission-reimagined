@@ -7,6 +7,7 @@ public enum GameEventKind
     Travel,
     Arrival,
     Expense,
+    Crew,
     Warning
 }
 

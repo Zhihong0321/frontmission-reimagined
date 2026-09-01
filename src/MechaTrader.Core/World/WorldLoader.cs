@@ -19,10 +19,11 @@ public static class WorldLoader
     public const string IndustriesKey = "industries";
     public const string CitiesKey = "cities";
     public const string RoutesKey = "routes";
+    public const string CrewKey = "crew";
 
     public static readonly IReadOnlyList<string> RequiredKeys = new[]
     {
-        ConfigKey, GoodsKey, TerrainKey, TrucksKey, IndustriesKey, CitiesKey, RoutesKey
+        ConfigKey, GoodsKey, TerrainKey, TrucksKey, IndustriesKey, CitiesKey, RoutesKey, CrewKey
     };
 
     private const double KmPerDegreeLat = 111.32;
@@ -50,6 +51,7 @@ public static class WorldLoader
         var industryFile = Parse<IndustriesFile>(files[IndustriesKey], IndustriesKey);
         var cityDtos = Parse<CitiesFile>(files[CitiesKey], CitiesKey).Cities;
         var routeDtos = Parse<RoutesFile>(files[RoutesKey], RoutesKey).Routes;
+        var crew = Parse<CrewConfig>(files[CrewKey], CrewKey);
 
         if (goods.Count == 0) throw new WorldLoadException("goods.json defines no goods.");
         if (cityDtos.Count == 0) throw new WorldLoadException("cities.json defines no cities.");
@@ -60,6 +62,7 @@ public static class WorldLoader
         var industriesById = ToLookup(industryFile.Industries, i => i.Id, "industry");
 
         ValidateIndustryGoods(industryFile, goodsById);
+        ValidateCrew(crew, industriesById);
 
         var cities = new List<City>(cityDtos.Count);
         foreach (var dto in cityDtos)
@@ -90,7 +93,8 @@ public static class WorldLoader
             Trucks = trucks,
             TrucksById = trucksById,
             Industries = industryFile.Industries,
-            Routes = graph
+            Routes = graph,
+            Crew = crew
         };
     }
 
@@ -209,6 +213,72 @@ public static class WorldLoader
         {
             if (!goodsById.ContainsKey(id))
                 throw new WorldLoadException($"baseConsumptionPerPop references unknown good '{id}'.");
+        }
+    }
+
+    /// <summary>
+    /// Crew content is wired to the simulation by lever, not by skill id, so the ids
+    /// themselves are free to change. What must hold is that every lever is claimed at
+    /// most once and that nothing references a skill or industry that does not exist -
+    /// a typo there would otherwise show up as a stat that silently does nothing.
+    /// </summary>
+    private static void ValidateCrew(CrewConfig crew, IReadOnlyDictionary<string, IndustryDef> industriesById)
+    {
+        if (crew.MaxSkill <= 0)
+            throw new WorldLoadException("crew.maxSkill must be positive.");
+        if (crew.CrewCapacity < 0)
+            throw new WorldLoadException("crew.crewCapacity cannot be negative.");
+        if (crew.RefreshDays < 1)
+            throw new WorldLoadException("crew.refreshDays must be at least 1.");
+        if (crew.Skills.Count == 0)
+            throw new WorldLoadException("crew.json defines no skills.");
+        if (crew.Roles.Count == 0)
+            throw new WorldLoadException("crew.json defines no roles.");
+
+        var skillsById = ToLookup(crew.Skills, s => s.Id, "crew skill");
+        var claimed = new Dictionary<string, string>();
+
+        foreach (var skill in crew.Skills)
+        {
+            if (!CrewLever.All.Contains(skill.Lever))
+            {
+                throw new WorldLoadException(
+                    $"Crew skill '{skill.Id}' declares unknown lever '{skill.Lever}'; " +
+                    $"expected one of {string.Join(", ", CrewLever.All)}.");
+            }
+
+            if (skill.Lever == CrewLever.None) continue;
+
+            if (claimed.TryGetValue(skill.Lever, out var owner))
+            {
+                throw new WorldLoadException(
+                    $"Crew skills '{owner}' and '{skill.Id}' both claim the '{skill.Lever}' lever.");
+            }
+
+            claimed[skill.Lever] = skill.Id;
+        }
+
+        ToLookup(crew.Roles, r => r.Id, "crew role");
+
+        foreach (var role in crew.Roles)
+        {
+            if (!string.IsNullOrWhiteSpace(role.Primary) && !skillsById.ContainsKey(role.Primary))
+                throw new WorldLoadException($"Crew role '{role.Id}' specialises in unknown skill '{role.Primary}'.");
+        }
+
+        foreach (var (industryId, bonuses) in crew.IndustryAffinity)
+        {
+            if (!industriesById.ContainsKey(industryId))
+                throw new WorldLoadException($"crew.industryAffinity references unknown industry '{industryId}'.");
+
+            foreach (var skillId in bonuses.Keys)
+            {
+                if (!skillsById.ContainsKey(skillId))
+                {
+                    throw new WorldLoadException(
+                        $"crew.industryAffinity['{industryId}'] references unknown skill '{skillId}'.");
+                }
+            }
         }
     }
 

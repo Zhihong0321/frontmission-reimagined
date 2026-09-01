@@ -77,6 +77,7 @@ public sealed class GreedyTrader : ITraderPolicy
         var eco = world.Config.Economy;
 
         var origin = world.City(cityId);
+        var terms = CrewMath.Terms(state.Caravan, world);
         var free = CaravanMath.FreeVolume(state.Caravan, world);
         var upkeep = CaravanMath.DailyUpkeep(state.Caravan, world);
 
@@ -100,10 +101,11 @@ public sealed class GreedyTrader : ITraderPolicy
                 var destinationProfile = destination.Market[good.Id];
                 var destinationStock = state.StockOf(destinationId, good.Id);
 
-                if (Economy.SellUnitPrice(good, destinationProfile, destinationStock, eco)
-                    <= Economy.BuyUnitPrice(good, originProfile, originStock, eco)) continue;
+                if (Economy.SellUnitPrice(good, destinationProfile, destinationStock, eco, terms)
+                    <= Economy.BuyUnitPrice(good, originProfile, originStock, eco, terms)) continue;
 
-                var maxUnits = Economy.MaxAffordableUnits(good, originProfile, originStock, state.Cash, free, eco);
+                var maxUnits = Economy.MaxAffordableUnits(
+                    good, originProfile, originStock, state.Cash, free, eco, terms);
                 if (maxUnits <= 0) continue;
 
                 // Order size is itself a decision. Buying the maximum walks the purchase
@@ -115,9 +117,9 @@ public sealed class GreedyTrader : ITraderPolicy
                     var units = (int)(maxUnits * fraction);
                     if (units <= 0) continue;
 
-                    var cost = Economy.ApproximateBuyCost(good, originProfile, originStock, units, eco);
+                    var cost = Economy.ApproximateBuyCost(good, originProfile, originStock, units, eco, terms);
                     var revenue = Economy.ApproximateSellRevenue(
-                        good, destinationProfile, destinationStock, units, eco);
+                        good, destinationProfile, destinationStock, units, eco, terms);
 
                     var net = revenue - cost - fixedCost;
                     if (best is null || net > best.Value.Net)
@@ -205,7 +207,9 @@ public sealed class RandomTrader : ITraderPolicy
             var stock = state.StockOf(cityId, good.Id);
             var free = CaravanMath.FreeVolume(state.Caravan, world);
 
-            var max = Economy.MaxAffordableUnits(good, profile, stock, state.Cash, free, world.Config.Economy);
+            var max = Economy.MaxAffordableUnits(
+                good, profile, stock, state.Cash, free, world.Config.Economy,
+                CrewMath.Terms(state.Caravan, world));
             if (max > 0) return new BuyCommand(good.Id, Math.Max(1, rng.NextInt(max) + 1));
         }
 

@@ -51,12 +51,15 @@ $simDetail = ''
 if ($sim -match 'tick time: ([\d.]+) ms') { $simDetail = "tick $($Matches[1]) ms" }
 if ($sim -match 'skilled play: ([\-\d,]+) cr') { $simDetail += "; skilled $($Matches[1]) cr" }
 if ($sim -match 'careless play: ([\-\d,]+) cr') { $simDetail += "; careless $($Matches[1]) cr" }
+if ($sim -match 'figures written to (.+)') { $simDetail += '; FIGURES.md regenerated' }
 Record 'Balance harness green (1000 days, skill beats luck)' $simOk $simDetail
 
 # 4 - the web host actually serves a playable game
 $host_ = $null
 $hostOk = $false
 $hostDetail = ''
+$crewOk = $false
+$crewDetail = 'not reached'
 try {
     $host_ = Start-Process -FilePath 'dotnet' `
         -ArgumentList 'run', '--project', 'src/MechaTrader.Host', '-c', 'Release', '--no-build' `
@@ -108,6 +111,38 @@ try {
                       ($wait.view.location.id -eq $run.toId) -and ($profit -gt 0)
 
             $hostDetail = "hauled $($run.bestUnits) $($run.bestGoodName) to $($run.toName) in $($run.days)d for $profit cr; illegal move refused=$([bool]$bad.error)"
+
+            # 5 - the recruitment centre hires, and the payroll actually bites.
+            # Run from wherever the haul finished, so this holds for any city rather
+            # than only the opening one.
+            $parked = $sell.view
+            $hand = $parked.crew.recruitment.candidates |
+                    Where-Object { $_.affordable -and $_.roomAboard } | Select-Object -First 1
+
+            if (-not $hand) {
+                $crewDetail = "no affordable recruit at $($parked.crew.recruitment.cityName)"
+            }
+            else {
+                $cashBeforeHire = $parked.cash
+                $hired = Cmd ("{`"type`":`"hireCrew`",`"candidateId`":`"$($hand.id)`"}")
+                $ghost = Cmd '{"type":"hireCrew","candidateId":"nobody-r0-0"}'
+                $dayOn = Cmd '{"type":"wait","days":1}'
+                $paidOff = Cmd ("{`"type`":`"dismissCrew`",`"crewId`":`"$($hand.id)`"}")
+
+                $signingCharged = ($cashBeforeHire - $hired.view.cash) -eq $hand.signingFee
+                $wageCharged = ($hired.view.cash - $dayOn.view.cash) -ge $hand.dailyWage
+                $offTheBoard = -not ($paidOff.view.crew.recruitment.candidates |
+                                     Where-Object { $_.id -eq $hand.id })
+
+                $crewOk = (-not $hired.error) -and ($ghost.error) -and (-not $paidOff.error) -and
+                          ($hired.view.crew.size -eq 1) -and ($paidOff.view.crew.size -eq 0) -and
+                          ($hired.view.crew.dailyWages -eq $hand.dailyWage) -and
+                          $signingCharged -and $wageCharged -and $offTheBoard
+
+                $crewDetail = "signed $($hand.name) at $($parked.crew.recruitment.cityName) for " +
+                              "$($hand.signingFee) cr + $($hand.dailyWage) cr/day; " +
+                              "unknown recruit refused=$([bool]$ghost.error); paid off clean=$offTheBoard"
+            }
         }
     }
 }
@@ -118,6 +153,7 @@ finally {
     if ($host_ -and -not $host_.HasExited) { Stop-Process -Id $host_.Id -Force -ErrorAction SilentlyContinue }
 }
 Record 'Web host serves a playable buy-haul-sell cycle' $hostOk $hostDetail
+Record 'Recruitment centre hires, pays wages and pays off' $crewOk $crewDetail
 
 # ----- verdict -----
 Write-Host ('-' * 52)

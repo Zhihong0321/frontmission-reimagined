@@ -21,6 +21,12 @@ public sealed record WaitCommand(int Days) : Command;
 
 public sealed record BuyTruckCommand(string TruckTypeId) : Command;
 
+/// <summary>Sign on somebody from the local recruitment centre. Costs a signing fee.</summary>
+public sealed record HireCrewCommand(string CandidateId) : Command;
+
+/// <summary>Pay somebody off. Costs severance; the wage stops the same day.</summary>
+public sealed record DismissCrewCommand(string CrewId) : Command;
+
 public sealed class CommandResult
 {
     public bool Ok { get; private init; }

@@ -124,7 +124,7 @@ public class SkillExpressionTests
         {
             foreach (var good in world.Goods)
             {
-                var stock = game.State.StockOf(city.Id, good.Id);
+                var stock = game.State.TotalStockOf(city.Id, good.Id);
                 Assert.True(double.IsFinite(stock) && stock > 0,
                     $"{city.Id}/{good.Id} stock became {stock} after 1000 days.");
             }

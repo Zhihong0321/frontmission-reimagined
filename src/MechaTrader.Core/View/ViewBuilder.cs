@@ -1,3 +1,4 @@
+using MechaTrader.Core.Model;
 using MechaTrader.Core.Sim;
 using MechaTrader.Core.State;
 using MechaTrader.Core.World;
@@ -30,7 +31,8 @@ public static class ViewBuilder
             Market: location is null ? Array.Empty<MarketRowView>() : BuildMarket(state, world, location),
             Cargo: BuildCargo(state, world),
             Routes: location is null ? Array.Empty<RouteView>() : BuildRoutes(state, world, location),
-            Shipyard: location is null ? Array.Empty<TruckOfferView>() : BuildShipyard(world));
+            Shipyard: location is null ? Array.Empty<TruckOfferView>() : BuildShipyard(world),
+            Crew: BuildCrew(state, world, location));
     }
 
     /// <summary>
@@ -52,7 +54,8 @@ public static class ViewBuilder
                 var good = world.Good(goodId);
                 var profile = world.City(cityId).Market[goodId];
                 var stock = state.StockOf(cityId, goodId);
-                total += Economy.EstimateSellRevenue(good, profile, stock, lot.Units, eco);
+                total += Economy.EstimateSellRevenue(
+                    good, profile, stock, lot.Units, eco, CrewMath.Terms(state.Caravan, world));
             }
             else
             {
@@ -92,6 +95,7 @@ public static class ViewBuilder
     private static List<MarketRowView> BuildMarket(GameState state, WorldData world, City city)
     {
         var eco = world.Config.Economy;
+        var terms = CrewMath.Terms(state.Caravan, world);
         var rows = new List<MarketRowView>(world.Goods.Count);
 
         foreach (var good in world.Goods)
@@ -108,10 +112,12 @@ public static class ViewBuilder
                 GoodId: good.Id,
                 Name: good.Name,
                 Tier: good.Tier,
-                Buy: Math.Round(Economy.BuyUnitPrice(good, profile, stock, eco), 1),
-                Sell: Math.Round(Economy.SellUnitPrice(good, profile, stock, eco), 1),
+                Buy: Math.Round(Economy.BuyUnitPrice(good, profile, stock, eco, terms), 1),
+                Sell: Math.Round(Economy.SellUnitPrice(good, profile, stock, eco, terms), 1),
                 BasePrice: good.BasePrice,
-                Stock: Math.Round(stock),
+                Stock: Math.Round(stock.Total),
+                Shelf: Math.Round(stock.Out),
+                Intake: Math.Round(stock.In),
                 Held: lot?.Units ?? 0,
                 AverageCost: Math.Round(lot?.AverageCost ?? 0, 1),
                 UnitVolume: good.UnitVolume,
@@ -187,6 +193,7 @@ public static class ViewBuilder
         if (days <= 0 || days == int.MaxValue) return new CargoAdvice(null, null, 0, 0);
 
         var eco = world.Config.Economy;
+        var terms = CrewMath.Terms(state.Caravan, world);
         var free = CaravanMath.FreeVolume(state.Caravan, world);
         var fixedCost = fuel + CaravanMath.DailyUpkeep(state.Caravan, world) * days;
 
@@ -200,7 +207,8 @@ public static class ViewBuilder
             var destinationProfile = destination.Market[good.Id];
             var destinationStock = state.StockOf(destination.Id, good.Id);
 
-            var maxUnits = Economy.MaxAffordableUnits(good, originProfile, originStock, state.Cash, free, eco);
+            var maxUnits = Economy.MaxAffordableUnits(
+                good, originProfile, originStock, state.Cash, free, eco, terms);
             if (maxUnits <= 0) continue;
 
             foreach (var fraction in OrderSizes)
@@ -208,8 +216,9 @@ public static class ViewBuilder
                 var units = (int)(maxUnits * fraction);
                 if (units <= 0) continue;
 
-                var cost = Economy.ApproximateBuyCost(good, originProfile, originStock, units, eco);
-                var revenue = Economy.ApproximateSellRevenue(good, destinationProfile, destinationStock, units, eco);
+                var cost = Economy.ApproximateBuyCost(good, originProfile, originStock, units, eco, terms);
+                var revenue = Economy.ApproximateSellRevenue(
+                    good, destinationProfile, destinationStock, units, eco, terms);
 
                 var profit = (long)Math.Round(revenue - cost - fixedCost);
                 if (profit > best.Profit)
@@ -221,6 +230,138 @@ public static class ViewBuilder
     }
 
     private static readonly double[] OrderSizes = { 1.0, 0.75, 0.5, 0.3, 0.15 };
+
+    /// <summary>
+    /// The crew board: who is aboard, what the roster is actually worth, and who is
+    /// waiting at the local recruitment centre.
+    /// </summary>
+    private static CrewView BuildCrew(GameState state, WorldData world, City? location)
+    {
+        var cfg = world.Crew;
+        var roster = state.Caravan.Crew;
+
+        var members = roster.Select(m => new CrewMemberView(
+            Id: m.Id,
+            Name: m.Name,
+            RoleName: RoleName(cfg, m.RoleId),
+            DailyWage: m.DailyWage,
+            Severance: m.DailyWage * Math.Max(0, cfg.SeveranceDays),
+            HiredDay: m.HiredDay,
+            HiredAt: world.CitiesById.TryGetValue(m.HiredAtCityId, out var hiredAt) ? hiredAt.Name : "",
+            Skills: LevelsOf(cfg, m.Skills))).ToList();
+
+        var skills = cfg.Skills.Select(skill =>
+        {
+            var level = CrewMath.Level(roster, skill.Id);
+
+            var leader = roster
+                .Where(m => level > 0 && m.Skill(skill.Id) == level)
+                .Select(m => m.Name)
+                .FirstOrDefault();
+
+            return new CrewSkillView(
+                Id: skill.Id,
+                Name: skill.Name,
+                Lever: skill.Lever,
+                Blurb: skill.Blurb,
+                Level: level,
+                MaxLevel: cfg.MaxSkill,
+                LeaderName: leader,
+                EffectText: EffectText(state, world, skill, level));
+        }).ToList();
+
+        return new CrewView(
+            Size: roster.Count,
+            Capacity: cfg.CrewCapacity,
+            DailyWages: CrewMath.DailyWages(roster),
+            Roster: members,
+            Skills: skills,
+            Recruitment: location is null ? null : BuildRecruitment(state, world, location));
+    }
+
+    /// <summary>
+    /// The local hiring board, minus anyone who has already taken a contract this run.
+    /// The pool itself is derived from the seed, not stored, so this is a pure read.
+    /// </summary>
+    private static RecruitmentView BuildRecruitment(GameState state, WorldData world, City city)
+    {
+        var cfg = world.Crew;
+        var roomAboard = state.Caravan.Crew.Count < cfg.CrewCapacity;
+
+        var candidates = Recruitment.PoolFor(world, city, state.Seed, state.Day)
+            .Where(c => !state.RecruitedIds.Contains(c.Id))
+            .Select(c => new CandidateView(
+                Id: c.Id,
+                Name: c.Name,
+                RoleName: c.RoleName,
+                DailyWage: c.DailyWage,
+                SigningFee: c.SigningFee,
+                Affordable: state.Cash >= c.SigningFee,
+                RoomAboard: roomAboard,
+                Skills: LevelsOf(cfg, c.Skills)))
+            .ToList();
+
+        return new RecruitmentView(
+            CityName: city.Name,
+            RefreshInDays: Recruitment.DaysUntilRefresh(state.Day, cfg),
+            Candidates: candidates);
+    }
+
+    private static List<SkillLevelView> LevelsOf(CrewConfig cfg, IReadOnlyDictionary<string, int> skills)
+        => cfg.Skills
+            .Select(s => new SkillLevelView(s.Id, s.Name, skills.TryGetValue(s.Id, out var level) ? level : 0))
+            .ToList();
+
+    private static string RoleName(CrewConfig cfg, string roleId)
+    {
+        foreach (var role in cfg.Roles)
+        {
+            if (role.Id == roleId) return string.IsNullOrWhiteSpace(role.Name) ? role.Id : role.Name;
+        }
+        return roleId;
+    }
+
+    /// <summary>
+    /// What a skill is worth, stated in the terms the player is already reading
+    /// elsewhere on the screen. The price levers erode the market's spread rather than
+    /// moving the mid price, so the honest figure to show is the change to the quote.
+    /// </summary>
+    private static string EffectText(GameState state, WorldData world, CrewSkillDef skill, int level)
+    {
+        var cfg = world.Crew;
+        var spread = world.Config.Economy.Spread;
+        var effect = cfg.MaxSkill > 0
+            ? skill.MaxEffect * Math.Clamp((double)level / cfg.MaxSkill, 0.0, 1.0)
+            : 0.0;
+
+        switch (skill.Lever)
+        {
+            case CrewLever.Speed:
+                var speed = CaravanMath.SpeedKmPerDay(state.Caravan, world);
+                return level == 0
+                    ? $"nobody reading the road: {speed:N0} km/day"
+                    : $"+{effect:P0} convoy speed, now {speed:N0} km/day";
+
+            case CrewLever.Buy:
+                return level == 0
+                    ? "nobody haggling: the market keeps its full cut"
+                    : $"-{spread * effect / (1.0 + spread):P1} off every buy quote";
+
+            case CrewLever.Sell:
+                return level == 0
+                    ? "nobody closing: the market keeps its full cut"
+                    : $"+{spread * effect / (1.0 - spread):P1} on every sell quote";
+
+            case CrewLever.Upkeep:
+                var upkeep = CaravanMath.TruckUpkeep(state.Caravan, world);
+                return level == 0
+                    ? $"nobody on the books: {upkeep:N0} cr/day of truck upkeep"
+                    : $"-{effect:P0} truck upkeep and fuel, {upkeep * effect:N0} cr/day";
+
+            default:
+                return "carried, but nothing in the simulation reads it yet";
+        }
+    }
 
     /// <summary>
     /// The map, in the projected kilometre coordinates the loader already computed.

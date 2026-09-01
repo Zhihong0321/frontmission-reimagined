@@ -96,3 +96,83 @@ Two things worth your judgement:
    solitaire — the AI policy in `Core/Ai` is already the seed of one. Recommend rivals
    plus depot ownership before any Godot work, since both change balance and the map is
    already data-real.
+
+---
+
+## Phase 2 — crew and recruitment
+
+Added people. Four skills, each wired to a lever the simulation already had:
+navigation → convoy speed, negotiation → buy side, sales → sell side, accounting →
+truck upkeep and fuel. Every city runs a recruitment centre; four seats on the convoy;
+wages charged every day whether the convoy moves or not.
+
+Three decisions worth recording, because each had a worse obvious alternative.
+
+**Bonuses erode the spread, they do not discount the price.** The first sketch had
+negotiation take a percentage off the buy price and sales add one to the sell price.
+At the shipping spread of 4.5% each way, a 5%-per-side crew makes selling in the city
+you bought in *profitable* — an infinite money loop reachable by ordinary play. Crew
+bonuses are now a share of the spread still conceded (`TradeTerms`), clamped to [0, 1].
+A perfect crew makes an in-place round trip exactly free and nothing makes it pay. The
+property is asserted over every city and good in the unit suite and again in the balance
+harness, because it is the kind of thing a later tuning pass could quietly reintroduce.
+
+**A skill is led by the best hand aboard, not the sum of the roster.** Summing would make
+headcount the answer and turn hiring into a slider. Taking the maximum makes it a
+question of *who*, with payroll as the counterweight, and it leaves the four-seat limit
+meaning something.
+
+**Recruitment pools are derived, never stored.** A pool is a pure function of
+`(seed, cityId, hiringRound)`, so the view can draw the board and `CommandProcessor` can
+re-derive the identical list to validate a hire. Nothing to persist, nothing that can
+disagree with itself. Critically it does not draw from `GameState.RngState` — if it did,
+opening a screen would advance the world's random sequence and determinism would be gone.
+It also folds the city id with FNV-1a rather than `string.GetHashCode`, which is
+randomised per process and would give a save a different pool on every launch.
+
+Content-side, `crew.json` carries the skills, the levers they pull, the roles, wages and
+the name pools. A skill names its lever rather than being recognised by id, so retuning
+or renaming one is a data change, and a skill on lever `none` ships a stat before the
+system behind it exists. The loader rejects an unknown lever, two skills claiming the
+same lever, a role specialising in a skill that does not exist, and affinity entries
+naming unknown industries.
+
+The economy underneath is untouched: both bots still trade without crew, and the harness
+still prints +44,928 / −15,805 to the credit. Crew are an investment the player opts
+into, priced so that a wage is a slow bleed on small runs and obviously worth it on
+large ones.
+
+21 new tests (44 → 65), a fifth acceptance gate that hires, waits a day and pays off over
+HTTP, and a crew section in the balance report showing what each city is offering.
+
+### Two stores per city
+
+Corrected a design error from earlier in the session. I had treated the in-place round
+trip as something to be made *unprofitable* by clamping crew bonuses to the spread. It
+should not be reachable at all.
+
+A city now holds each good in two stores. `Out` is the shelf: what it sells, all a convoy
+can buy, and capped accordingly. `In` is the intake: what caravans have unloaded on it.
+Selling fills the intake, so it cannot cheapen the shelf, and the goods you dropped are
+not on sale the same day — the city eats out of the intake first and shelves the rest at
+`restockRate` (0.35/day). Both stores together are what the city owns.
+
+The pricing follows from the split rather than being bolted onto it: the buy quote reads
+the shelf, the sell quote reads shelf + intake. Since price falls as stock rises and the
+total is never below the shelf, `sell ≤ buy` holds at every possible holding. It is now a
+property of the model, not of the tuning. The crew clamp stays as a second, independent
+guard, but it is no longer the thing standing between the game and a money printer.
+
+The tick reduces exactly to the old single-pool formula when the intake is empty, and
+draws the same single random number, so an untraded world replays identically. That is
+asserted against a copy of the old formula in
+`AnUntradedCityTicksExactlyAsItDidWithOneStore`, and it is why every price band in the
+balance report is unchanged.
+
+One real consequence: you can no longer buy more than a city has. Orders are capped at
+the shelf, which is also why the greedy bot improved from 44,928 to 47,404 — it used to
+be able to place an order larger than the city could fill and pay the resulting price
+spike for it.
+
+74 tests (65 → 74). The market panel now shows the shelf, with an intake badge when a
+city is holding goods somebody unloaded on it.

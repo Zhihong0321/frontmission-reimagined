@@ -16,7 +16,8 @@ public sealed record GameView(
     IReadOnlyList<MarketRowView> Market,
     IReadOnlyList<CargoRowView> Cargo,
     IReadOnlyList<RouteView> Routes,
-    IReadOnlyList<TruckOfferView> Shipyard);
+    IReadOnlyList<TruckOfferView> Shipyard,
+    CrewView Crew);
 
 public sealed record LocationView(
     string Id,
@@ -47,7 +48,13 @@ public sealed record MarketRowView(
     double Buy,
     double Sell,
     double BasePrice,
+    // Stock is everything the city owns; Shelf is the part actually for sale and the
+    // only part a buy can draw on. Intake is what caravans have unloaded here and the
+    // city has not shelved yet - visible so a glutted market is legible rather than
+    // mysterious.
     double Stock,
+    double Shelf,
+    double Intake,
     int Held,
     double AverageCost,
     double UnitVolume,
@@ -97,3 +104,57 @@ public sealed record MapView(
 public sealed record MapCityView(string Id, string Name, string Region, double X, double Y);
 
 public sealed record MapRoadView(string FromId, string ToId, string TerrainId, string TerrainName);
+
+/// <summary>
+/// The payroll, what it buys, and who is available locally.
+///
+/// Every number here is already resolved into what it does to the convoy - the
+/// front-end renders "+21% convoy speed", it does not know that a level is divided by
+/// maxSkill and multiplied by a lever's maxEffect.
+/// </summary>
+public sealed record CrewView(
+    int Size,
+    int Capacity,
+    long DailyWages,
+    IReadOnlyList<CrewMemberView> Roster,
+    IReadOnlyList<CrewSkillView> Skills,
+    RecruitmentView? Recruitment);
+
+public sealed record SkillLevelView(string Id, string Name, int Level);
+
+public sealed record CrewMemberView(
+    string Id,
+    string Name,
+    string RoleName,
+    long DailyWage,
+    long Severance,
+    int HiredDay,
+    string HiredAt,
+    IReadOnlyList<SkillLevelView> Skills);
+
+/// <summary>One ability, at the level the best hand aboard has, and what that is worth.</summary>
+public sealed record CrewSkillView(
+    string Id,
+    string Name,
+    string Lever,
+    string Blurb,
+    int Level,
+    int MaxLevel,
+    string? LeaderName,
+    string EffectText);
+
+/// <summary>The local recruitment centre. Null while the convoy is on the road.</summary>
+public sealed record RecruitmentView(
+    string CityName,
+    int RefreshInDays,
+    IReadOnlyList<CandidateView> Candidates);
+
+public sealed record CandidateView(
+    string Id,
+    string Name,
+    string RoleName,
+    long DailyWage,
+    long SigningFee,
+    bool Affordable,
+    bool RoomAboard,
+    IReadOnlyList<SkillLevelView> Skills);

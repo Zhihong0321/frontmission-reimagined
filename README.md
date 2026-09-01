@@ -70,16 +70,42 @@ anywhere. Change a city's industries and its whole market re-derives.
 Orders are priced against the depth they consume, unit by unit, so dumping a full hold
 craters the local price. Order size is a real decision, not a formality.
 
+Each city keeps its goods in two stores: a **shelf** it sells from, and an **intake**
+holding what caravans have unloaded on it. You can only buy off the shelf, and what you
+sell goes into the intake — so unloading a hold never cheapens what the city is selling,
+and there is no sell-then-buy-back loop to find. The city eats out of its intake and
+shelves the rest over the following days. Prices read both: the shelf sets what you pay,
+everything the city owns sets what it will pay you.
+
 Cities are generated from industry archetypes (`salvage`, `refining`, `precision`,
 `assembly`, …) rather than hand-written markets, so adding a city is six lines in
 `data/cities.json`.
 
+## Crew
+
+Every city runs a recruitment centre. Who is standing in it is generated from the world
+seed, the city's population and the industries it runs — a trade hub grows brokers, a
+plant town grows bookkeepers — and the board re-rolls every ten days.
+
+Four things a hand can be good at: **navigation** (convoy speed), **negotiation** (buy
+prices), **sales** (sell prices) and **accounting** (truck upkeep and fuel). A skill is
+led by the best single hand aboard rather than the sum, so the question is who to hire,
+not how many. There are four seats and a daily wage against them.
+
+The price levers erode the market's spread rather than moving the mid price, and are
+clamped so they can close the gap between buy and sell but never invert it. A perfect
+crew makes an in-place round trip free; nothing makes it profitable.
+
 ## Where the pressure comes from
 
 The genre's tension normally comes from risk of loss at sea. With combat cut, that slot
-is filled by **truck upkeep and distance-based fuel**: money leaks every day, so standing
-still is a decision with a price and a bad route costs real credits. Without it the loop
-is a spreadsheet that always says yes.
+is filled by **truck upkeep, distance-based fuel and payroll**: money leaks every day, so
+standing still is a decision with a price and a bad route costs real credits. Without it
+the loop is a spreadsheet that always says yes.
+
+Crew sharpen that. A wage is fixed while what it buys scales with the size of the runs
+you make, so the same hire is a slow bleed early and obviously correct once the convoy is
+big — and every seat has to earn its wage back or be paid off.
 
 ## Content
 
@@ -95,6 +121,14 @@ restart.
 | `routes.json` | 29 road links; distances derive from coordinates |
 | `terrain.json` | speed and fuel multipliers — alpine passes and the Channel are chokepoints |
 | `trucks.json` | capacity, speed, upkeep, fuel burn, price |
+| `crew.json` | skills and what they lever, hiring roles, wages, name pools |
+
+## Figures
+
+`FIGURES.md` holds the current numbers — world size, the opening position, per-good price
+bands, how much better skilled play does than careless play, and what the recruitment
+centres are offering. It is **generated** by the balance harness on every run, so it
+cannot drift from the code. Do not edit it by hand.
 
 ## For AI sessions
 

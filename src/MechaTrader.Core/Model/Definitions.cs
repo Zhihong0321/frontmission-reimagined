@@ -66,6 +66,12 @@ public sealed class EconomyConfig
 
     /// <summary>Roads are not straight lines; scales great-circle distance up.</summary>
     public double RoadDetourFactor { get; init; } = 1.25;
+
+    /// <summary>
+    /// Share of a city's intake that reaches its shelf each day. Lower means goods sold
+    /// into a city take longer to come back onto the market.
+    /// </summary>
+    public double RestockRate { get; init; } = 0.35;
 }
 
 public sealed class GameConfig
@@ -74,4 +80,103 @@ public sealed class GameConfig
     public string StartCityId { get; init; } = "";
     public List<string> StartTruckIds { get; init; } = new();
     public EconomyConfig Economy { get; init; } = new();
+}
+
+/// <summary>
+/// The levers a crew skill is allowed to pull. A skill declares one of these in
+/// content; the simulation reads the lever rather than the skill id, so renaming or
+/// retuning a skill is a data change and adding one that does nothing yet is legal.
+/// </summary>
+public static class CrewLever
+{
+    public const string Speed = "speed";
+    public const string Buy = "buy";
+    public const string Sell = "sell";
+    public const string Upkeep = "upkeep";
+    public const string None = "none";
+
+    public static readonly IReadOnlyList<string> All = new[] { Speed, Buy, Sell, Upkeep, None };
+}
+
+/// <summary>
+/// One crew ability. <see cref="MaxEffect"/> is what the lever gives at <c>maxSkill</c>
+/// and scales linearly below it; its meaning depends on the lever:
+/// speed = fractional speed bonus, buy/sell = share of the market spread erased,
+/// upkeep = share of running costs cut.
+/// </summary>
+public sealed class CrewSkillDef
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Lever { get; init; } = CrewLever.None;
+    public double MaxEffect { get; init; }
+    public string Blurb { get; init; } = "";
+}
+
+/// <summary>A hiring archetype. <see cref="Primary"/> is the skill it rolls high in.</summary>
+public sealed class CrewRoleDef
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+
+    /// <summary>Skill id this role specialises in; empty means a generalist.</summary>
+    public string Primary { get; init; } = "";
+}
+
+public sealed class CrewWageDef
+{
+    public long Base { get; init; } = 5;
+    public long PerSkillPoint { get; init; } = 6;
+}
+
+/// <summary>Shape of a city's recruitment pool.</summary>
+public sealed class CandidateGenDef
+{
+    public int BasePerCity { get; init; } = 1;
+    public double PerPopulation { get; init; } = 2.0;
+    public int MaxPerCity { get; init; } = 5;
+    public int PrimaryMin { get; init; } = 5;
+    public int PrimaryMax { get; init; } = 10;
+    public int SecondaryMin { get; init; } = 1;
+    public int SecondaryMax { get; init; } = 5;
+}
+
+/// <summary>Everything about crew that is content. Loaded from crew.json.</summary>
+public sealed class CrewConfig
+{
+    public int MaxSkill { get; init; } = 10;
+
+    /// <summary>How many people the convoy can carry on the books at once.</summary>
+    public int CrewCapacity { get; init; } = 4;
+
+    /// <summary>A city's recruitment pool re-rolls this often.</summary>
+    public int RefreshDays { get; init; } = 10;
+
+    /// <summary>Signing fee, expressed as a multiple of the daily wage.</summary>
+    public int SigningFeeDays { get; init; } = 20;
+
+    /// <summary>Severance on dismissal, expressed as a multiple of the daily wage.</summary>
+    public int SeveranceDays { get; init; } = 5;
+
+    public CrewWageDef Wage { get; init; } = new();
+    public CandidateGenDef Candidates { get; init; } = new();
+
+    public List<CrewSkillDef> Skills { get; init; } = new();
+    public List<CrewRoleDef> Roles { get; init; } = new();
+
+    /// <summary>industryId to skillId to bonus points, applied to that city's candidates.</summary>
+    public Dictionary<string, Dictionary<string, int>> IndustryAffinity { get; init; } = new();
+
+    public List<string> FirstNames { get; init; } = new();
+    public List<string> Surnames { get; init; } = new();
+
+    /// <summary>The skill wired to a given lever, or null if content declares none.</summary>
+    public CrewSkillDef? SkillFor(string lever)
+    {
+        foreach (var skill in Skills)
+        {
+            if (skill.Lever == lever) return skill;
+        }
+        return null;
+    }
 }

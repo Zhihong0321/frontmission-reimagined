@@ -6,9 +6,10 @@ prints one verdict line.
 | # | Criterion | Command | Passes when |
 |---|---|---|---|
 | 1 | Builds clean | `dotnet build MechaTrader.sln -c Release` | exit 0, zero warnings |
-| 2 | Tests pass | `dotnet test` | exit 0, 44/44 |
+| 2 | Tests pass | `dotnet test` | exit 0, all green |
 | 3 | Economy holds up | `dotnet run --project tools/MechaTrader.BalanceSim` | exit 0, prints `BALANCE OK` |
 | 4 | Web host is playable | `dotnet run --project src/MechaTrader.Host` | scripted buy→depart→wait→sell over HTTP succeeds; illegal moves refused |
+| 5 | Crew can be hired | same host | scripted hire→wait→pay off succeeds; fee and wage charged; unknown recruit refused |
 
 ## What criterion 3 actually asserts
 
@@ -32,8 +33,27 @@ must finish *down*, averaged over 5 seeds. This is the criterion that says the l
 game rather than a spreadsheet — if both made money, upkeep would be too low; if neither
 did, no player could win either.
 
-Current margins: skilled ≈ **+46,500 cr**, careless ≈ **−17,100 cr** on 20,000 starting
-capital over 60 days.
+Current margins live in **`FIGURES.md`**, which this harness regenerates on every run.
+Both bots trade without crew, so those figures are the un-crewed baseline: crew are an
+investment the player opts into, not a change to the underlying economy. Do not quote a
+margin from memory — quote that file.
+
+The harness also asserts the no-arbitrage property directly, against a maxed crew, in
+every city, for every good, with an empty intake and a glutted one.
+
+## What criterion 5 actually asserts
+
+Run against whatever city the criterion-4 haul finished in, so it holds for any city
+rather than only the opening one. It signs the first affordable recruit on that city's
+board and checks that the signing fee left the account exactly, that the next day costs
+at least the agreed wage, that a made-up candidate id is refused, and that a hand who has
+been paid off does not reappear on the board.
+
+The property the unit suite guards alongside it is the one that matters most: with a
+maxed roster, in every city, for every good, the sell price still does not exceed the buy
+price. Two independent things hold that line — the buy price reads only the shelf while
+the sell price reads everything the city owns, and crew erode the market's spread but
+cannot invert it — so no roster turns standing still into an income.
 
 ## Known tuning debt
 

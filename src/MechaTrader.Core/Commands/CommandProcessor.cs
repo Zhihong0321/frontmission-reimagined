@@ -18,6 +18,8 @@ public static class CommandProcessor
         DepartCommand c => Depart(state, world, c),
         WaitCommand c => Wait(state, world, c),
         BuyTruckCommand c => BuyTruck(state, world, c),
+        HireCrewCommand c => HireCrew(state, world, c),
+        DismissCrewCommand c => DismissCrew(state, world, c),
         _ => CommandResult.Fail($"Unsupported command '{command.GetType().Name}'.")
     };
 
@@ -44,7 +46,15 @@ public static class CommandProcessor
                 $"Not enough hold space: need {needed:0.#} of {free:0.#} free.");
 
         var stock = state.StockOf(cityId, good.Id);
-        var quote = Economy.QuoteBuy(good, profile, stock, cmd.Units, eco);
+
+        // You can only be sold what is on the shelf. Goods other caravans have dumped
+        // here sit in the city's intake and are not for sale yet.
+        var onTheShelf = Economy.UnitsOnTheShelf(stock, eco);
+        if (cmd.Units > onTheShelf)
+            return CommandResult.Fail($"Only {onTheShelf:N0} {good.Name} on the shelf at {city.Name}.");
+
+        var terms = CrewMath.Terms(state.Caravan, world);
+        var quote = Economy.QuoteBuy(good, profile, stock, cmd.Units, eco, terms);
 
         if (quote.Total > state.Cash)
             return CommandResult.Fail($"Not enough credits: {quote.Total:N0} needed, {state.Cash:N0} held.");
@@ -87,7 +97,8 @@ public static class CommandProcessor
         var eco = world.Config.Economy;
 
         var stock = state.StockOf(cityId, good.Id);
-        var quote = Economy.QuoteSell(good, profile, stock, cmd.Units, eco);
+        var terms = CrewMath.Terms(state.Caravan, world);
+        var quote = Economy.QuoteSell(good, profile, stock, cmd.Units, eco, terms);
 
         // Cost basis leaves at the weighted average, so profit reporting stays honest
         // across partial sales of a lot built up over several purchases.
@@ -109,7 +120,7 @@ public static class CommandProcessor
         return CommandResult.Success(new[]
         {
             new GameEvent(state.Day, GameEventKind.Trade,
-                $"Sold {cmd.Units:N0} {good.Name} at {city.Name} for {quote.Total:N0} cr ({verdict}).")
+                $"Sold {cmd.Units:N0} {good.Name} into {city.Name}'s stores for {quote.Total:N0} cr ({verdict}).")
         });
     }
 
@@ -168,6 +179,90 @@ public static class CommandProcessor
         }
 
         return CommandResult.Success(events);
+    }
+
+    /// <summary>
+    /// Sign on a candidate from the city's current recruitment pool.
+    ///
+    /// The pool is re-derived here from the seed rather than read from anywhere the
+    /// front-end could have touched, so a hire can only ever be for somebody the
+    /// simulation itself is offering today.
+    /// </summary>
+    private static CommandResult HireCrew(GameState state, WorldData world, HireCrewCommand cmd)
+    {
+        if (state.Caravan.Travel is not null)
+            return CommandResult.Fail("Nobody signs on mid-road; hire in a city.");
+
+        var cityId = state.Caravan.LocationId;
+        if (cityId is null) return CommandResult.Fail("The convoy has no location.");
+
+        var crewConfig = world.Crew;
+
+        if (state.Caravan.Crew.Count >= crewConfig.CrewCapacity)
+        {
+            return CommandResult.Fail(
+                $"The convoy already carries {crewConfig.CrewCapacity} crew; pay somebody off first.");
+        }
+
+        if (state.RecruitedIds.Contains(cmd.CandidateId))
+            return CommandResult.Fail("That hand has already taken a contract.");
+
+        var city = world.City(cityId);
+        var pool = Recruitment.PoolFor(world, city, state.Seed, state.Day);
+
+        var candidate = pool.FirstOrDefault(c => c.Id == cmd.CandidateId);
+        if (candidate is null)
+            return CommandResult.Fail($"Nobody by that reference is at the {city.Name} recruitment centre.");
+
+        if (state.Cash < candidate.SigningFee)
+        {
+            return CommandResult.Fail(
+                $"Not enough credits: {candidate.SigningFee:N0} signing fee, {state.Cash:N0} held.");
+        }
+
+        state.Cash -= candidate.SigningFee;
+        state.RecruitedIds.Add(candidate.Id);
+
+        state.Caravan.Crew.Add(new CrewMember
+        {
+            Id = candidate.Id,
+            Name = candidate.Name,
+            RoleId = candidate.RoleId,
+            DailyWage = candidate.DailyWage,
+            HiredDay = state.Day,
+            HiredAtCityId = cityId,
+            Skills = new Dictionary<string, int>(candidate.Skills)
+        });
+
+        return CommandResult.Success(new[]
+        {
+            new GameEvent(state.Day, GameEventKind.Crew,
+                $"{candidate.Name} signed on at {city.Name} as {candidate.RoleName}: " +
+                $"{candidate.SigningFee:N0} cr down, {candidate.DailyWage:N0} cr/day.")
+        });
+    }
+
+    private static CommandResult DismissCrew(GameState state, WorldData world, DismissCrewCommand cmd)
+    {
+        if (state.Caravan.Travel is not null)
+            return CommandResult.Fail("Nobody is put off the convoy mid-road; pay them off in a city.");
+
+        var member = state.Caravan.Crew.FirstOrDefault(c => c.Id == cmd.CrewId);
+        if (member is null) return CommandResult.Fail("Nobody by that reference is on the payroll.");
+
+        var severance = member.DailyWage * Math.Max(0, world.Crew.SeveranceDays);
+        if (state.Cash < severance)
+            return CommandResult.Fail($"Not enough credits: {severance:N0} severance, {state.Cash:N0} held.");
+
+        state.Cash -= severance;
+        state.Caravan.Crew.Remove(member);
+
+        return CommandResult.Success(new[]
+        {
+            new GameEvent(state.Day, GameEventKind.Crew,
+                $"{member.Name} paid off for {severance:N0} cr. " +
+                $"Payroll is now {CrewMath.DailyWages(state.Caravan.Crew):N0} cr/day.")
+        });
     }
 
     private static CommandResult BuyTruck(GameState state, WorldData world, BuyTruckCommand cmd)
