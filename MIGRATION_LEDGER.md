@@ -186,6 +186,10 @@ the user authorized Phase A. Their product green base is the coordination-only c
 `7f8897c15f5ab3b17dbe522e0e474af046a766e9`; the worker branches begin at the subsequent
 assignment commit containing this ledger state and their immutable task packets.
 
+Launch identities: `PA-LUNA-01` is Codex agent `/root/pa_luna_01`; `PA-AGY-01` is managed
+AGY exec cell `17`, with its CLI log at `coordination/runs/PA-AGY-01/agy.log` in the
+assigned worktree.
+
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
 | `PA-LUNA-01` | `ACTIVE` | `LUNA-C` (`gpt-5.6-luna`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-LUNA-01` | `codex/pa-luna-01-browser-smoke` | `tests/browser/**`; `coordination/handoffs/PA-LUNA-01.md` | 2026-09-03 |
