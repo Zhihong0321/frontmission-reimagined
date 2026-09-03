@@ -4,11 +4,15 @@ This file is the canonical coordination record for the repository consolidation 
 maintainability migration. Every coordinator, Codex subagent, AGY CLI worker, and Claude
 Code worker must read this file before doing assigned work.
 
+The durable execution plan and risk controls are in `MIGRATION_PLAN.md`. This ledger owns
+live state; the plan owns process. Chat is not a source of truth.
+
 ## Control
 
 - Overall status: `PLANNED`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
+- Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
 - Ledger write policy: single writer; only the coordinator edits this file
 - Worker policy: workers read this file and return a structured handoff to the coordinator
 - Canonical ledger path: `D:\FrontMission-RIMG\MIGRATION_LEDGER.md`
@@ -21,6 +25,14 @@ Code worker must read this file before doing assigned work.
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
 - Last full verification: `NOT_RUN`
+
+## Disk-first policy
+
+Before dependent work begins, the coordinator must write every material plan, decision,
+assignment, status change, scope change, verification result, integration result, and
+rollback point to this ledger or `MIGRATION_PLAN.md`.
+
+Workers must treat chat as notification only and re-read the physical files before work.
 
 Creating this ledger did not authorize migration work. The user subsequently authorized
 the version-control backup job only. No migration or refactor job may start until its
@@ -139,109 +151,21 @@ The coordinator verifies the commit and copies the relevant information into thi
 
 ## Planned waves
 
-### Wave 0 — recoverable baseline and repository consolidation
+`MIGRATION_PLAN.md` version 2 is authoritative for wave contents and safety gates.
 
-Status: `PLANNED`
-
-This wave is serial and coordinator-owned. It must not start without explicit user
-authorization.
-
-| Job | Description | Depends on | Owner | Status |
-|---|---|---|---|---|
-| `W0-00` | Push recoverable RIMG and finalized MapLab snapshots to the configured GitHub repository | None | `ROOT` | `VERIFIED` |
-| `W0-01` | Inventory modified and untracked files; classify source, generated, archive, and secret material | None | `ROOT` | `PLANNED` |
-| `W0-02` | Run and record the existing acceptance baseline without unrelated fixes | `W0-01` | `ROOT` | `PLANNED` |
-| `W0-03` | Integrate finalized MapLab frontend into the main repository without redesign | `W0-02` | `ROOT` | `PLANNED` |
-| `W0-04` | Commit the recoverable consolidated baseline | `W0-03` | `ROOT` | `PLANNED` |
-| `W0-05` | Verify integrated launch and parity before retiring the sibling directory | `W0-04` | `ROOT` | `PLANNED` |
-| `W0-06` | Remove the verified obsolete sibling directory and explicitly approved dead folders | `W0-05` | `ROOT` | `PLANNED` |
-| `W0-07` | Create worker branches and isolated worktrees | `W0-06` | `ROOT` | `PLANNED` |
-
-Deletion gate for `W0-06`:
-
-- Integrated files are committed.
-- The committed repository can launch without the sibling folder.
-- Required browser and API smoke checks pass.
-- The full verification result is recorded.
-- The exact deletion targets are recorded in the decision log before deletion.
-
-### Wave 1 — parallel read-only decomposition
-
-Status: `PLANNED`
-
-| Job | Suggested worker | Output | Status |
+| Phase | Purpose | Depends on | Status |
 |---|---|---|---|
-| `W1-BACKEND` | `LUNA-A` | Backend feature-boundary and file-ownership proposal | `PLANNED` |
-| `W1-FRONTEND` | `LUNA-B` | Chart and ops module-boundary proposal | `PLANNED` |
-| `W1-VERIFY` | `LUNA-C` | Test dependency map and fast-check proposal | `PLANNED` |
-| `W1-ASSETS` | `AGY` | Asset/generated/archive classification report | `PLANNED` |
-| `W1-REVIEW` | `CLAUDE` | Independent risk and architecture review | `PLANNED` |
+| `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
+| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `PLANNED` |
+| `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
+| `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
+| `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `B` | `PLANNED` |
+| `E` | AI context files, generated codemap, scoped documentation, and verification modes | `C`, `D` | `PLANNED` |
+| `F` | Independent cleanup commits and final retirement of the sibling MapLab directory | `E` | `PLANNED` |
 
-Wave 1 workers are read-only. The coordinator resolves disagreements and records the
-approved structure before any splitting begins.
-
-### Wave 2 — mechanical backend split
-
-Status: `PLANNED`
-
-Tentative work packages:
-
-- Domain-specific definition files.
-- Domain-specific view-model files.
-- Feature-specific `CommandProcessor` partial files.
-- Feature-specific `ViewBuilder` partial files.
-- World-loading parse and validation modules.
-- Balance harness reports and assertions.
-- Mirrored feature-oriented test files.
-
-All Wave 2 work must preserve public entrypoints and behavior.
-
-### Wave 3 — mechanical frontend split
-
-Status: `PLANNED`
-
-Tentative work packages:
-
-- Chart document, styling, boot sequence, camera, and input.
-- Terrain, rendering, routing, HUD, and bridge modules.
-- Ops shell, state, DOM helpers, and command transport.
-- Individual ops page modules using the existing page/tab registry.
-
-Native browser modules are the initial target. Adding a bundler requires a separate
-decision.
-
-### Wave 4 — AI context and repository map
-
-Status: `PLANNED`
-
-Tentative outputs:
-
-- Short canonical agent instructions.
-- Scoped feature notes.
-- Compact domain glossary.
-- Machine-readable feature ownership map.
-- Generated codemap.
-- Architecture decision records for durable decisions.
-- Removal of duplicate onboarding and append-only status prose.
-
-### Wave 5 — verification acceleration
-
-Status: `PLANNED`
-
-Tentative verification modes:
-
-- `Fast`: compile and essential invariants.
-- `Feature <name>`: feature tests plus architecture invariants.
-- `Full`: existing complete acceptance suite.
-
-### Wave 6 — behavior-aware architectural improvements
-
-Status: `PLANNED`
-
-This wave is intentionally separate from mechanical splitting. Candidate work includes
-clearer domain names, command protocol centralization, dependency enforcement, and reduced
-cross-feature signature threading. Each item requires its own approval and acceptance
-criteria.
+Phase F is the only phase allowed to delete the original MapLab directory. ES-module
+conversion, semantic backend redesign, Git history rewriting, and LFS migration are not
+part of this plan.
 
 ## Active jobs and path ownership
 
@@ -278,12 +202,16 @@ No migration verification has run.
 | `D-004` | 2026-09-03 | Consolidate the finalized MapLab frontend into the main repository | The frontend and backend form one product and require atomic changes | `PROPOSED` |
 | `D-005` | 2026-09-03 | Store the pre-consolidation RIMG and MapLab snapshots as separate branches in `Zhihong0321/frontmission-reimagined` | Preserve both current trees before choosing or applying the final merged layout | `ACCEPTED` |
 | `D-006` | 2026-09-03 | Exclude MapLab bytecode and empty generator logs from its source snapshot | They are transient runtime output; all source, metadata, and finalized art remain in the recovery branch | `ACCEPTED` |
+| `D-007` | 2026-09-03 | Store durable process in `MIGRATION_PLAN.md` and live state in this ledger | Keep the ledger operational while preserving complete physical instructions | `ACCEPTED` |
+| `D-008` | 2026-09-03 | Move MapLab deletion to final cleanup | Prevent false-positive verification and preserve a working reference during migration | `ACCEPTED` |
+| `D-009` | 2026-09-03 | Preserve classic-script semantics during initial frontend extraction | Avoid combining file splitting with runtime module-semantics changes | `ACCEPTED` |
+| `D-010` | 2026-09-03 | Keep the integration branch green and discard failed worker branches before dependent work | Prevent a half-migrated failure chain and avoid restarting the whole migration | `ACCEPTED` |
 
 ## Open decisions
 
 These decisions must be resolved before their dependent jobs become `READY`:
 
-1. Final in-repository location for the frontend: `client/` versus `web/chart/`.
+1. Final approval of the proposed in-repository frontend location `web/chart/`.
 2. Which generated and source art belongs in Git, Git LFS, or external storage.
 3. Exact dead directories approved for removal in addition to the sibling MapLab folder.
 4. Whether the Claude `sonnet` alias resolves to the user's intended Sonnet 5 model.
