@@ -190,6 +190,19 @@ not authorize migration work.
 | `PA-CLAUDE-01` | Claude Desktop | `coordination/tasks/PA-CLAUDE-01-adversarial-plan-review.md` | `READY` |
 | `PA-KIMI-01` | Kimi CLI `cmkey/kimi-k3` | `coordination/tasks/PA-KIMI-01-baseline-reproducibility.md` | `READY` |
 
+## Deferred coordinator-managed jobs
+
+These workers are intentionally reserved until all three ready manual advisory handoffs
+have been received and synthesized. No task packet is issued yet because its acceptance
+criteria may change from the advisory evidence.
+
+| Candidate job | Worker | Intended work | Release condition | Status |
+|---|---|---|---|---|
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement one approved, bounded Phase A safety-net component | Cursor, Claude, and Kimi advisory handoffs reviewed; exact exclusive scope recorded | `DEFERRED` |
+| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Advisory handoffs reviewed; output schema and no-delete boundary recorded | `DEFERRED` |
+
+The coordinator launches both jobs. The user does not relay their prompts.
+
 ## Integration queue
 
 The queue is empty.
@@ -223,6 +236,7 @@ No migration verification has run.
 | `D-010` | 2026-09-03 | Keep the integration branch green and discard failed worker branches before dependent work | Prevent a half-migrated failure chain and avoid restarting the whole migration | `ACCEPTED` |
 | `D-011` | 2026-09-03 | Use committed physical task packets and handoffs for every local or user-relayed worker | Make cross-tool delegation reproducible without relying on chat context | `ACCEPTED` |
 | `D-012` | 2026-09-03 | Let the coordinator launch installed CLIs; use user relay only for UI-specific workers | Reduce manual task passing while preserving access to requested IDE and desktop models | `ACCEPTED` |
+| `D-013` | 2026-09-03 | Defer Codex Luna and AGY implementation/inventory jobs until the three manual preflight reviews are synthesized | Avoid duplicate analysis and prevent issuing scopes that advisory evidence may invalidate | `ACCEPTED` |
 
 ## Open decisions
 
@@ -253,6 +267,7 @@ At the beginning of every coordinating session:
 - No worker has been spawned.
 - No external coding CLI has been launched against the repository.
 - Three user-relayed read-only preflight task packets are ready on disk.
+- Codex Luna and AGY Gemini Flash are deliberately deferred until those handoffs are synthesized.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
