@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: `PASS` at `18bb16e99a02611c580ebeed837633d03a922a9a` (existing seven-gate `check.ps1`; browser gate not yet integrated)
+- Last full verification: `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673` (existing seven-gate `check.ps1` plus standalone browser smoke)
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -94,7 +94,7 @@ Only the coordinator changes job status.
 | `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PHASE_A` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
-| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `COMPLETED_PA-LUNA-01` |
+| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `VERIFIED_PA-LUNA-01` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `VERIFIED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
@@ -213,7 +213,7 @@ below have moved to the active-jobs table with committed packets and exclusive s
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Commit `633c75e5142888d79df97116fb5d31c43db5d7e3`; handoff received | `REVIEW` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Worker commits `633c75e` + `8401013`; integrated as `1fc5206` + `30b2b69` | `VERIFIED` |
 | `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Report integrated as `081f42c`; secrets-scanned managed log integrated as `47ee7ce` | `VERIFIED` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
@@ -222,7 +222,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
-| 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` plus pending follow-up | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `REPAIR_1_ACTIVE` — initial test proved worker creation but could miss the production handler's silent `{type:'tile', err}` path |
+| 1 | `PA-LUNA-01` | worker `633c75e` + `8401013`; integrated `1fc5206` + `30b2b69` | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check; full existing `check.ps1` | `VERIFIED` — repair 1 closed the silent tile-error false-green; browser 1/1 and all 7 existing acceptance gates passed on integration candidate |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 
 ## Verification ledger
@@ -236,6 +236,8 @@ No migration verification has run.
 | 2026-09-03 | `24c1fca` | Three manual preflight jobs | Coordinator review of physical handoffs and scope compliance | `PASS` | All three changed only their assigned handoff; no product code, migration, test run, move, or deletion occurred |
 | 2026-09-03 | `18bb16e` | Phase A pre-change baseline in isolated `D:\FrontMission-RIMG-worktrees\PA-BASELINE-01` | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 316.5 ms and green; host/API gates all passed; post-run diff only `FIGURES.md` timing `~220 ms -> ~320 ms`; port 5080 released |
 | 2026-09-03 | `47ee7ce` | `PA-AGY-01` inventory integration | Worker scope/ancestry review; `git diff --check`; redacted-pattern scan of managed log; before/after status of both repositories | `PASS` | Integrated only report, handoff, and run log; MapLab remained clean; report records 111/111 manifest sprites present, current `world.js` statically in sync, known `art/truck.png` 404, path walks, generated outputs, secret-bearing path names without values, and no-delete attestation |
+| 2026-09-04 | `30b2b69` | `PA-LUNA-01` browser smoke integration in isolated `D:\FrontMission-RIMG-worktrees\PA-INTEGRATION-01` | `node --check tests/browser/smoke.test.js`; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser` | `PASS` | Playwright 1/1 passed in 33.2 s; chart booted, multiple canvas samples painted, ops opened, globals/assets loaded, fixed-seed browser-bridge command advanced state, production tile worker emitted `ready` and a successful `tile`; port 5080 released |
+| 2026-09-04 | `30b2b69` | Post-browser-safety full existing acceptance in isolated integration worktree | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 176.0 ms and green; all host/API/build gates passed; only expected `FIGURES.md` timing `~220 ms -> ~180 ms` changed; port 5080 released |
 
 ## Decision log
 
@@ -265,6 +267,7 @@ No migration verification has run.
 | `D-022` | 2026-09-03 | Authorize execution of Phase A only | The user explicitly started Phase A after plan v3 synthesis; phases B-F, consolidation, refactoring, moves, and deletion remain unauthorized | `ACCEPTED` |
 | `D-023` | 2026-09-03 | Assign `PA-LUNA-01` the standalone browser smoke suite and `PA-AGY-01` the no-delete inventory report | These are approved Phase A gates with non-overlapping write scopes and independent outputs | `ACCEPTED` |
 | `D-024` | 2026-09-03 | Accept and integrate `PA-AGY-01` with coordinator-normalized commit evidence | The report and handoff are in scope and useful; the handoff's self-reported result hash predates its final worker commit and its "direct ancestor" wording is imprecise, so the ledger records authoritative worker/integration hashes | `ACCEPTED_WITH_MODIFICATIONS` |
+| `D-025` | 2026-09-04 | Accept `PA-LUNA-01` after one focused same-scope repair | The initial suite could miss the chart's silently swallowed worker tile error; the follow-up observes production `ready`, successful `tile`, and worker error messages, and both targeted browser and full existing acceptance checks are green | `ACCEPTED` |
 
 ## Open decisions
 
@@ -305,6 +308,9 @@ At the beginning of every coordinating session:
 - `PA-AGY-01` is integrated and verified as evidence-only work. Its no-delete inventory
   identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
   facts without authorizing cleanup or Phase B.
+- `PA-LUNA-01` is integrated and verified locally at `30b2b69`. The browser safety net
+  is green together with all seven existing acceptance gates; its verified integration
+  commits are pushed with this ledger update.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
