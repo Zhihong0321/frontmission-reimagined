@@ -245,6 +245,18 @@ Record 'Recruitment centre hires, pays wages and pays off' $crewOk $crewDetail
 Record 'City page reports founding stats and living supply' $cityOk $cityDetail
 Record 'Build page names the running build and its commit log' $buildOk2 $buildDetail2
 
+# 8 - the generated frontend world stays in sync with data/ (Phase A step 6, D-015).
+$worldJsOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\verify-worldjs.ps1') 2>&1 | Out-String
+$worldJsOk = ($LASTEXITCODE -eq 0)
+$worldJsDetail = ($worldJsOut -split "`n" | Select-Object -First 1).Trim() -replace '^(PASS|FAIL)\s+', ''
+Record 'Generated world.js stays in sync with data/' $worldJsOk $worldJsDetail
+
+# 9 - the API's response shape and value baseline are stable (Phase A step 6, D-015).
+$apiShapeOut = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\verify-api-shape.ps1') 2>&1 | Out-String
+$apiShapeOk = ($LASTEXITCODE -eq 0)
+$apiShapeDetail = ($apiShapeOut -split "`n" | Select-Object -First 1).Trim() -replace '^(PASS|FAIL)\s+', ''
+Record 'API response shape and value baseline are stable' $apiShapeOk $apiShapeDetail
+
 # ----- verdict -----
 Write-Host ('-' * 52)
 $failed = @($results | Where-Object { -not $_.Ok })
