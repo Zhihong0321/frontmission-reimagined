@@ -222,7 +222,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
-| 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` | `master` during Phase A | Scope/diff review; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `PENDING_REVIEW` |
+| 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` plus pending follow-up | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `REPAIR_1_ACTIVE` — initial test proved worker creation but could miss the production handler's silent `{type:'tile', err}` path |
 
 ## Verification ledger
 
