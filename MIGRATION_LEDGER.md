@@ -9,7 +9,7 @@ live state; the plan owns process. Chat is not a source of truth.
 
 ## Control
 
-- Overall status: `PHASE_A_ACTIVE`
+- Overall status: `PHASE_A_COMPLETE`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
@@ -24,8 +24,9 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery branch: `backup/maplab-final-20260903`
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
-- Integration branch: `UNSET`
-- Last full verification: nine-gate `check.ps1` `PASS` directly on `master` at `a5b390be1a5928162ae9f526b4111c79d51894ad` (post-`PA-ROOT-03` merge), and again in a fresh isolated clone via `tools/clean-clone-check.ps1`. `check.ps1` grew from seven gates to nine (`PA-ROOT-03`: generated-world sync, API response shape/value baseline). Phase A steps 5, 6, and 7 are all `VERIFIED`; steps 8-9 (tag `known-green/original`, create the integration branch) remain open
+- Integration branch: `integration` (created from tag `known-green/original`, same commit `5ed5949`)
+- Known-green tag: `known-green/original` at commit `5ed5949` (CLAUDE.md gate-count fix, direct child of the `PA-ROOT-03` merge `a5b390b`/`d9c7699`)
+- Last full verification: nine-gate `check.ps1` `PASS` directly on `master` at `5ed5949` (CLAUDE.md documentation fix, no code/content change). `check.ps1` grew from seven gates to nine (`PA-ROOT-03`: generated-world sync, API response shape/value baseline). Phase A steps 1-8 are `VERIFIED`; step 9 (integration branch) is `VERIFIED` for the branch itself — see `D-031` for the scope note on worker worktrees
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -168,7 +169,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
 | `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
-| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `ACTIVE` |
+| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `VERIFIED` |
 | `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
 | `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
@@ -256,6 +257,7 @@ No migration verification has run.
 | 2026-09-04 | `2250df2` (worker worktree, pre-final-fix) | `PA-ROOT-03` full nine-gate suite in worker worktree `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `dotnet build`; `dotnet test` (239 passed); `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1` (record then verify); `powershell -File .\check.ps1`; `tools/clean-clone-check.ps1` | `PASS` | All nine gates green including both new ones; isolated full clone also nine-for-nine with `/chart/` correctly 404ing (no sibling MapLab reachable) and only `FIGURES.md` differing afterward; port 5080 released after every run |
 | 2026-09-04 | `defea0d` | `PA-ROOT-03` `F_content` line-ending fix, found by the coordinator | `dotnet test` run separately against the worker worktree, `D:\FrontMission-RIMG` (master's own checkout), and a fresh `clean-clone-check.ps1` clone | `PASS` (after fix) | Fast-forwarding `master` to the worker's pre-fix branch tip and re-running `check.ps1` directly on `D:\FrontMission-RIMG` failed one xUnit fact that had passed in the worktree: `F_content` hashed raw file bytes, and git's line-ending checkout mode differed between the two checkouts of the identical commit. Fixed by normalizing `\r\n`→`\n` before hashing; all three checkouts then agreed |
 | 2026-09-04 | `a5b390be1a5928162ae9f526b4111c79d51894ad` | `PA-ROOT-03` merged onto `master` | Fast-forward from verified worker branch tip (linear ancestor of `master`, no cherry-pick); full nine-gate `check.ps1` re-run directly on `master` | `PASS` | Clean fast-forward, no divergence; post-merge `check.ps1` all nine gates green on `master` itself; port 5080 released |
+| 2026-09-04 | `5ed5949` | Phase A closure: `CLAUDE.md` gate-count fix, pre-tagging | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build 0 warnings; Core 239 tests passed; BalanceSim 152.0 ms; host/API/recruitment/city/build/world.js/API-shape gates all passed; only the expected `FIGURES.md` timing line changed afterward (220ms -> 150ms) and was discarded via `git checkout -- FIGURES.md`, not committed. Commit then tagged `known-green/original`; branch `integration` created from the same tag |
 
 ## Decision log
 
@@ -291,6 +293,7 @@ No migration verification has run.
 | `D-028` | 2026-09-04 | Resume Phase A with coordinator job `PA-ROOT-02`, using the existing `?view=lon,lat,zoom` deep-link prewarm path to exercise the tile worker before considering a product fix | The user authorized proceeding. The frontend already contains a bounded high-zoom deep-link worker path; testing it avoids the synthetic wheel sequence that triggered the canvas error and preserves the no-product-change preference. A product fix remains out of scope unless this redesign cannot meet the strict gate | `ACCEPTED` |
 | `D-029` | 2026-09-04 | Let Claude Code finish and integrate `PA-ROOT-02` after the Codex coordinator ran out of usage quota mid-job, resolving the `sonnet`-alias open decision as Sonnet 5 | The `PA-ROOT-02` worktree held the redesign's scaffolding (four implementation files plus `.gitignore`) uncommitted and unchecked when Codex stopped. The user directly instructed Claude Code to continue, and then explicitly authorized it to also perform the coordinator-only integration steps (cherry-pick review, full `check.ps1`, ledger update) that the ledger normally reserves for `ROOT`, given `ROOT` was unavailable. Claude Code self-reports its resolved model as Sonnet 5, settling the second open decision below | `ACCEPTED` |
 | `D-030` | 2026-09-04 | Assign `PA-ROOT-03` (deterministic fingerprints, save/API/`world.js` fixtures) to close Phase A steps 6-7, continuing to let Claude Code act as `ROOT` per `D-029`; separately authorize a one-time regeneration of `D:\FrontMission-MapLab\world.js` | This is the next unstarted Phase A gate named in the plan and was already scoped by the accepted `PA-KIMI-01`/`PA-CLAUDE-01` designs, so it needed no new design review, only user confirmation to start. Mid-job, `tools/verify-worldjs.ps1` found the live `world.js` genuinely stale relative to `data/` (confirmed by hand, not a script bug) — pre-existing, unrelated to this session, and outside the packet's write scope (`D:\FrontMission-MapLab\**` prohibited). The user was asked and chose to authorize a one-time regeneration identical to what `play.ps1::Update-ChartData` already performs automatically on every normal launch, rather than leaving the new gate permanently red or dropping it from `check.ps1` | `ACCEPTED` |
+| `D-031` | 2026-09-04 | Close Phase A steps 8-9: fix `CLAUDE.md`'s stale "seven gates" wording first (open decision 2, below), verify the full nine-gate `check.ps1` directly on the resulting commit `5ed5949`, tag it `known-green/original`, and branch `integration` from that tag. Continuing Claude-Code-as-`ROOT` per `D-029`. Do not create Phase B worker worktrees yet | The `CLAUDE.md` fix is documentation-only and does not touch any gate input, so folding it into the tagged baseline (rather than tagging around it) keeps the known-green commit's own onboarding doc accurate. Per the plan's transaction process (step 2: "coordinator creates an isolated branch and worktree") and concurrency rule 4, worktrees are created per assigned job at `READY`, not speculatively; Phase B has no `READY` job yet and phases B-F remain unauthorized (`D-022`), so step 9 is satisfied for the integration branch itself but worker worktrees are deferred to the first Phase B assignment | `ACCEPTED` |
 
 ## Open decisions
 
@@ -298,14 +301,12 @@ These decisions must be resolved before their dependent jobs become `READY`:
 
 1. Exact dead directories approved for removal in addition to the sibling MapLab folder;
    decide only after runtime/network inventory and quarantine evidence.
-2. `CLAUDE.md`'s project brief still says "seven gates, one verdict line" (Start Here and
-   Run/Verify sections); `check.ps1` has had nine gates since `PA-ROOT-03`. `CLAUDE.md`
-   was outside that packet's write scope, so this is recorded rather than fixed. Low
-   stakes, but should be corrected in a documentation-only pass before it misleads a
-   future session's first ninety seconds.
 
 Resolved: whether the Claude Code CLI `sonnet` alias resolves to the intended Sonnet 5
 model. `PA-ROOT-02` confirms it does; see `D-029`.
+
+Resolved: `CLAUDE.md`'s stale "seven gates" wording. Fixed in commit `5ed5949`
+(documentation only); see `D-031`.
 
 ## Coordinator resume procedure
 
@@ -359,10 +360,15 @@ At the beginning of every coordinating session:
   user separately authorized regenerating once (`D-030`). `PA-ROOT-03` is `VERIFIED` and
   merged (fast-forwarded, no cherry-pick) to `master` at `a5b390b`. `check.ps1` is nine
   gates, all green on `master` itself and in a fresh isolated clone.
-- Phase A steps 1-7 are now `VERIFIED`. Steps 8-9 (tag `known-green/original`; create the
-  integration branch and worker worktrees from that commit) remain open and unassigned —
-  nothing beyond `PA-ROOT-03`'s integration has been started. Phases B-F remain
-  unauthorized.
+- Phase A steps 1-9 are now `VERIFIED`/complete. Step 8 fixed the `CLAUDE.md`
+  "seven gates" staleness first (commit `5ed5949`), reran the full nine-gate `check.ps1`
+  directly on that commit, and tagged it `known-green/original`. Step 9 created the
+  `integration` branch from that tag (`D-031`); worker worktrees for it are deferred to
+  the first `READY` Phase B job rather than created speculatively, since Phase B has no
+  assigned job yet and phases B-F remain unauthorized. Per the plan's master/integration
+  branch policy (and `D-018`), `master` is now frozen for product changes at
+  `known-green/original`; only coordination-only records (this ledger, task packets,
+  handoffs) may still be committed to `master` until the migration finishes.
 - No pre-existing product, data, asset, or sibling-repository *source* file or directory
   has been moved or deleted. The rejected browser-test integration was removed only by
   recoverable Git revert commits under the stop-loss rule. The one MapLab file changed by

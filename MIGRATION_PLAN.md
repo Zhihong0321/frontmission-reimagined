@@ -10,12 +10,14 @@ Live ownership, job status, commits, checks, and handoffs belong in
 
 - Plan version: `3`
 - Plan status: `APPROVED_FOR_PLANNING_ONLY`
-- Execution status: `NOT_STARTED`
+- Execution status: `PHASE_A_COMPLETE` (Phase A steps 1-9 verified; phases B-F remain
+  unauthorized per `MIGRATION_LEDGER.md` `D-022`)
 - Current known remote recovery points:
   - RIMG: `backup-rimg-20260903` at `29de90387bb2d8fcccf5d6b787def5edac2ca923`
   - MapLab: `backup-maplab-20260903` at `df3c1baa8a83c2412607353af9994170b988dbe3`
 - Current coordination commit before advisory synthesis: `24c1fca311282dadf8d803ba302c2aab468759e6`
-- Current known-green application commit: `UNSET`
+- Current known-green application commit: `known-green/original` at `5ed5949` (see
+  `MIGRATION_LEDGER.md` for the full verification record and `D-031`)
 
 No implementation job may begin merely because it appears in this plan. The ledger must
 mark the job `READY`, name its owner and write scope, and record its green base commit.
