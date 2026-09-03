@@ -32,14 +32,19 @@ public static class Fingerprints
     /// <summary>
     /// `F_content`: a `(filename, sha256)` manifest over every required data file, so a
     /// content edit and a serialization-order regression can never be confused for each
-    /// other in the same fingerprint.
+    /// other in the same fingerprint. Line endings are normalized to `\n` first: git's
+    /// checkout line-ending behavior (`core.autocrlf`) can differ between a clone and a
+    /// worktree of the very same commit, and that is an environment detail, not a
+    /// content change this fingerprint should ever fail on.
     /// </summary>
     public static IReadOnlyDictionary<string, string> FContent(IReadOnlyDictionary<string, string> files)
     {
         var manifest = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var (key, text) in files) manifest[key + ".json"] = Sha256Hex(text);
+        foreach (var (key, text) in files) manifest[key + ".json"] = Sha256Hex(NormalizeLineEndings(text));
         return manifest;
     }
+
+    private static string NormalizeLineEndings(string text) => text.Replace("\r\n", "\n");
 
     public static string Sha256Hex(string text)
     {

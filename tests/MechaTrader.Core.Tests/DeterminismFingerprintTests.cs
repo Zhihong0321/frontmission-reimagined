@@ -26,21 +26,21 @@ public class DeterminismFingerprintTests
 
     private static readonly IReadOnlyDictionary<string, string> GoldenFContent = new Dictionary<string, string>
     {
-        ["cities.json"] = "9afbc5307c79f5c9263a1022182027a1ef417cbd0bd1cdef388776f5adc5b63a",
-        ["citystats.json"] = "b46d47786ffa84af443be95c9977128f4855a99076eea14012aa046633321821",
-        ["config.json"] = "e97ce83c7101089c0f1328907c967a1a315d06f57b9fcc9fd91285f0879318b5",
-        ["contracts.json"] = "1f375fa3830a8aefe0627618c8347603a870464f53aca1d63f7d78c65d75125d",
-        ["crew.json"] = "429b2458c4eefa6263a03a3d9355292d6b5426099376af2bad147a531eae80bf",
-        ["events.json"] = "c041377b66bb622245a2172c811841ead0c7c6e88d0f01597429ecc12843e51b",
-        ["expos.json"] = "60b02edade6cb3de46c69ad4866863d8f1353d49b0859801021b5169ecca530e",
-        ["gear.json"] = "a88cfc7961240d1fbb15cad5486f3c43e4c6cffb6877f83b7a113ed4635c503e",
-        ["goods.json"] = "7e9d8b8d7295eac5279003755ea63138a1d876f4a6d05394fa42c9a0612862e7",
-        ["industries.json"] = "2dab0932c9191ff07663d4553a95d4131f8c17899e597efe97730e103f128c26",
-        ["map.json"] = "36d9e6e234681a115a3b522b095e0b3be202dc6a08daf0651978bc014bca88db",
-        ["routes.json"] = "c130b9f39b2c9c33e018518b8c66e159882f1fa38ce9b0aad8549b9703f5c0aa",
-        ["standing.json"] = "ac51740fefdf9e775d1c9d0f2c207d279d8d0d0bab8315ccdcf9478f32ccb78b",
-        ["terrain.json"] = "9856925c7bc903dc8e56c7d37fa9e965d81f754e80decf18f358918b131b6698",
-        ["trucks.json"] = "817e292566d22b4ab6876ac53d039c38ccc7ecc21a252cd50d9220ca0543d112",
+        ["cities.json"] = "aa25715d4757c1cc7763144e2b668fe728f5510e0347af26704d3fcdd1dc2062",
+        ["citystats.json"] = "edbce70c8842c1eb2f9e902f6a68a32eebeccafc4b71f13277f3ec10105d5a8c",
+        ["config.json"] = "248184f5b627ecbd9a8e1384296c25a3cc6c8cf396d3fe6d4855b900d81a6384",
+        ["contracts.json"] = "dceed649eb539b30fa79b9e1e480a470dd17c7ed1d687892e4f71ab4587566f0",
+        ["crew.json"] = "fd737aba149a83da3a0c1f9421aa6961f005a269bd37e8ede2b6a04ff2e71189",
+        ["events.json"] = "d4145f078ef158697f6fc70e847631d995213f653c6ab3c377fc4c4e20065fbf",
+        ["expos.json"] = "467532e5bf75c283a4b53cf5c122aa3c3d72d6089962512b6512825ee48531aa",
+        ["gear.json"] = "3a8a4ccaffd560989a490805047817dad386be3ef21ae98e51fd3ae1d7104a0d",
+        ["goods.json"] = "9ab9f7c3390db64f4366864c117e3cfecfeb07d944462e02e923ebd3f0cc1a9d",
+        ["industries.json"] = "a2c55aca61bcd9cdc76336a69fe04d8247046c752f381a613e0df7bed104c244",
+        ["map.json"] = "ede84684362ea08ad657d23bec805582ff8e18712dfb1b36890564d7a2426e76",
+        ["routes.json"] = "b2f406cef500e191c8d6ee03c2c5dfcf045c1a552384263b277deb63641ecb0b",
+        ["standing.json"] = "3593aa1d791db257f8f0c81a6312957548757023142d52cbe1a45c08132393a9",
+        ["terrain.json"] = "b68401cae642ab99e41a32d03476b4a1de77ec82703ac5e4459f577ebd67659c",
+        ["trucks.json"] = "4d35ece35c83cfccf22bf45a662a8c2fd58cd9258a3fc7f9b9d52b93f92c9c45",
     };
 
     [Fact]
