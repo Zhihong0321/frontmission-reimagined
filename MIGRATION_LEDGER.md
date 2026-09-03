@@ -95,7 +95,7 @@ Only the coordinator changes job status.
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `COMPLETED_PA-LUNA-01` |
-| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `COMPLETED_PA-AGY-01` |
+| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `VERIFIED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
 | `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
@@ -214,7 +214,7 @@ below have moved to the active-jobs table with committed packets and exclusive s
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
 | `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Commit `633c75e5142888d79df97116fb5d31c43db5d7e3`; handoff received | `REVIEW` |
-| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Commit `a4b9f4bd270a985f1bcc6ce14a1aee629d0dd6bc`; report and handoff received; managed log pending coordinator preservation | `REVIEW` |
+| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Report integrated as `081f42c`; secrets-scanned managed log integrated as `47ee7ce` | `VERIFIED` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
 
@@ -223,7 +223,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
 | 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` plus pending follow-up | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `REPAIR_1_ACTIVE` — initial test proved worker creation but could miss the production handler's silent `{type:'tile', err}` path |
-| 2 | `PA-AGY-01` | `a4b9f4bd270a985f1bcc6ce14a1aee629d0dd6bc` plus pending managed-log preservation | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `PENDING_REVIEW` |
+| 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 
 ## Verification ledger
 
@@ -235,6 +235,7 @@ No migration verification has run.
 | 2026-09-03 | `df3c1ba` | Finalized MapLab recovery snapshot | Git remote ref verification | `PASS` | Pushed as branch `backup/maplab-final-20260903` and tag `backup-maplab-20260903` |
 | 2026-09-03 | `24c1fca` | Three manual preflight jobs | Coordinator review of physical handoffs and scope compliance | `PASS` | All three changed only their assigned handoff; no product code, migration, test run, move, or deletion occurred |
 | 2026-09-03 | `18bb16e` | Phase A pre-change baseline in isolated `D:\FrontMission-RIMG-worktrees\PA-BASELINE-01` | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 316.5 ms and green; host/API gates all passed; post-run diff only `FIGURES.md` timing `~220 ms -> ~320 ms`; port 5080 released |
+| 2026-09-03 | `47ee7ce` | `PA-AGY-01` inventory integration | Worker scope/ancestry review; `git diff --check`; redacted-pattern scan of managed log; before/after status of both repositories | `PASS` | Integrated only report, handoff, and run log; MapLab remained clean; report records 111/111 manifest sprites present, current `world.js` statically in sync, known `art/truck.png` 404, path walks, generated outputs, secret-bearing path names without values, and no-delete attestation |
 
 ## Decision log
 
@@ -263,6 +264,7 @@ No migration verification has run.
 | `D-021` | 2026-09-03 | Reserve AGY `gemini-3.8-flash-high` for the no-delete inventory job | This matches the requested low-cost worker allocation and the task is repetitive, bounded analysis | `ACCEPTED` |
 | `D-022` | 2026-09-03 | Authorize execution of Phase A only | The user explicitly started Phase A after plan v3 synthesis; phases B-F, consolidation, refactoring, moves, and deletion remain unauthorized | `ACCEPTED` |
 | `D-023` | 2026-09-03 | Assign `PA-LUNA-01` the standalone browser smoke suite and `PA-AGY-01` the no-delete inventory report | These are approved Phase A gates with non-overlapping write scopes and independent outputs | `ACCEPTED` |
+| `D-024` | 2026-09-03 | Accept and integrate `PA-AGY-01` with coordinator-normalized commit evidence | The report and handoff are in scope and useful; the handoff's self-reported result hash predates its final worker commit and its "direct ancestor" wording is imprecise, so the ledger records authoritative worker/integration hashes | `ACCEPTED_WITH_MODIFICATIONS` |
 
 ## Open decisions
 
@@ -300,6 +302,9 @@ At the beginning of every coordinating session:
   only the expected `FIGURES.md` timing-line change. This is baseline evidence, not yet the
   `known-green/original` checkpoint because browser, determinism/save, generated-world,
   API-shape, content-hash, and clean-layout Phase A gates remain open.
+- `PA-AGY-01` is integrated and verified as evidence-only work. Its no-delete inventory
+  identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
+  facts without authorizing cleanup or Phase B.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
