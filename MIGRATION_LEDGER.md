@@ -9,7 +9,7 @@ live state; the plan owns process. Chat is not a source of truth.
 
 ## Control
 
-- Overall status: `PHASE_A_BLOCKED`
+- Overall status: `PHASE_A_ACTIVE`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: existing seven-gate `check.ps1` `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673`; browser safety job `BLOCKED` and its prior integration is pending rollback
+- Last full verification: existing seven-gate `check.ps1` `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673`; product tree is unchanged after browser-test rollback; replacement browser gate is active
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -91,7 +91,7 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `BLOCKED_AT_PHASE_A_BROWSER_GATE` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PA-ROOT-02` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
@@ -168,7 +168,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
 | `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
-| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `BLOCKED` |
+| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `ACTIVE` |
 | `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
 | `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
@@ -192,7 +192,7 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
-| None | — | — | — | — | — | — | — |
+| `PA-ROOT-02` | `ACTIVE` | `ROOT` | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
 
 ## Completed manual advisory jobs
 
@@ -224,6 +224,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 |---|---|---|---|---|---|
 | 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected integration `1fc5206` + `30b2b69`; rollback `a6408fc` + `10b2875` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLED_BACK` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened and incomplete test files were removed from master by recoverable Git reverts |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
+| 3 | `PA-ROOT-02` | pending | `master` during Phase A | Strict browser assertions from `PA-LUNA-01`; deep-link tile-worker proof; no product changes; targeted browser check; full existing acceptance | `ACTIVE` |
 
 ## Verification ledger
 
@@ -271,6 +272,7 @@ No migration verification has run.
 | `D-025` | 2026-09-04 | Accept `PA-LUNA-01` after one focused same-scope repair | The initial suite could miss the chart's silently swallowed worker tile error; the follow-up observes production `ready`, successful `tile`, and worker error messages, and both targeted browser and full existing acceptance checks are green | `ACCEPTED` |
 | `D-026` | 2026-09-04 | Reopen `PA-LUNA-01` for a second and final focused repair before Phase A advances | The integrated suite blanket-exempts every `/chart/art/gen/**` failure even though those are manifest-declared runtime sprites; only the two proven current missing fallbacks (`art/tex-deep.png`, `art/truck.png`) may be tolerated, and manifest runtime files must be probed without weakening other 404 checks | `ACCEPTED` |
 | `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration with `a6408fc` + `10b2875` | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
+| `D-028` | 2026-09-04 | Resume Phase A with coordinator job `PA-ROOT-02`, using the existing `?view=lon,lat,zoom` deep-link prewarm path to exercise the tile worker before considering a product fix | The user authorized proceeding. The frontend already contains a bounded high-zoom deep-link worker path; testing it avoids the synthetic wheel sequence that triggered the canvas error and preserves the no-product-change preference. A product fix remains out of scope unless this redesign cannot meet the strict gate | `ACCEPTED` |
 
 ## Open decisions
 
@@ -312,12 +314,10 @@ At the beginning of every coordinating session:
 - `PA-AGY-01` is integrated and verified as evidence-only work. Its no-delete inventory
   identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
   facts without authorizing cleanup or Phase B.
-- `PA-LUNA-01` integration commits are pushed and its browser/full checks passed at
-  `30b2b69`, but a post-integration scope audit invalidated final verification because
-  manifest sprite failures were too broadly tolerated. Repair 2 implemented the strict
-  asset checks but exposed a pre-existing uncaught zoom/canvas error, so the job is
-  `BLOCKED`; the diagnostic branch is pushed and the incomplete integration was rolled
-  back. Phase A is stopped at this redesign/product-fix gate and no dependent work began.
+- `PA-LUNA-01` remains `BLOCKED` and preserved at `f94f2e0`; its incomplete integration
+  was rolled back. The user authorized proceeding, and replacement job `PA-ROOT-02` is
+  active with a committed redesign packet. No dependent determinism/save/API job may
+  start until the strict browser gate is green.
 - No pre-existing product, data, asset, or sibling-repository file or directory has been
   moved or deleted. The rejected browser-test integration was removed only by recoverable
   Git revert commits under the stop-loss rule.
