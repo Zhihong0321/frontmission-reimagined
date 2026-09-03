@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: existing seven-gate `check.ps1` `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673`; product tree is unchanged after browser-test rollback; replacement browser gate is active
+- Last full verification: existing seven-gate `check.ps1` `PASS` at `3530cf1cf215d29c5699720b29385c5e82af2772` (isolated integration worktree, post-`PA-ROOT-02` merge); the redesigned strict browser gate is `MERGED` and `VERIFIED` on `master` at `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b`
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -91,14 +91,14 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PA-ROOT-02` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `IDLE_AFTER_PA-ROOT-02` (see `D-029`: Codex exhausted its usage quota mid-job; Claude Code finished and integrated the job under direct user instruction) |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `VERIFIED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
-| `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
+| `CLAUDE` | Claude Code | `sonnet` (self-reported resolved model: Sonnet 5) | Independent architecture and regression review; substituted for `ROOT` on `PA-ROOT-02` per `D-029` | `COMPLETED_PA-ROOT-02` |
 | `CLAUDE-DESKTOP` | Claude Desktop | Sonnet 5 recorded by preflight handoff | User-relayed review or bounded implementation | `COMPLETED_PREFLIGHT` |
 
 The exact model resolved by the Claude `sonnet` alias must be recorded when the first
@@ -192,7 +192,10 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
-| `PA-ROOT-02` | `ACTIVE` | `ROOT` | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
+| `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
+
+No job is currently `ACTIVE`. The next Phase A jobs (deterministic and save fixtures) are
+unassigned; the browser gate is no longer the blocker for them.
 
 ## Completed manual advisory jobs
 
@@ -224,7 +227,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 |---|---|---|---|---|---|
 | 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected integration `1fc5206` + `30b2b69`; rollback `a6408fc` + `10b2875` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLED_BACK` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened and incomplete test files were removed from master by recoverable Git reverts |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
-| 3 | `PA-ROOT-02` | pending | `master` during Phase A | Strict browser assertions from `PA-LUNA-01`; deep-link tile-worker proof; no product changes; targeted browser check; full existing acceptance | `ACTIVE` |
+| 3 | `PA-ROOT-02` | worker `e4adc7b`; integrated `master` commit `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b`; integration-worktree proof `3530cf1cf215d29c5699720b29385c5e82af2772` | `master` during Phase A | Strict browser assertions from `PA-LUNA-01`; deep-link tile-worker proof; no product changes; targeted browser check x2; full existing acceptance | `VERIFIED` — deep-link (`/chart/?view=14.4,50.1,4`) drives the boot-time `startTileWorker`/`wantTile` prewarm without a synthetic wheel gesture; strict suite green twice in the worker worktree and once more after cherry-pick into an isolated integration worktree; port 5080 confirmed released after every run; post-merge `check.ps1` all seven gates green with only the expected `FIGURES.md` timing-line diff (not committed) |
 
 ## Verification ledger
 
@@ -240,6 +243,9 @@ No migration verification has run.
 | 2026-09-04 | `30b2b69` | `PA-LUNA-01` browser smoke integration in isolated `D:\FrontMission-RIMG-worktrees\PA-INTEGRATION-01` | `node --check tests/browser/smoke.test.js`; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser` | `PASS` | Playwright 1/1 passed in 33.2 s; chart booted, multiple canvas samples painted, ops opened, globals/assets loaded, fixed-seed browser-bridge command advanced state, production tile worker emitted `ready` and a successful `tile`; port 5080 released |
 | 2026-09-04 | `30b2b69` | Post-browser-safety full existing acceptance in isolated integration worktree | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 176.0 ms and green; all host/API/build gates passed; only expected `FIGURES.md` timing `~220 ms -> ~180 ms` changed; port 5080 released |
 | 2026-09-04 | `10b2875` | `PA-LUNA-01` stop-loss rollback | Git revert of integration commits `30b2b69` then `1fc5206`; diagnostic branch push verification | `PASS` | Incomplete browser-test files removed from master by recoverable commits; product sources/data unchanged; strict blocked implementation preserved at `origin/codex/pa-luna-01-browser-smoke` commit `f94f2e0`; coordinator-authored blocked handoff retained |
+| 2026-09-04 | `e4adc7b495cac093e3170818c68f81d3580981ea` | `PA-ROOT-02` redesigned browser smoke, worker worktree | `node --check tests/browser/smoke.test.js`; `git diff --check`; write-scope review; `npm ci --prefix tests/browser`; `npx --prefix tests/browser playwright install chromium`; `npm test --prefix tests/browser` x2; port 5080 listener check x2 | `PASS` | Deep link `/chart/?view=14.4,50.1,4` (Praha's real coordinate) drives boot-time `startTileWorker`/`wantTile` without a synthetic wheel gesture; run 1 passed in 30.5s, run 2 in 16.2s; worker `ready`, one `tile` without `err`, no worker errors, no page/console/network/API failures either run; no listener on port 5080 after either run |
+| 2026-09-04 | `3530cf1cf215d29c5699720b29385c5e82af2772` | `PA-ROOT-02` cherry-picked onto isolated integration worktree `D:\FrontMission-RIMG-worktrees\PA-INTEGRATION-02` (detached from `master` `15b9aff`) | `npm ci --prefix tests/browser`; `npx --prefix tests/browser playwright install chromium`; `npm test --prefix tests/browser`; `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Browser smoke passed in 32.7s against the merged state; full seven-gate acceptance all green (Release build 0 warnings; Core 229 passed; BalanceSim 322.9 ms; host/API/recruitment/city/build gates passed); only diff after the run was the expected `FIGURES.md` timing line (`~220 ms -> ~320 ms`, not committed); port 5080 released |
+| 2026-09-04 | `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b` | `PA-ROOT-02` merged onto `master` | Cherry-pick from verified worker commit `e4adc7b`; ancestry and scope review | `PASS` | Fast-forward-equivalent cherry-pick of the single verified commit onto `master` at `15b9aff`; no conflicts; identical diff to the worker branch |
 
 ## Decision log
 
@@ -273,6 +279,7 @@ No migration verification has run.
 | `D-026` | 2026-09-04 | Reopen `PA-LUNA-01` for a second and final focused repair before Phase A advances | The integrated suite blanket-exempts every `/chart/art/gen/**` failure even though those are manifest-declared runtime sprites; only the two proven current missing fallbacks (`art/tex-deep.png`, `art/truck.png`) may be tolerated, and manifest runtime files must be probed without weakening other 404 checks | `ACCEPTED` |
 | `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration with `a6408fc` + `10b2875` | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
 | `D-028` | 2026-09-04 | Resume Phase A with coordinator job `PA-ROOT-02`, using the existing `?view=lon,lat,zoom` deep-link prewarm path to exercise the tile worker before considering a product fix | The user authorized proceeding. The frontend already contains a bounded high-zoom deep-link worker path; testing it avoids the synthetic wheel sequence that triggered the canvas error and preserves the no-product-change preference. A product fix remains out of scope unless this redesign cannot meet the strict gate | `ACCEPTED` |
+| `D-029` | 2026-09-04 | Let Claude Code finish and integrate `PA-ROOT-02` after the Codex coordinator ran out of usage quota mid-job, resolving the `sonnet`-alias open decision as Sonnet 5 | The `PA-ROOT-02` worktree held the redesign's scaffolding (four implementation files plus `.gitignore`) uncommitted and unchecked when Codex stopped. The user directly instructed Claude Code to continue, and then explicitly authorized it to also perform the coordinator-only integration steps (cherry-pick review, full `check.ps1`, ledger update) that the ledger normally reserves for `ROOT`, given `ROOT` was unavailable. Claude Code self-reports its resolved model as Sonnet 5, settling the second open decision below | `ACCEPTED` |
 
 ## Open decisions
 
@@ -280,8 +287,9 @@ These decisions must be resolved before their dependent jobs become `READY`:
 
 1. Exact dead directories approved for removal in addition to the sibling MapLab folder;
    decide only after runtime/network inventory and quarantine evidence.
-2. Whether the Claude Code CLI `sonnet` alias resolves to the intended Sonnet 5 model if
-   a later CLI job is issued. The completed Desktop review recorded Sonnet 5 directly.
+
+Resolved: whether the Claude Code CLI `sonnet` alias resolves to the intended Sonnet 5
+model. `PA-ROOT-02` confirms it does; see `D-029`.
 
 ## Coordinator resume procedure
 
@@ -303,8 +311,8 @@ At the beginning of every coordinating session:
   worktrees and have returned durable handoffs.
 - The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
   physical handoffs were reviewed, accepted or accepted with modifications, and retained.
-- Plan version 3 contains the resulting safety changes. Phase A only is authorized and is
-  now `BLOCKED` at the browser gate; phases B-F remain unauthorized and gated.
+- Plan version 3 contains the resulting safety changes. Phase A only is authorized; its
+  browser gate is no longer `BLOCKED`. Phases B-F remain unauthorized and gated.
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
 - The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
@@ -315,9 +323,16 @@ At the beginning of every coordinating session:
   identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
   facts without authorizing cleanup or Phase B.
 - `PA-LUNA-01` remains `BLOCKED` and preserved at `f94f2e0`; its incomplete integration
-  was rolled back. The user authorized proceeding, and replacement job `PA-ROOT-02` is
-  active with a committed redesign packet. No dependent determinism/save/API job may
-  start until the strict browser gate is green.
+  was rolled back. The user authorized proceeding, and replacement job `PA-ROOT-02`
+  redesigned the tile-worker trigger to use the frontend's own `?view=lon,lat,zoom`
+  boot-time prewarm path instead of a synthetic wheel gesture. The Codex coordinator ran
+  out of usage quota mid-job with the redesign uncommitted and unchecked; Claude Code
+  completed it, ran every required check twice, and — with separate explicit user
+  authorization — also performed the coordinator-only integration: cherry-pick into an
+  isolated worktree, full seven-gate `check.ps1`, and this ledger update. See `D-029`.
+  `PA-ROOT-02` is `VERIFIED` and merged to `master` at `6cbcd23`. The strict browser gate
+  is green, so the browser-gate blocker on dependent determinism/save/API jobs is lifted;
+  those jobs are still unassigned and nothing beyond this integration has been started.
 - No pre-existing product, data, asset, or sibling-repository file or directory has been
   moved or deleted. The rejected browser-test integration was removed only by recoverable
   Git revert commits under the stop-loss rule.
