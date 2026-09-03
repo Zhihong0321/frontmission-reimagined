@@ -9,7 +9,7 @@ live state; the plan owns process. Chat is not a source of truth.
 
 ## Control
 
-- Overall status: `PHASE_A_ACTIVE`
+- Overall status: `PHASE_A_BLOCKED`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
@@ -168,7 +168,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
 | `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
-| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `ACTIVE` |
+| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `BLOCKED` |
 | `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
 | `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
@@ -213,7 +213,7 @@ below have moved to the active-jobs table with committed packets and exclusive s
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Diagnostic branch pushed at `f94f2e05267782b2f92e18576a93480d6cb24f26`; prior integration `1fc5206` + `30b2b69` scheduled for rollback | `BLOCKED` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Diagnostic branch pushed at `f94f2e05267782b2f92e18576a93480d6cb24f26`; prior integration reverted by `a6408fc` + `10b2875`; blocked handoff retained on master | `BLOCKED` |
 | `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Report integrated as `081f42c`; secrets-scanned managed log integrated as `47ee7ce` | `VERIFIED` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
@@ -222,7 +222,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
-| 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected prior integration `1fc5206` + `30b2b69` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLBACK_REQUIRED` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened |
+| 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected integration `1fc5206` + `30b2b69`; rollback `a6408fc` + `10b2875` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLED_BACK` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened and incomplete test files were removed from master by recoverable Git reverts |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 
 ## Verification ledger
@@ -238,6 +238,7 @@ No migration verification has run.
 | 2026-09-03 | `47ee7ce` | `PA-AGY-01` inventory integration | Worker scope/ancestry review; `git diff --check`; redacted-pattern scan of managed log; before/after status of both repositories | `PASS` | Integrated only report, handoff, and run log; MapLab remained clean; report records 111/111 manifest sprites present, current `world.js` statically in sync, known `art/truck.png` 404, path walks, generated outputs, secret-bearing path names without values, and no-delete attestation |
 | 2026-09-04 | `30b2b69` | `PA-LUNA-01` browser smoke integration in isolated `D:\FrontMission-RIMG-worktrees\PA-INTEGRATION-01` | `node --check tests/browser/smoke.test.js`; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser` | `PASS` | Playwright 1/1 passed in 33.2 s; chart booted, multiple canvas samples painted, ops opened, globals/assets loaded, fixed-seed browser-bridge command advanced state, production tile worker emitted `ready` and a successful `tile`; port 5080 released |
 | 2026-09-04 | `30b2b69` | Post-browser-safety full existing acceptance in isolated integration worktree | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 176.0 ms and green; all host/API/build gates passed; only expected `FIGURES.md` timing `~220 ms -> ~180 ms` changed; port 5080 released |
+| 2026-09-04 | `10b2875` | `PA-LUNA-01` stop-loss rollback | Git revert of integration commits `30b2b69` then `1fc5206`; diagnostic branch push verification | `PASS` | Incomplete browser-test files removed from master by recoverable commits; product sources/data unchanged; strict blocked implementation preserved at `origin/codex/pa-luna-01-browser-smoke` commit `f94f2e0`; coordinator-authored blocked handoff retained |
 
 ## Decision log
 
@@ -269,7 +270,7 @@ No migration verification has run.
 | `D-024` | 2026-09-03 | Accept and integrate `PA-AGY-01` with coordinator-normalized commit evidence | The report and handoff are in scope and useful; the handoff's self-reported result hash predates its final worker commit and its "direct ancestor" wording is imprecise, so the ledger records authoritative worker/integration hashes | `ACCEPTED_WITH_MODIFICATIONS` |
 | `D-025` | 2026-09-04 | Accept `PA-LUNA-01` after one focused same-scope repair | The initial suite could miss the chart's silently swallowed worker tile error; the follow-up observes production `ready`, successful `tile`, and worker error messages, and both targeted browser and full existing acceptance checks are green | `ACCEPTED` |
 | `D-026` | 2026-09-04 | Reopen `PA-LUNA-01` for a second and final focused repair before Phase A advances | The integrated suite blanket-exempts every `/chart/art/gen/**` failure even though those are manifest-declared runtime sprites; only the two proven current missing fallbacks (`art/tex-deep.png`, `art/truck.png`) may be tolerated, and manifest runtime files must be probed without weakening other 404 checks | `ACCEPTED` |
-| `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
+| `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration with `a6408fc` + `10b2875` | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
 
 ## Open decisions
 
@@ -314,8 +315,8 @@ At the beginning of every coordinating session:
   `30b2b69`, but a post-integration scope audit invalidated final verification because
   manifest sprite failures were too broadly tolerated. Repair 2 implemented the strict
   asset checks but exposed a pre-existing uncaught zoom/canvas error, so the job is
-  `BLOCKED`; the diagnostic branch is pushed and the incomplete integration is queued for
-  rollback before any dependent Phase A implementation.
+  `BLOCKED`; the diagnostic branch is pushed and the incomplete integration was rolled
+  back. Phase A is stopped at this redesign/product-fix gate and no dependent work began.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
