@@ -41,8 +41,11 @@ New-Item -ItemType Directory -Path $cloneRoot | Out-Null
 
 try {
     Write-Host "Cloning $repoRoot -> $clonePath (full history, HEAD only branch)..." -ForegroundColor DarkGray
-    $cloneOut = & git clone --no-hardlinks $repoRoot $clonePath 2>&1 | Out-String
-    if ($LASTEXITCODE -ne 0) { Fail "git clone failed:`n$cloneOut" }
+    # No `2>&1`: git writes its normal progress to stderr, and in Windows PowerShell 5.1
+    # redirecting a native command's stderr wraps each line as a terminating
+    # NativeCommandError under $ErrorActionPreference = 'Stop', even on exit code 0.
+    & git clone --no-hardlinks $repoRoot $clonePath
+    if ($LASTEXITCODE -ne 0) { Fail 'git clone failed (see output above).' }
 
     Push-Location $clonePath
     try {
