@@ -26,6 +26,8 @@ live state; the plan owns process. Chat is not a source of truth.
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
 - Last full verification: `NOT_RUN`
+- Preflight advisory synthesis: `COMPLETE`
+- Execution authorization after synthesis: `NOT_RECORDED`
 
 ## Disk-first policy
 
@@ -94,10 +96,10 @@ Only the coordinator changes job status.
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `UNSPAWNED` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `UNSPAWNED` |
-| `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `UNSPAWNED` |
-| `CURSOR` | Cursor 3.18.25 | requested Grok 4.6; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `AVAILABLE_MANUAL` |
+| `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
+| `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
 | `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
-| `CLAUDE-DESKTOP` | Claude Desktop | user-selected model | User-relayed review or bounded implementation | `AVAILABLE_MANUAL` |
+| `CLAUDE-DESKTOP` | Claude Desktop | Sonnet 5 recorded by preflight handoff | User-relayed review or bounded implementation | `COMPLETED_PREFLIGHT` |
 
 The exact model resolved by the Claude `sonnet` alias must be recorded when the first
 Claude job is launched.
@@ -117,6 +119,12 @@ Claude job is launched.
 9. Generated files have one designated owner per wave.
 10. If a worker discovers required work outside its scope, it stops that part and reports
     an expansion request instead of editing the file.
+11. Phase D cannot start until Phase C is verified. The C# view/command DTO files and the
+    browser bridge/ops scripts are one semantic ownership boundary even though their paths
+    do not overlap.
+12. Once the integration branch exists, `master` is frozen for product changes. An urgent
+    master fix pauses all workers and must be brought forward and fully reverified before
+    work resumes.
 
 ## Worker start protocol
 
@@ -155,7 +163,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 
 ## Planned waves
 
-`MIGRATION_PLAN.md` version 2 is authoritative for wave contents and safety gates.
+`MIGRATION_PLAN.md` version 3 is authoritative for wave contents and safety gates.
 
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
@@ -163,7 +171,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 | `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `PLANNED` |
 | `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
-| `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `B` | `PLANNED` |
+| `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
 | `E` | AI context files, generated codemap, scoped documentation, and verification modes | `C`, `D` | `PLANNED` |
 | `F` | Independent cleanup commits and final retirement of the sibling MapLab directory | `E` | `PLANNED` |
 
@@ -179,27 +187,27 @@ No jobs are active.
 |---|---|---|---|---|---|
 | None | — | — | — | — | — |
 
-## Ready manual advisory jobs
+## Completed manual advisory jobs
 
-These jobs are read-only, require no worktree, and may run concurrently. Their results do
-not authorize migration work.
+These jobs were read-only and required no worktree. Their results have been reviewed and
+dispositioned; they do not by themselves authorize migration work.
 
-| Job | Worker | Physical task packet | Status |
-|---|---|---|---|
-| `PA-CURSOR-01` | Cursor Grok 4.6 | `coordination/tasks/PA-CURSOR-01-browser-safety.md` | `READY` |
-| `PA-CLAUDE-01` | Claude Desktop | `coordination/tasks/PA-CLAUDE-01-adversarial-plan-review.md` | `READY` |
-| `PA-KIMI-01` | Kimi CLI `cmkey/kimi-k3` | `coordination/tasks/PA-KIMI-01-baseline-reproducibility.md` | `READY` |
+| Job | Worker | Physical task packet | Handoff | Status | Disposition |
+|---|---|---|---|---|---|
+| `PA-CURSOR-01` | Cursor Grok 4.6 | `coordination/tasks/PA-CURSOR-01-browser-safety.md` | `coordination/handoffs/PA-CURSOR-01.md` | `VERIFIED` | `ACCEPT_WITH_MODIFICATIONS` (`D-014`) |
+| `PA-CLAUDE-01` | Claude Desktop Sonnet 5 | `coordination/tasks/PA-CLAUDE-01-adversarial-plan-review.md` | `coordination/handoffs/PA-CLAUDE-01.md` | `VERIFIED` | `ACCEPT` (`D-016`) |
+| `PA-KIMI-01` | Kimi CLI `cmkey/kimi-k3` | `coordination/tasks/PA-KIMI-01-baseline-reproducibility.md` | `coordination/handoffs/PA-KIMI-01.md` | `VERIFIED` | `ACCEPT_WITH_MODIFICATIONS` (`D-015`) |
 
 ## Deferred coordinator-managed jobs
 
-These workers are intentionally reserved until all three ready manual advisory handoffs
-have been received and synthesized. No task packet is issued yet because its acceptance
-criteria may change from the advisory evidence.
+These workers were reserved until all three manual advisory handoffs were synthesized.
+That evidence gate is now satisfied. They remain `PLANNED` and unlaunched because Phase A
+execution has not yet been authorized; no task packet or write scope has been issued.
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement one approved, bounded Phase A safety-net component | Cursor, Claude, and Kimi advisory handoffs reviewed; exact exclusive scope recorded | `DEFERRED` |
-| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Advisory handoffs reviewed; output schema and no-delete boundary recorded | `DEFERRED` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement one approved, bounded Phase A safety-net component | Execution authorized; physical packet and exact exclusive scope recorded | `PLANNED` |
+| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Execution authorized; physical packet, output schema, and no-delete boundary recorded | `PLANNED` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
 
@@ -219,6 +227,7 @@ No migration verification has run.
 |---|---|---|---|---|---|
 | 2026-09-03 | `29de903` | RIMG recovery snapshot | Git remote ref verification | `PASS` | Pushed as `master` and tag `backup-rimg-20260903`; application checks intentionally not run |
 | 2026-09-03 | `df3c1ba` | Finalized MapLab recovery snapshot | Git remote ref verification | `PASS` | Pushed as branch `backup/maplab-final-20260903` and tag `backup-maplab-20260903` |
+| 2026-09-03 | `24c1fca` | Three manual preflight jobs | Coordinator review of physical handoffs and scope compliance | `PASS` | All three changed only their assigned handoff; no product code, migration, test run, move, or deletion occurred |
 
 ## Decision log
 
@@ -226,8 +235,8 @@ No migration verification has run.
 |---|---|---|---|---|
 | `D-001` | 2026-09-03 | Use one canonical single-writer ledger | Prevent worker merge conflicts and contradictory status | `ACCEPTED` |
 | `D-002` | 2026-09-03 | Do not begin Wave 0 while creating this ledger | User explicitly requested planning before execution | `ACCEPTED` |
-| `D-003` | 2026-09-03 | Require isolated worktrees for concurrent writers | Protect the dirty baseline and make integration reviewable | `PROPOSED` |
-| `D-004` | 2026-09-03 | Consolidate the finalized MapLab frontend into the main repository | The frontend and backend form one product and require atomic changes | `PROPOSED` |
+| `D-003` | 2026-09-03 | Require isolated worktrees for concurrent writers | Protect the dirty baseline and make integration reviewable | `ACCEPTED` |
+| `D-004` | 2026-09-03 | Consolidate the finalized MapLab frontend into the main repository | The frontend and backend form one product and require atomic changes | `ACCEPTED` |
 | `D-005` | 2026-09-03 | Store the pre-consolidation RIMG and MapLab snapshots as separate branches in `Zhihong0321/frontmission-reimagined` | Preserve both current trees before choosing or applying the final merged layout | `ACCEPTED` |
 | `D-006` | 2026-09-03 | Exclude MapLab bytecode and empty generator logs from its source snapshot | They are transient runtime output; all source, metadata, and finalized art remain in the recovery branch | `ACCEPTED` |
 | `D-007` | 2026-09-03 | Store durable process in `MIGRATION_PLAN.md` and live state in this ledger | Keep the ledger operational while preserving complete physical instructions | `ACCEPTED` |
@@ -237,16 +246,23 @@ No migration verification has run.
 | `D-011` | 2026-09-03 | Use committed physical task packets and handoffs for every local or user-relayed worker | Make cross-tool delegation reproducible without relying on chat context | `ACCEPTED` |
 | `D-012` | 2026-09-03 | Let the coordinator launch installed CLIs; use user relay only for UI-specific workers | Reduce manual task passing while preserving access to requested IDE and desktop models | `ACCEPTED` |
 | `D-013` | 2026-09-03 | Defer Codex Luna and AGY implementation/inventory jobs until the three manual preflight reviews are synthesized | Avoid duplicate analysis and prevent issuing scopes that advisory evidence may invalidate | `ACCEPTED` |
+| `D-014` | 2026-09-03 | Accept the Cursor browser-safety design with implementation adjustments | Playwright covers the missing real-browser gate; implementation must sample multiple canvas points, verify the lazy worker and provenance, and choose a currently compatible dependency version rather than copying the advisory version blindly | `ACCEPTED` |
+| `D-015` | 2026-09-03 | Accept the Kimi reproducibility design with an explicit command-coverage matrix | State/view/content/world/API/save baselines materially reduce false-green risk; commands outside the fingerprint script must remain visibly covered by the full Core suite | `ACCEPTED` |
+| `D-016` | 2026-09-03 | Accept Claude's `REVISE_BEFORE_START` verdict and all seven required controls | Both sibling walks, per-item Core tests, wire-contract browser gates, C-before-D ordering, branch policy, advisory dispositions, and command coverage directly prevent stacked failures | `ACCEPTED` |
+| `D-017` | 2026-09-03 | Use `web/chart/` as the active in-repository frontend path | It keeps the playable frontend below the existing web root and gives the host one explicit source | `ACCEPTED` |
+| `D-018` | 2026-09-03 | Freeze product changes on `master` after `known-green/original` and run migration on a named integration branch | Prevent untracked divergence; urgent fixes trigger a worker pause, forward integration, and full re-verification | `ACCEPTED` |
+| `D-019` | 2026-09-03 | Make Phase D depend on verified Phase C and define `Full` verification as a strict superset | Disjoint files still share an implicit JSON contract; narrow checks cannot certify integration | `ACCEPTED` |
+| `D-020` | 2026-09-03 | Keep active finalized art in normal Git during this migration and defer storage optimization | The art is already remotely recoverable; LFS/history migration would invalidate recovery assumptions and is a separate project | `ACCEPTED` |
+| `D-021` | 2026-09-03 | Reserve AGY `gemini-3.8-flash-high` for the no-delete inventory job | This matches the requested low-cost worker allocation and the task is repetitive, bounded analysis | `ACCEPTED` |
 
 ## Open decisions
 
 These decisions must be resolved before their dependent jobs become `READY`:
 
-1. Final approval of the proposed in-repository frontend location `web/chart/`.
-2. Which generated and source art belongs in Git, Git LFS, or external storage.
-3. Exact dead directories approved for removal in addition to the sibling MapLab folder.
-4. Whether the Claude `sonnet` alias resolves to the user's intended Sonnet 5 model.
-5. Whether AGY should use `gemini-3.8-flash-high` or another configured model.
+1. Exact dead directories approved for removal in addition to the sibling MapLab folder;
+   decide only after runtime/network inventory and quarantine evidence.
+2. Whether the Claude Code CLI `sonnet` alias resolves to the intended Sonnet 5 model if
+   a later CLI job is issued. The completed Desktop review recorded Sonnet 5 directly.
 
 ## Coordinator resume procedure
 
@@ -264,10 +280,13 @@ At the beginning of every coordinating session:
 ## Current checkpoint
 
 - The explicitly authorized version-control backup job is complete and remotely verified.
-- No worker has been spawned.
-- No external coding CLI has been launched against the repository.
-- Three user-relayed read-only preflight task packets are ready on disk.
-- Codex Luna and AGY Gemini Flash are deliberately deferred until those handoffs are synthesized.
+- No implementation worker has been spawned.
+- The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
+  physical handoffs were reviewed, accepted or accepted with modifications, and retained.
+- Plan version 3 contains the resulting safety changes. Phase A remains `PLANNED` because
+  execution authorization after synthesis is not yet recorded.
+- Codex Luna High and AGY Gemini Flash High are eligible for precisely scoped Phase A task
+  packets after authorization, but remain unlaunched.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.

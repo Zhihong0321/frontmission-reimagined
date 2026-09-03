@@ -8,13 +8,13 @@ Live ownership, job status, commits, checks, and handoffs belong in
 
 ## Status
 
-- Plan version: `2`
+- Plan version: `3`
 - Plan status: `APPROVED_FOR_PLANNING_ONLY`
 - Execution status: `NOT_STARTED`
 - Current known remote recovery points:
   - RIMG: `backup-rimg-20260903` at `29de90387bb2d8fcccf5d6b787def5edac2ca923`
   - MapLab: `backup-maplab-20260903` at `df3c1baa8a83c2412607353af9994170b988dbe3`
-- Current coordination commit: `bc6a4ba436ceb46f5cf12dddc0eb187db86b0e4f`
+- Current coordination commit before advisory synthesis: `24c1fca311282dadf8d803ba302c2aab468759e6`
 - Current known-green application commit: `UNSET`
 
 No implementation job may begin merely because it appears in this plan. The ledger must
@@ -88,10 +88,14 @@ in-repository frontend is added, making a broken consolidation appear successful
 
 Controls:
 
-- Keep the old folder as a reference but remove runtime sibling discovery.
+- Keep the old folder as a reference but remove both runtime sibling-discovery paths:
+  `Program.cs::LocateMapLab` for serving and `play.ps1::Update-ChartData` for generation.
 - Configure one explicit in-repository frontend path.
+- Once the in-repository generator is expected, a missing generator or failed generation
+  is a hard failure rather than a warning followed by stale output.
 - Verify from a fresh clone in a location with no sibling MapLab folder.
-- Record the served file location during verification.
+- Record the served file location and a unique in-repository provenance marker during
+  verification.
 
 ### Browser-blind acceptance suite
 
@@ -106,6 +110,8 @@ Controls:
 - Assert that WORLD, MANIFEST, MECHA, and OPS initialize.
 - Assert that state loads, the canvas renders, and the ops shell opens.
 - Exercise at least one deterministic game command through the browser bridge.
+- Force the lazy tile-worker path, explicitly probe required static assets, and sample
+  the rendered canvas at multiple points rather than relying on one corner pixel.
 
 ### Frontend execution-order changes
 
@@ -127,6 +133,10 @@ Controls:
 
 - Capture deterministic state fingerprints before refactoring.
 - Keep representative serialized saves as compatibility fixtures.
+- Pin both state and view output, content inputs, generated `world.js`, and stable API
+  response shapes while maintaining an explicit allowlist for inherently noisy fields.
+- Maintain a command-coverage matrix. It must say which command types are protected by
+  deterministic fingerprints and which are protected only by the full Core test suite.
 - During mechanical splits preserve namespaces, names, signatures, ordering, visibility,
   and public entrypoints.
 - Renaming and abstraction changes are separate jobs.
@@ -151,6 +161,10 @@ Controls:
 - Parallelize analysis freely.
 - Limit concurrent writers to independent surfaces.
 - Never assign two workers to split the same original large file concurrently.
+- Treat the C# view/command DTO surface and the browser bridge/ops scripts as one semantic
+  contract even though their Git paths do not overlap.
+- Complete Phase C before Phase D. Do not run backend wire-contract decomposition and
+  frontend extraction concurrently.
 - Only the coordinator integrates commits.
 - Every job names an exact green base commit and exclusive write scope.
 
@@ -204,34 +218,69 @@ If a bounded job remains red after two focused repair attempts:
 
 No new worker is assigned to build on a red integration state.
 
+## Phase-level recovery rule
+
+If a later full check proves that an earlier phase checkpoint was falsely green:
+
+1. Stop every dependent job immediately.
+2. Mark the checkpoint `INVALIDATED` in the ledger; do not delete or move its tag.
+3. Preserve the failing integration state on a named diagnostic branch.
+4. Create a replacement integration branch from the most recent still-verified
+   `known-green/*` tag.
+5. Replay only independently reviewed green commits, then rerun the full checkpoint.
+
+This rolls back at most to the last verified phase, not automatically to the original
+project. Published recovery history is never rewritten.
+
+## Master and integration branch policy
+
+Before the integration branch is created, the ledger must name its branch and exact base.
+After creation, `master` is frozen for product changes at `known-green/original` until the
+migration finishes. Coordination-only records may still be committed before execution.
+
+If an urgent product fix must land on `master`, all workers pause. The coordinator records
+the new master commit, brings it forward into the integration branch at a green checkpoint
+without rewriting published history, and reruns the full checkpoint before workers resume.
+
 ## Execution phases
 
 ### Phase A — establish the known-green original
 
-1. Inventory source, generated output, archives, assets, and secrets.
-2. Run the complete existing acceptance suite.
-3. Run the current player view in a browser and record observable behavior.
-4. Add the browser smoke suite as a standalone safety-net change.
-5. Add deterministic state fingerprints and representative save fixtures.
-6. Verify both API and browser behavior from a clean environment reproducing the current
+1. Record an accept, modify, or reject disposition for every preflight advisory handoff.
+2. Inventory source, generated output, archives, assets, path discovery, and secrets.
+3. Run the complete existing acceptance suite in the documented command order and record
+   the exact commit and post-run generated-file changes.
+4. Run the current player view in a browser and record observable behavior.
+5. Add the browser smoke suite as a standalone safety-net change.
+6. Add deterministic state and view fingerprints, representative save fixtures, stable
+   API shape fixtures, content hashes, generated-world verification, and the command
+   coverage matrix.
+7. Verify both API and browser behavior from a clean environment reproducing the current
    two-folder layout.
-7. Commit and tag `known-green/original`.
-8. Create the integration branch and worker worktrees from that commit.
+8. Commit and tag `known-green/original`.
+9. Create the integration branch and worker worktrees from that commit.
 
 No structural migration begins until this phase is green.
 
 ### Phase B — consolidate without deleting the fallback
 
 1. Import the MapLab recovery tree into the main repository at the approved path.
-2. Initial target path is `web/chart/`, pending the recorded path decision.
+2. The approved active frontend path is `web/chart/`.
 3. Preserve frontend bytes and relative layout during the import.
-4. Update the host to use only the in-repository chart path.
-5. Update world generation to use the in-repository data and chart paths.
-6. Remove runtime sibling discovery.
-7. Run build, unit, deterministic, API, static-asset, and browser checks.
-8. Clone the integration commit into a separate location with no sibling MapLab folder.
-9. Launch and verify there.
-10. Commit and tag `known-green/consolidated`.
+4. Move or copy the generator into the repository and prove generation is deterministic
+   from the in-repository `data/` path.
+5. In one bounded path-switch transaction, update the host to serve only `web/chart/`,
+   update `play.ps1::Update-ChartData` to use only the in-repository generator, and remove
+   `Program.cs::LocateMapLab` plus every sibling fallback.
+6. Make missing or failed required generation fatal and add a provenance assertion proving
+   `/chart/` came from the consolidated copy.
+7. Do not accept a mid-phase manual playtest unless its served-source provenance is
+   recorded; the untouched sibling folder otherwise makes the result ambiguous.
+8. Run build, full Core tests, deterministic, save, API, static-asset, and browser checks.
+9. Clone the integration commit into a separate location with no sibling MapLab folder or
+   unrelated ancestor `data/` directory.
+10. Launch, regenerate `world.js`, and verify there using a full-history clone.
+11. Commit and tag `known-green/consolidated`.
 
 The original `D:\FrontMission-MapLab` directory remains untouched in this phase.
 
@@ -251,14 +300,18 @@ For every item:
 
 - Move code without semantic cleanup.
 - Preserve public entrypoints.
-- Run relevant tests.
+- Run the full, unfiltered `MechaTrader.Core.Tests` project after each item.
 - Compare deterministic fingerprints and save fixtures.
+- After items 2, 4, and 5, also run the browser smoke and API-shape checks because these
+  files form the frontend wire contract.
 - Integrate only while green.
 
 End with the complete acceptance and browser suites, then tag
 `known-green/backend-split`.
 
 ### Phase D — mechanical frontend decomposition
+
+Phase D depends on Phase C's verified checkpoint, not only on Phase B.
 
 Tentative order:
 
@@ -295,8 +348,11 @@ End with the complete acceptance and browser suites, then tag
 6. Move durable reasoning into architecture decision records.
 7. Stop automatically loading histories and large specifications for unrelated tasks.
 8. Add `Fast`, feature-specific, and `Full` verification entrypoints.
-9. Ensure full checks remain mandatory at integration checkpoints.
-10. Tag `known-green/ai-workflow` after verification.
+9. Define `Full` as a strict superset of the original seven `check.ps1` gates plus the
+   browser, deterministic, save, API-shape, generated-world, asset, and clean-path checks.
+10. Ensure `Full` remains mandatory at integration checkpoints; `Fast` and feature checks
+   are iteration aids and cannot certify integration.
+11. Tag `known-green/ai-workflow` after verification.
 
 ### Phase F — cleanup and retirement
 
