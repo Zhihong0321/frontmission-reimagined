@@ -179,6 +179,17 @@ No jobs are active.
 |---|---|---|---|---|---|
 | None | — | — | — | — | — |
 
+## Ready manual advisory jobs
+
+These jobs are read-only, require no worktree, and may run concurrently. Their results do
+not authorize migration work.
+
+| Job | Worker | Physical task packet | Status |
+|---|---|---|---|
+| `PA-CURSOR-01` | Cursor Grok 4.6 | `coordination/tasks/PA-CURSOR-01-browser-safety.md` | `READY` |
+| `PA-CLAUDE-01` | Claude Desktop | `coordination/tasks/PA-CLAUDE-01-adversarial-plan-review.md` | `READY` |
+| `PA-KIMI-01` | Kimi CLI `cmkey/kimi-k3` | `coordination/tasks/PA-KIMI-01-baseline-reproducibility.md` | `READY` |
+
 ## Integration queue
 
 The queue is empty.
@@ -241,6 +252,7 @@ At the beginning of every coordinating session:
 - The explicitly authorized version-control backup job is complete and remotely verified.
 - No worker has been spawned.
 - No external coding CLI has been launched against the repository.
+- Three user-relayed read-only preflight task packets are ready on disk.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
