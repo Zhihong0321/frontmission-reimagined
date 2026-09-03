@@ -9,7 +9,7 @@ live state; the plan owns process. Chat is not a source of truth.
 
 ## Control
 
-- Overall status: `PLANNED`
+- Overall status: `PHASE_A_ACTIVE`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
@@ -27,7 +27,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - Integration branch: `UNSET`
 - Last full verification: `NOT_RUN`
 - Preflight advisory synthesis: `COMPLETE`
-- Execution authorization after synthesis: `NOT_RECORDED`
+- Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
 ## Disk-first policy
 
@@ -91,11 +91,11 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `IDLE` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PHASE_A` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
-| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `UNSPAWNED` |
-| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `UNSPAWNED` |
+| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `ASSIGNED_PA-LUNA-01` |
+| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `ASSIGNED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
 | `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
@@ -168,7 +168,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
 | `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
-| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `PLANNED` |
+| `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `ACTIVE` |
 | `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
 | `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
@@ -181,11 +181,15 @@ part of this plan.
 
 ## Active jobs and path ownership
 
-No jobs are active.
+Both Phase A assignments transitioned `PLANNED -> READY -> ACTIVE` on 2026-09-03 after
+the user authorized Phase A. Their product green base is the coordination-only commit
+`7f8897c15f5ab3b17dbe522e0e474af046a766e9`; the worker branches begin at the subsequent
+assignment commit containing this ledger state and their immutable task packets.
 
-| Job | Worker | Worktree | Branch | Write scope | Started |
-|---|---|---|---|---|---|
-| None | — | — | — | — | — |
+| Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
+|---|---|---|---|---|---|---|---|
+| `PA-LUNA-01` | `ACTIVE` | `LUNA-C` (`gpt-5.6-luna`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-LUNA-01` | `codex/pa-luna-01-browser-smoke` | `tests/browser/**`; `coordination/handoffs/PA-LUNA-01.md` | 2026-09-03 |
+| `PA-AGY-01` | `ACTIVE` | `AGY` (`gemini-3.8-flash-high`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-AGY-01` | `codex/pa-agy-01-inventory` | `coordination/reports/PA-AGY-01-inventory.md`; `coordination/handoffs/PA-AGY-01.md`; `coordination/runs/PA-AGY-01/**` | 2026-09-03 |
 
 ## Completed manual advisory jobs
 
@@ -201,13 +205,13 @@ dispositioned; they do not by themselves authorize migration work.
 ## Deferred coordinator-managed jobs
 
 These workers were reserved until all three manual advisory handoffs were synthesized.
-That evidence gate is now satisfied. They remain `PLANNED` and unlaunched because Phase A
-execution has not yet been authorized; no task packet or write scope has been issued.
+That evidence gate is satisfied and the user has now authorized Phase A only. The jobs
+below have moved to the active-jobs table with committed packets and exclusive scopes.
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement one approved, bounded Phase A safety-net component | Execution authorized; physical packet and exact exclusive scope recorded | `PLANNED` |
-| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Execution authorized; physical packet, output schema, and no-delete boundary recorded | `PLANNED` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Moved to active jobs | `ACTIVE` |
+| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Moved to active jobs | `ACTIVE` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
 
@@ -254,6 +258,8 @@ No migration verification has run.
 | `D-019` | 2026-09-03 | Make Phase D depend on verified Phase C and define `Full` verification as a strict superset | Disjoint files still share an implicit JSON contract; narrow checks cannot certify integration | `ACCEPTED` |
 | `D-020` | 2026-09-03 | Keep active finalized art in normal Git during this migration and defer storage optimization | The art is already remotely recoverable; LFS/history migration would invalidate recovery assumptions and is a separate project | `ACCEPTED` |
 | `D-021` | 2026-09-03 | Reserve AGY `gemini-3.8-flash-high` for the no-delete inventory job | This matches the requested low-cost worker allocation and the task is repetitive, bounded analysis | `ACCEPTED` |
+| `D-022` | 2026-09-03 | Authorize execution of Phase A only | The user explicitly started Phase A after plan v3 synthesis; phases B-F, consolidation, refactoring, moves, and deletion remain unauthorized | `ACCEPTED` |
+| `D-023` | 2026-09-03 | Assign `PA-LUNA-01` the standalone browser smoke suite and `PA-AGY-01` the no-delete inventory report | These are approved Phase A gates with non-overlapping write scopes and independent outputs | `ACCEPTED` |
 
 ## Open decisions
 
@@ -283,10 +289,10 @@ At the beginning of every coordinating session:
 - No implementation worker has been spawned.
 - The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
   physical handoffs were reviewed, accepted or accepted with modifications, and retained.
-- Plan version 3 contains the resulting safety changes. Phase A remains `PLANNED` because
-  execution authorization after synthesis is not yet recorded.
-- Codex Luna High and AGY Gemini Flash High are eligible for precisely scoped Phase A task
-  packets after authorization, but remain unlaunched.
+- Plan version 3 contains the resulting safety changes. Phase A only is authorized and is
+  `ACTIVE`; phases B-F remain unauthorized and gated.
+- `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
+  their immutable physical packets are committed under `coordination/tasks/` before launch.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
