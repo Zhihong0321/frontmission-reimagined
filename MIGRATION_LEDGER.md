@@ -94,7 +94,7 @@ Only the coordinator changes job status.
 | `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PHASE_A` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
-| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `ASSIGNED_PA-LUNA-01` |
+| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `COMPLETED_PA-LUNA-01` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `ASSIGNED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
@@ -192,7 +192,6 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
-| `PA-LUNA-01` | `ACTIVE` | `LUNA-C` (`gpt-5.6-luna`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-LUNA-01` | `codex/pa-luna-01-browser-smoke` | `tests/browser/**`; `coordination/handoffs/PA-LUNA-01.md` | 2026-09-03 |
 | `PA-AGY-01` | `ACTIVE` | `AGY` (`gemini-3.8-flash-high`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-AGY-01` | `codex/pa-agy-01-inventory` | `coordination/reports/PA-AGY-01-inventory.md`; `coordination/handoffs/PA-AGY-01.md`; `coordination/runs/PA-AGY-01/**` | 2026-09-03 |
 
 ## Completed manual advisory jobs
@@ -214,18 +213,16 @@ below have moved to the active-jobs table with committed packets and exclusive s
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Moved to active jobs | `ACTIVE` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Commit `633c75e5142888d79df97116fb5d31c43db5d7e3`; handoff received | `REVIEW` |
 | `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Moved to active jobs | `ACTIVE` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
 
 ## Integration queue
 
-The queue is empty.
-
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
-| — | — | — | — | — | — |
+| 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` | `master` during Phase A | Scope/diff review; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `PENDING_REVIEW` |
 
 ## Verification ledger
 
