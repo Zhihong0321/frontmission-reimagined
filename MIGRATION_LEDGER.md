@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: existing seven-gate `check.ps1` `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673`; browser run passed but its asset allowlist is `UNDER_REPAIR`
+- Last full verification: existing seven-gate `check.ps1` `PASS` at `30b2b6942828946f23f48c63700d0d8c0f87f673`; browser safety job `BLOCKED` and its prior integration is pending rollback
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -94,7 +94,7 @@ Only the coordinator changes job status.
 | `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PHASE_A` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
-| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `REPAIR_2_PA-LUNA-01` |
+| `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `VERIFIED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
@@ -213,7 +213,7 @@ below have moved to the active-jobs table with committed packets and exclusive s
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
-| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Worker commits `633c75e` + `8401013`; integrated as `1fc5206` + `30b2b69`; repair 2 required before final verification | `REVIEW` |
+| `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Diagnostic branch pushed at `f94f2e05267782b2f92e18576a93480d6cb24f26`; prior integration `1fc5206` + `30b2b69` scheduled for rollback | `BLOCKED` |
 | `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Report integrated as `081f42c`; secrets-scanned managed log integrated as `47ee7ce` | `VERIFIED` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
@@ -222,7 +222,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
-| 1 | `PA-LUNA-01` | worker `633c75e` + `8401013`; integrated `1fc5206` + `30b2b69`; pending repair 2 | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; narrowly allow only proven optional missing art; probe manifest-declared runtime sprites; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check; full existing `check.ps1` | `REPAIR_2_ACTIVE` — post-integration audit found `/art/gen/**` was blanket-exempted, which could hide deletion of a manifest-declared sprite |
+| 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected prior integration `1fc5206` + `30b2b69` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLBACK_REQUIRED` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 
 ## Verification ledger
@@ -269,6 +269,7 @@ No migration verification has run.
 | `D-024` | 2026-09-03 | Accept and integrate `PA-AGY-01` with coordinator-normalized commit evidence | The report and handoff are in scope and useful; the handoff's self-reported result hash predates its final worker commit and its "direct ancestor" wording is imprecise, so the ledger records authoritative worker/integration hashes | `ACCEPTED_WITH_MODIFICATIONS` |
 | `D-025` | 2026-09-04 | Accept `PA-LUNA-01` after one focused same-scope repair | The initial suite could miss the chart's silently swallowed worker tile error; the follow-up observes production `ready`, successful `tile`, and worker error messages, and both targeted browser and full existing acceptance checks are green | `ACCEPTED` |
 | `D-026` | 2026-09-04 | Reopen `PA-LUNA-01` for a second and final focused repair before Phase A advances | The integrated suite blanket-exempts every `/chart/art/gen/**` failure even though those are manifest-declared runtime sprites; only the two proven current missing fallbacks (`art/tex-deep.png`, `art/truck.png`) may be tolerated, and manifest runtime files must be probed without weakening other 404 checks | `ACCEPTED` |
+| `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
 
 ## Open decisions
 
@@ -311,8 +312,10 @@ At the beginning of every coordinating session:
   facts without authorizing cleanup or Phase B.
 - `PA-LUNA-01` integration commits are pushed and its browser/full checks passed at
   `30b2b69`, but a post-integration scope audit invalidated final verification because
-  manifest sprite failures were too broadly tolerated. Repair 2 is active; no dependent
-  Phase A implementation may start until it is green or blocked under the stop-loss rule.
+  manifest sprite failures were too broadly tolerated. Repair 2 implemented the strict
+  asset checks but exposed a pre-existing uncaught zoom/canvas error, so the job is
+  `BLOCKED`; the diagnostic branch is pushed and the incomplete integration is queued for
+  rollback before any dependent Phase A implementation.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
