@@ -1,0 +1,272 @@
+{
+  "styleVersion": 2,
+  "style": {
+    "view": "Top-down orthographic view looking straight down, map view, no perspective, not isometric.",
+    "medium": "Stylized hand-painted strategy-game map asset, painterly but clean, soft edges, readable silhouette, not photoreal, not 3D render.",
+    "world": "Post-apocalyptic wasteland after a machine invasion: ash, scorch, corrosion, frost, permanent overcast.",
+    "palette": "Cold desaturated palette: blue-grey, slate, charcoal, wet stone, bone, and dark sea-green for anything living. Low saturation, no warm browns, no orange, no gold.",
+    "light": "Cold overcast light from directly above, flat and blue-tinted, no long cast shadow, at most a faint contact shadow.",
+    "isolation": "ONE object only, centered, filling about 80% of the frame, no ground plane, no other objects, no people, no text, no watermark, no frame."
+  },
+  "backgrounds": {
+    "chroma": "The background is a perfectly flat, solid, pure green #00FF00 with no gradient and no texture.",
+    "transparent": ""
+  },
+  "categories": {
+    "tree": {
+      "label": "Trees",
+      "biomes": [
+        "forest"
+      ],
+      "footprintKm": 14,
+      "spriteShare": 1.0,
+      "stepKm": 9,
+      "weights": {
+        "dead-oak": 3,
+        "dead-pine": 3,
+        "black-conifer": 3,
+        "scorched-broadleaf": 2,
+        "scrub-clump": 2,
+        "fallen-trunk": 1,
+        "burnt-stump-field": 2,
+        "dead-orchard-rows": 1,
+        "living-pine-stand": 6,
+        "leafy-broadleaf": 5,
+        "green-thicket": 4,
+        "mixed-copse": 4
+      },
+      "types": {
+        "dead-oak": "a single dead leafless broadleaf tree seen from above, bare grey branches radiating from a dark trunk",
+        "dead-pine": "a single dead conifer seen from above, sparse dark needles, bare lower branches, charcoal trunk",
+        "scorched-broadleaf": "a single fire-scorched broadleaf tree seen from above, half the canopy burnt black, the rest dead brown leaves",
+        "black-conifer": "a single living dark conifer seen from above, near-black green needles, tight round crown",
+        "scrub-clump": "a low clump of dead scrub bushes seen from above, tangled grey twigs, no trunk",
+        "fallen-trunk": "a fallen dead tree trunk seen from above, broken roots on one end, bark peeling",
+        "burnt-stump-field": "a field of burnt tree stumps seen from above, charred black rings on ash ground, no canopy left, one loose cluster",
+        "dead-orchard-rows": "a block of dead orchard trees seen from above, thick bare grey crowns almost touching in straight rows, dark trunks, the rows running horizontally from left to right, bare dry earth between them",
+        "living-pine-stand": "a stand of living pine trees seen from above, dense dark green crowns packed tightly together into one clump, deep shade between them",
+        "leafy-broadleaf": "a single broadleaf tree in full leaf seen from above, a broad round canopy of deep green leaves, dense and unbroken, dark centre",
+        "green-thicket": "a dense thicket of living scrub and young saplings seen from above, a tangled leafy green mass, irregular bushy outline",
+        "mixed-copse": "a tight copse of living trees seen from above, five or six green crowns of different sizes touching each other, one silhouette"
+      }
+    },
+    "rock": {
+      "label": "Rocks",
+      "biomes": [
+        "hill"
+      ],
+      "footprintKm": 12,
+      "spriteShare": 0.25,
+      "stepKm": 17,
+      "weights": {
+        "outcrop": 3,
+        "rock-cluster": 2,
+        "boulder": 1,
+        "scree": 2,
+        "slab": 1,
+        "boulder-field": 2
+      },
+      "types": {
+        "boulder": "a single large grey boulder seen from above, cracked faceted top, dust at the base",
+        "rock-cluster": "a tight cluster of four angular grey rocks seen from above, one silhouette",
+        "scree": "a scattered pile of small broken stones seen from above, one compact silhouette",
+        "slab": "a broken flat stone slab tilted out of the ground seen from above, sharp fractured edges, deep cracks splitting the face, pale dust in the cracks",
+        "outcrop": "a rocky outcrop breaking through ash-covered ground seen from above, jagged, dark cracks",
+        "boulder-field": "a scattered field of grey boulders seen from above, six or seven angular blocks of different sizes, pale dust between them"
+      }
+    },
+    "mountain": {
+      "label": "Mountain parts",
+      "biomes": [
+        "mountain"
+      ],
+      "footprintKm": 40,
+      "spriteShare": 0.9,
+      "stepKm": 20,
+      "weights": {
+        "ridge-segment": 5,
+        "twin-peaks": 2,
+        "foothill": 2,
+        "crag": 1,
+        "snow-peak": 1,
+        "glacier-tongue": 1,
+        "ridge-corner": 2,
+        "pass-notch": 2
+      },
+      "types": {
+        "ridge-segment": "a segment of a mountain ridge seen from above, a dark slate crest line with lighter sunlit flanks, elongated left to right, combinable with other segments",
+        "snow-peak": "a single snow-capped mountain peak seen from above, white snow on the summit, dark slate flanks, roughly round",
+        "twin-peaks": "two mountain peaks joined by a saddle seen from above, snow on both summits, dark slate flanks",
+        "foothill": "a rounded barren foothill seen from above, ash-grey slopes, gentle ridges, no snow",
+        "crag": "a jagged rocky crag seen from above, sharp broken spires, no snow",
+        "glacier-tongue": "a small dirty glacier tongue seen from above, a pale blue-grey ice lobe with curved crevasse lines across it, dark moraine rubble along both edges",
+        "ridge-corner": "an L-shaped bend in a mountain ridge seen from above, the dark slate crest line turning a right angle, lighter flanks on the outside of the bend",
+        "pass-notch": "a mountain pass seen from above, a low gap between two dark rock shoulders, pale gravel floor running through the notch"
+      }
+    },
+    "ground": {
+      "label": "Ground features",
+      "biomes": [
+        "plain",
+        "desert",
+        "tundra",
+        "swamp"
+      ],
+      "footprintKm": 16,
+      "spriteShare": 0.35,
+      "stepKm": 17,
+      "types": {
+        "crater": "a single impact crater seen from above, raised rim, dark scorched floor, ejecta rays fading out",
+        "cracked-earth": "a patch of cracked dry earth seen from above, polygonal cracks, irregular outline that fades at the edge",
+        "marsh-pool": "a stagnant marsh pool seen from above, oily dark water with grey-green scum, reeds along one side",
+        "salt-pan": "a patch of bleached white salt pan seen from above, irregular outline fading into grey",
+        "ash-dune": "a low drift of grey ash seen from above, soft wind ripples, irregular outline fading out",
+        "frost-patch": "a patch of frost-cracked frozen ground seen from above, pale ice veins on dark soil, fading edge",
+        "ash-drift-long": "a long wind-blown drift of grey ash seen from above, lying horizontally across the frame from left to right, parallel streaks all running the same way, feathered ends fading out",
+        "oil-spill": "a spreading oil spill seen from above, a black slick with a faint iridescent sheen at the rim, soaked into pale cracked ground",
+        "bomb-field": "a field of small bomb craters seen from above, a dozen overlapping pits with raised pale rims, scorched ground between them"
+      },
+      "weights": {
+        "ash-drift-long": 2,
+        "oil-spill": 1,
+        "bomb-field": 2
+      }
+    },
+    "ruin": {
+      "label": "Ruins",
+      "biomes": [],
+      "footprintKm": 18,
+      "types": {
+        "collapsed-block": "the ruin of a collapsed apartment block seen from above, broken concrete slabs, exposed rooms, rubble spilling out",
+        "burnt-factory": "a burnt-out factory hall seen from above, collapsed roof showing steel ribs, one standing chimney",
+        "old-town": "a dense cluster of ruined old-town buildings seen from above, collapsed roofs, one intact church tower, rubble streets",
+        "wrecked-overpass": "a wrecked highway overpass seen from above, broken deck, fallen pillars, cracked asphalt",
+        "shattered-tower": "the stump of a shattered skyscraper seen from above, jagged top, debris field around it",
+        "silo-cluster": "a cluster of rusted industrial silos seen from above, one collapsed, rust streaks",
+        "village-crossroads": "a ruined village at a crossroads seen from above, two cracked roads meeting, collapsed cottages along both verges, one burnt barn",
+        "rail-yard": "an abandoned rail yard seen from above, parallel rusted tracks, derailed wagons scattered off the rails, a collapsed engine shed",
+        "refinery-ruin": "a wrecked oil refinery seen from above, toppled distillation towers, ruptured round storage tanks, black scorch across the yard",
+        "bridge-stub": "the broken stub of a road bridge seen from above, the deck sheared off mid-span, fallen concrete piers in the gap below"
+      },
+      "weights": {
+        "village-crossroads": 3,
+        "rail-yard": 2,
+        "refinery-ruin": 2,
+        "bridge-stub": 1
+      }
+    },
+    "wreck": {
+      "label": "Wrecks and machines",
+      "biomes": [
+        "plain"
+      ],
+      "footprintKm": 10,
+      "spriteShare": 0.12,
+      "stepKm": 17,
+      "weights": {
+        "truck-wreck": 3,
+        "tank-wreck": 2,
+        "pylon-fallen": 2,
+        "downed-aircraft": 1,
+        "machine-hulk": 1,
+        "convoy-wreck-line": 2,
+        "machine-nest": 1
+      },
+      "types": {
+        "truck-wreck": "a burnt-out cargo truck wreck seen from above, no wheels, rust hull, scorched ground beneath",
+        "tank-wreck": "a destroyed battle tank seen from above, turret blown off and lying beside it, rust",
+        "downed-aircraft": "a crashed transport aircraft seen from above, broken wing, fuselage split, scorch trail",
+        "machine-hulk": "the hulk of a dead alien war machine seen from above, insect-like armoured shell, dull black metal, one broken leg",
+        "pylon-fallen": "a fallen electrical pylon seen from above, bent lattice steel, wires trailing",
+        "convoy-wreck-line": "three burnt-out cargo trucks seen from above lined up nose to tail in a horizontal row from left to right, rust hulls, scorched ground under them",
+        "machine-nest": "an alien machine nest seen from above, a black chitinous dome of fused metal plates, spines around the rim, bare dead ground in a circle"
+      }
+    },
+    "texture": {
+      "label": "Ground textures",
+      "kind": "texture",
+      "biomes": [],
+      "footprintKm": 0,
+      "style": {
+        "view": "Top-down orthographic view looking straight down at flat ground, map view, no perspective, no horizon.",
+        "medium": "Seamless tileable ground texture for a strategy-game map, even detail across the whole frame, no focal object, no vignette.",
+        "world": "Post-apocalyptic wasteland after a machine invasion, under permanent overcast.",
+        "palette": "Cold desaturated blue-grey tones, low contrast, low saturation, no warm browns.",
+        "light": "Flat cold overcast light from directly above, no directional shadows.",
+        "isolation": "Fill the entire frame edge to edge with the surface, no objects, no text, no watermark, no border."
+      },
+      "types": {
+        "plain": "cracked ash-covered ground, fine grey dust with faint scorch marks",
+        "hill": "broken rocky ground with small stones and gravel in grey-brown",
+        "mountain": "dark slate scree and rock rubble, sharp fragments",
+        "forest": "forest floor of dead leaves, fallen twigs and grey moss",
+        "swamp": "oily marsh mud with pale scum patches and reed stubble",
+        "desert": "bleached salt flat with fine cracks and sand ripples",
+        "tundra": "frozen ash with frost crystals and pale ice veins",
+        "water": "dark still water with a faint oil sheen and tiny ripples"
+      }
+    },
+    "unit": {
+      "label": "Player units",
+      "biomes": [],
+      "footprintKm": 8,
+      "types": {
+        "convoy-truck": "a single armoured cargo truck seen from directly above, facing right, steel hull, canvas-covered bed, amber roof beacon, mud on the wheels",
+        "convoy-hauler": "a heavy six-wheel hauler seen from directly above, facing right, open ore bed, steel plates",
+        "convoy-runner": "a light fast four-wheel runner truck seen from directly above, facing right, low hull, small cargo box",
+        "mule": "a mid-size armoured cargo hauler truck seen from directly above, facing right, six wheels, canvas-covered bed, amber roof beacon",
+        "ox": "a very large heavy freighter truck seen from directly above, facing right, eight wheels, long armoured container bed, twin exhaust stacks",
+        "kite": "a light fast runner truck seen from directly above, facing right, four wheels, low narrow hull, small cargo box, wedge nose",
+        "digger": "a tracked excavator machine seen from directly above, facing right, two heavy tracks, a folded digging arm along the hull, an ore bucket"
+      },
+      "weights": {
+        "mule": 3,
+        "ox": 2,
+        "kite": 2,
+        "digger": 1
+      }
+    },
+    "copse": {
+      "label": "Copses and scrub",
+      "biomes": [
+        "hill",
+        "plain",
+        "swamp"
+      ],
+      "footprintKm": 13,
+      "spriteShare": 0.35,
+      "stepKm": 17,
+      "weights": {
+        "roadside-copse": 3,
+        "lone-tree": 2,
+        "reed-bed": 2,
+        "hedgerow": 2
+      },
+      "types": {
+        "roadside-copse": "a small clump of living trees seen from above, six green crowns close together, dry grass around the base",
+        "lone-tree": "a single living tree standing alone seen from above, one broad green canopy, bare ground around it",
+        "reed-bed": "a patch of tall green reeds seen from above, dense fine stems, dark standing water showing through in places",
+        "hedgerow": "an overgrown hedgerow seen from above, a thick continuous line of green scrub running horizontally from left to right, ragged edges"
+      }
+    },
+    "infra": {
+      "label": "Standing structures",
+      "biomes": [
+        "plain",
+        "desert",
+        "tundra"
+      ],
+      "footprintKm": 18,
+      "spriteShare": 0.35,
+      "stepKm": 17,
+      "weights": {
+        "solar-farm": 2,
+        "radio-tower": 2
+      },
+      "types": {
+        "solar-farm": "a solar panel farm seen from directly above, neat rows of dark blue-black rectangular panel arrays on pale gravel, several panels cracked and dulled by grey ash",
+        "radio-tower": "a tall steel lattice radio mast seen from directly above, the square lattice foot at the centre, three guy wires running out to small concrete anchors, a low equipment hut beside it"
+      }
+    }
+  }
+}

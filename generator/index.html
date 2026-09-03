@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Map Asset Generator</title>
+<style>
+  :root { --bg: #0b0c0e; --panel: #131518; --line: rgba(255,255,255,0.1); --text: #cfd2d6; --dim: #7d8288; --amber: #e0a030; --alert: #d0553a; --ok: #7fb26b; --mono: "Cascadia Mono", Consolas, "Courier New", monospace; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 12px var(--mono); height: 100vh; display: grid; grid-template-rows: 44px 1fr; }
+  header { display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header b { letter-spacing: 0.2em; color: #eef0f2; font-weight: normal; }
+  header b i { color: var(--amber); font-style: normal; }
+  header .st { color: var(--dim); }
+  header .st.bad { color: var(--alert); }
+  main { display: grid; grid-template-columns: 380px 1fr; min-height: 0; }
+  aside { border-right: 1px solid var(--line); overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  section { border: 1px solid var(--line); border-radius: 4px; padding: 10px; background: var(--panel); }
+  h3 { margin: 0 0 8px; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); font-weight: normal; }
+  label { display: block; color: var(--dim); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin: 6px 0 2px; }
+  textarea, input, select { width: 100%; background: #0e1013; color: var(--text); border: 1px solid var(--line); border-radius: 3px; font: 11px var(--mono); padding: 5px 6px; }
+  textarea { resize: vertical; min-height: 36px; line-height: 1.35; }
+  button { font: 11px var(--mono); letter-spacing: 0.06em; background: #1a1d21; color: var(--text); border: 1px solid var(--line); border-radius: 3px; padding: 5px 9px; cursor: pointer; }
+  button:hover { border-color: rgba(255,255,255,0.3); }
+  button.primary { background: var(--amber); color: #15120a; border-color: var(--amber); font-weight: bold; }
+  button.danger:hover { border-color: var(--alert); color: var(--alert); }
+  button.on { background: var(--ok); color: #101; border-color: var(--ok); }
+  .row { display: flex; gap: 6px; align-items: center; }
+  .row > * { flex: 1; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .tabs button.on { background: var(--amber); color: #15120a; border-color: var(--amber); }
+  .type { border-top: 1px solid var(--line); padding: 8px 0; }
+  .type .name { display: flex; justify-content: space-between; align-items: center; color: #eef0f2; margin-bottom: 4px; }
+  .type textarea { min-height: 44px; }
+  .type .row { margin-top: 4px; }
+  .type .row button { flex: 0 0 auto; }
+  .type .row input { flex: 0 0 70px; }
+  #gallery { overflow: auto; padding: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .card { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); overflow: hidden; }
+  .card.approved { border-color: var(--ok); }
+  .card .img { position: relative; height: 200px; background-color: #6a665c; background-image: linear-gradient(45deg, #5f5b52 25%, transparent 25%, transparent 75%, #5f5b52 75%), linear-gradient(45deg, #5f5b52 25%, transparent 25%, transparent 75%, #5f5b52 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; display: flex; align-items: center; justify-content: center; }
+  .card .img img { max-width: 190px; max-height: 190px; }
+  .card .img .scale { position: absolute; right: 6px; bottom: 6px; background: rgba(10,11,13,0.8); padding: 3px 5px; border-radius: 3px; display: flex; gap: 6px; align-items: flex-end; }
+  .card .img .scale img { image-rendering: auto; }
+  .card .img .scale small { color: var(--dim); font-size: 9px; }
+  .card .meta { padding: 8px; }
+  .card .meta .t { display: flex; justify-content: space-between; color: #eef0f2; }
+  .card .meta .t small { color: var(--dim); }
+  .card .meta .row { margin-top: 6px; }
+  .card .meta input { width: 60px; flex: 0 0 60px; }
+  .card .meta .p { color: var(--dim); font-size: 10px; margin-top: 6px; max-height: 0; overflow: hidden; transition: max-height .2s; white-space: pre-wrap; }
+  .card.open .meta .p { max-height: 400px; }
+  .card.err { border-color: var(--alert); }
+  .card.err .img { background: #2a1512; color: var(--alert); padding: 10px; font-size: 11px; }
+  .card.pending .img::after { content: 'generating…'; color: var(--amber); letter-spacing: 0.2em; animation: pulse 1s infinite alternate; }
+  @keyframes pulse { from { opacity: .4 } to { opacity: 1 } }
+  #filters { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+  #filters select { width: auto; }
+  #prompt-preview { min-height: 120px; font-size: 10px; color: #b8bcc2; }
+  .hint { color: var(--dim); font-size: 10px; line-height: 1.4; }
+</style>
+</head>
+<body>
+<header>
+  <b>MAP <i>ASSET</i> GENERATOR</b>
+  <span class="st" id="status">…</span>
+  <span style="flex:1"></span>
+  <span class="hint">approved sprites → art/manifest.js → </span><a href="/chart.html" target="_blank" style="color:var(--amber)">open the chart ↗</a>
+</header>
+<main>
+  <aside>
+    <section>
+      <h3>Style (locked block, every prompt starts with it)</h3>
+      <div id="style-fields"></div>
+      <div class="row" style="margin-top:8px">
+        <div><label>background</label><select id="bg"><option value="chroma">chroma green → keyed</option><option value="transparent">API transparent</option></select></div>
+        <div><label>quality</label><select id="quality"><option value="low">low (fast, cheap)</option><option value="medium">medium</option><option value="high">high</option></select></div>
+        <div><label>variants</label><input id="n" type="number" min="1" max="8" value="2"></div>
+      </div>
+      <div class="row" style="margin-top:8px"><button id="save-style">save style</button></div>
+    </section>
+    <section>
+      <h3>Catalog</h3>
+      <div class="tabs" id="tabs"></div>
+      <div class="row"><button id="gen-all" class="primary">generate every type in this category</button></div>
+      <div id="types"></div>
+    </section>
+    <section>
+      <h3>Prompt preview (edit, then generate with it)</h3>
+      <textarea id="prompt-preview" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:6px"><button id="gen-prompt">generate with this prompt</button></div>
+      <p class="hint">Tip: keep the style block untouched between assets; change only the SUBJECT line. That is what keeps the set consistent.</p>
+    </section>
+  </aside>
+  <div id="gallery">
+    <div id="filters">
+      <select id="f-cat"><option value="">all categories</option></select>
+      <select id="f-state"><option value="">all</option><option value="approved">approved</option><option value="pending">not approved</option></select>
+      <button id="refresh">refresh</button>
+      <button id="rebuild">rebuild manifest</button>
+      <button id="regrade" title="rebuild every 256px sprite from its full image with the current colour grade">re-grade sprites</button>
+      <span class="hint" id="count"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+let catalog = null, current = null, previewFor = null;
+const api = async (path, body) => { const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}); return r.json(); };
+
+async function status() { const s = await api('/api/status'); $('status').textContent = s.key ? `key ok · ${s.count} generated · ${s.approved} approved` : 'NO KEY: ' + s.error; $('status').className = 'st' + (s.key ? '' : ' bad'); }
+
+function styleFromForm() { const st = {}; for (const k of Object.keys(catalog.style)) st[k] = $('st-' + k).value; return st; }
+function renderStyle() {
+  const box = $('style-fields'); box.innerHTML = '';
+  for (const [k, v] of Object.entries(catalog.style)) { const l = document.createElement('label'); l.textContent = k; const t = document.createElement('textarea'); t.id = 'st-' + k; t.value = v; box.appendChild(l); box.appendChild(t); }
+}
+function renderTabs() {
+  const tabs = $('tabs'); tabs.innerHTML = ''; const fc = $('f-cat');
+  for (const [id, c] of Object.entries(catalog.categories)) {
+    const b = document.createElement('button'); b.textContent = c.label; b.className = id === current ? 'on' : ''; b.onclick = () => { current = id; renderTabs(); renderTypes(); }; tabs.appendChild(b);
+    if (![...fc.options].some(o => o.value === id)) { const o = document.createElement('option'); o.value = id; o.textContent = c.label; fc.appendChild(o); }
+  }
+}
+function renderTypes() {
+  const c = catalog.categories[current]; const box = $('types'); box.innerHTML = '';
+  const head = document.createElement('div'); head.className = 'row'; head.innerHTML = `<div><label>biomes</label><input id="cat-biomes" value="${c.biomes.join(',')}"></div><div><label>footprint km</label><input id="cat-fp" type="number" value="${c.footprintKm}"></div>`; box.appendChild(head);
+  $('cat-biomes').onchange = (e) => { c.biomes = e.target.value.split(',').map(s => s.trim()).filter(Boolean); saveCatalog(); };
+  $('cat-fp').onchange = (e) => { c.footprintKm = +e.target.value; saveCatalog(); };
+  for (const [tid, subject] of Object.entries(c.types)) {
+    const d = document.createElement('div'); d.className = 'type';
+    d.innerHTML = `<div class="name"><span>${tid}</span><small class="hint">${current}</small></div><textarea spellcheck="false">${subject}</textarea><div class="row"><button data-prev>preview prompt</button><button data-gen class="primary">generate</button><button data-del class="danger">×</button></div>`;
+    const ta = d.querySelector('textarea'); ta.onchange = () => { c.types[tid] = ta.value; saveCatalog(); };
+    d.querySelector('[data-prev]').onclick = () => preview(current, tid, ta.value);
+    d.querySelector('[data-gen]').onclick = () => generate(current, tid, ta.value);
+    d.querySelector('[data-del]').onclick = () => { if (confirm('remove type ' + tid + ' from the catalog?')) { delete c.types[tid]; saveCatalog(); renderTypes(); } };
+    box.appendChild(d);
+  }
+  const add = document.createElement('div'); add.className = 'type'; add.innerHTML = `<div class="row"><input id="new-id" placeholder="new-type-id"><button id="new-add">add type</button></div>`; box.appendChild(add);
+  $('new-add').onclick = () => { const id = $('new-id').value.trim(); if (!id) return; c.types[id] = 'a single … seen from above'; saveCatalog(); renderTypes(); };
+}
+async function saveCatalog() { catalog.style = styleFromForm(); await api('/api/catalog', catalog); }
+async function preview(cat, tid, subject) { previewFor = { cat, tid, subject }; const r = await api('/api/preview', { category: cat, subject, style: styleFromForm(), bg: $('bg').value }); $('prompt-preview').value = r.prompt; }
+
+const pendingCards = new Map();
+function card(item, state) {
+  const c = catalog.categories[item.category] || {};
+  const el = document.createElement('div'); el.className = 'card' + (state === 'pending' ? ' pending' : '') + (item.error ? ' err' : '') + (item.approved ? ' approved' : '');
+  if (state === 'pending') { el.innerHTML = `<div class="img"></div><div class="meta"><div class="t"><span>${item.type}</span><small>${item.category}</small></div></div>`; return el; }
+  if (item.error) { el.innerHTML = `<div class="img">${item.error}</div><div class="meta"><div class="t"><span>${item.type}</span><small>${item.category}</small></div></div>`; return el; }
+  const fp = item.footprintKm || c.footprintKm || 12; const mapPx = Math.round(fp * 3);
+  el.innerHTML = `<div class="img"><img src="/${item.sprite}?t=${Date.now()}"><div class="scale"><img src="/${item.sprite}" style="width:${mapPx}px;height:${mapPx}px"><small>@zoom 3</small></div></div>
+    <div class="meta"><div class="t"><span>${item.type}</span><small>${item.category} · ${item.px}px</small></div>
+    <div class="row"><button data-app class="${item.approved ? 'on' : ''}">${item.approved ? 'approved' : 'approve'}</button><label style="margin:0;flex:0 0 auto">km</label><input data-fp type="number" value="${fp}"><label style="margin:0;flex:0 0 auto" title="relative pick weight">w</label><input data-w type="number" min="0" step="1" value="${item.weight ?? ((c.weights || {})[item.type] ?? 1)}" style="width:44px;flex:0 0 44px"><button data-more>…</button><button data-del class="danger">×</button></div>
+    <div class="p">${escapeHtml(item.prompt || '')}</div></div>`;
+  el.querySelector('[data-app]').onclick = async () => { const r = await api('/api/update', { category: item.category, id: item.id, approved: !item.approved, footprintKm: +el.querySelector('[data-fp]').value, biomes: c.biomes || [] }); item.approved = r.item.approved; el.className = 'card' + (item.approved ? ' approved' : ''); el.querySelector('[data-app]').className = item.approved ? 'on' : ''; el.querySelector('[data-app]').textContent = item.approved ? 'approved' : 'approve'; status(); };
+  el.querySelector('[data-fp]').onchange = async (e) => { await api('/api/update', { category: item.category, id: item.id, footprintKm: +e.target.value }); el.querySelector('.scale img').style.width = el.querySelector('.scale img').style.height = Math.round(e.target.value * 3) + 'px'; };
+  el.querySelector('[data-w]').onchange = async (e) => { await api('/api/update', { category: item.category, id: item.id, weight: +e.target.value }); };
+  el.querySelector('[data-more]').onclick = () => el.classList.toggle('open');
+  el.querySelector('[data-del]').onclick = async () => { if (!confirm('delete ' + item.id + '?')) return; await api('/api/delete', { category: item.category, id: item.id }); el.remove(); status(); };
+  return el;
+}
+function escapeHtml(s) { return s.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])); }
+
+async function generate(cat, tid, subject, promptOverride) {
+  const c = catalog.categories[cat]; const n = +$('n').value || 1;
+  const grid = $('grid'); const ph = card({ type: tid, category: cat }, 'pending'); grid.prepend(ph);
+  const body = { category: cat, type: tid, subject, style: styleFromForm(), bg: $('bg').value, quality: $('quality').value, size: '1024x1024', n, footprintKm: c.footprintKm, biomes: c.biomes };
+  if (promptOverride) body.prompt = promptOverride;
+  const r = await api('/api/generate', body);
+  ph.remove();
+  for (const item of (r.results || [{ error: r.error, type: tid, category: cat }]).reverse()) grid.prepend(card(item));
+  status();
+}
+async function loadLibrary() {
+  const items = await api('/api/library'); const fc = $('f-cat').value, fs = $('f-state').value;
+  const grid = $('grid'); grid.innerHTML = ''; let n = 0;
+  for (const it of items) { if (fc && it.category !== fc) continue; if (fs === 'approved' && !it.approved) continue; if (fs === 'pending' && it.approved) continue; grid.appendChild(card(it)); n++; }
+  $('count').textContent = n + ' shown';
+}
+
+$('save-style').onclick = async () => { await saveCatalog(); $('save-style').textContent = 'saved'; setTimeout(() => $('save-style').textContent = 'save style', 1200); };
+$('gen-prompt').onclick = () => { if (!previewFor) return alert('preview a type first'); generate(previewFor.cat, previewFor.tid, previewFor.subject, $('prompt-preview').value); };
+$('gen-all').onclick = async () => { const c = catalog.categories[current]; if (!confirm(`generate ${Object.keys(c.types).length} types × ${$('n').value} variants?`)) return; await Promise.all(Object.entries(c.types).map(([tid, s]) => generate(current, tid, s))); };
+$('refresh').onclick = loadLibrary; $('f-cat').onchange = loadLibrary; $('f-state').onchange = loadLibrary;
+$('rebuild').onclick = async () => { const m = await api('/api/manifest', {}); alert(m.sprites.length + ' approved sprites written to art/manifest.js'); };
+$('regrade').onclick = async () => { const r = await api('/api/reprocess', {}); alert(r.reprocessed + ' sprites re-graded'); loadLibrary(); };
+
+(async () => { catalog = await api('/api/catalog'); current = Object.keys(catalog.categories)[0]; renderStyle(); renderTabs(); renderTypes(); status(); loadLibrary(); })();
+</script>
+</body>
+</html>

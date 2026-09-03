@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ops shell test bench</title>
+<link rel="stylesheet" href="ops.css?v=2">
+<style>
+  :root { --ui-dim: #8b99ab; --ui-text: #d6dee9; }
+  body { margin: 0; background: #0b0c0e; color: #d6dee9; font-family: system-ui, sans-serif; }
+  #topbar { height: 48px; display: flex; align-items: center; padding: 0 16px; color: #8b99ab; font-size: 12px; }
+</style></head>
+<body>
+<div id="topbar">ops shell test bench — no chart, live API</div>
+<script>
+'use strict';
+// Minimal stand-in for game-bridge.js so the shell can be exercised without the map canvas.
+window.MECHA = {
+  command(body) { return fetch('/api/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).then((s) => { OPS.update(s); return s; }); },
+  go(id) { return MECHA.command({ type: 'depart', toId: id }); },
+  hud() { return false; },
+  newGame(seed) { return fetch('/api/new', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(seed === undefined ? {} : { seed }) }).then((r) => r.json()).then((s) => { OPS.update(s); return s; }); },
+  snapshot() { return null; }
+};
+window.toast = (m, k) => console.log('[toast]', k || 'info', m);
+window.focusChart = () => {};
+</script>
+<script src="ops.js?v=4"></script>
+<script>
+fetch('/api/state').then((r) => r.json()).then((s) => { OPS.update(s); OPS.open('city', 'market'); });
+</script>
+</body></html>

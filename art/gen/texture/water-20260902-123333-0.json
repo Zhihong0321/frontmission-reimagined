@@ -1,0 +1,33 @@
+{
+  "id": "water-20260902-123333-0",
+  "category": "texture",
+  "type": "water",
+  "file": "art/gen/texture/water-20260902-123333-0.png",
+  "sprite": "art/gen/texture/water-20260902-123333-0.s256.png",
+  "prompt": "Top-down orthographic view looking straight down at flat ground, map view, no perspective, no horizon. Seamless tileable ground texture for a strategy-game map, even detail across the whole frame, no focal object, no vignette. Post-apocalyptic wasteland after a machine invasion. Muted desaturated mid-grey tones, low contrast, low saturation. Flat overcast light from directly above, no directional shadows. Fill the entire frame edge to edge with the surface, no objects, no text, no watermark, no border.\n\nSUBJECT: dark still water with a faint oil sheen and tiny ripples.",
+  "subject": "dark still water with a faint oil sheen and tiny ripples",
+  "styleVersion": 1,
+  "bg": "none",
+  "size": "1024x1024",
+  "quality": "low",
+  "usage": {
+    "input_tokens": 123,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 123
+    },
+    "output_tokens": 2058,
+    "output_tokens_details": {
+      "image_tokens": 2058,
+      "text_tokens": 0
+    },
+    "total_tokens": 2181
+  },
+  "footprintKm": 0,
+  "biomes": [],
+  "rotate": true,
+  "kind": "texture",
+  "approved": true,
+  "created": "2026-09-02T12:34:57",
+  "px": 1024
+}

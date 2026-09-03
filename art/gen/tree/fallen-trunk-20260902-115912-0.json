@@ -1,0 +1,34 @@
+{
+  "id": "fallen-trunk-20260902-115912-0",
+  "category": "tree",
+  "type": "fallen-trunk",
+  "file": "art/gen/tree/fallen-trunk-20260902-115912-0.png",
+  "sprite": "art/gen/tree/fallen-trunk-20260902-115912-0.s256.png",
+  "prompt": "Top-down orthographic view looking straight down, map view, no perspective, not isometric. Stylized hand-painted strategy-game map asset, painterly but clean, soft edges, readable silhouette, not photoreal, not 3D render. Post-apocalyptic wasteland after a machine invasion: ash, scorch, rust, frost. Muted desaturated palette: ash grey, charcoal, rust brown, bone, dead moss. Low saturation. Overcast light from directly above, flat, no long cast shadow, at most a faint contact shadow. ONE object only, centered, filling about 80% of the frame, no ground plane, no other objects, no people, no text, no watermark, no frame.\n\nSUBJECT: a fallen dead tree trunk seen from above, broken roots on one end, bark peeling.\nThe background is a perfectly flat, solid, pure green #00FF00 with no gradient and no texture.",
+  "subject": "a fallen dead tree trunk seen from above, broken roots on one end, bark peeling",
+  "styleVersion": 1,
+  "bg": "chroma",
+  "size": "1024x1024",
+  "quality": "low",
+  "usage": {
+    "input_tokens": 189,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 189
+    },
+    "output_tokens": 2058,
+    "output_tokens_details": {
+      "image_tokens": 2058,
+      "text_tokens": 0
+    },
+    "total_tokens": 2247
+  },
+  "footprintKm": 14,
+  "biomes": [
+    "forest"
+  ],
+  "rotate": true,
+  "approved": true,
+  "created": "2026-09-02T11:59:12",
+  "px": 1327
+}
