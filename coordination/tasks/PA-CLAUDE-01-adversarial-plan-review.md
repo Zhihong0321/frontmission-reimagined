@@ -34,7 +34,10 @@ from the original baseline.
 
 ## Write scope
 
-None. Do not produce patches or rewritten files.
+If filesystem access is available, only
+`D:\FrontMission-RIMG\coordination\handoffs\PA-CLAUDE-01.md` may be created. Otherwise
+return the handoff text to the user. Do not produce product patches or rewrite any supplied
+file.
 
 ## Required output
 
@@ -48,7 +51,8 @@ Return one concise review containing:
 5. Specific plan changes required before Phase A or Phase B may start.
 6. A final verdict: `SAFE_TO_BEGIN_PHASE_A` or `REVISE_BEFORE_START`.
 
-Format the result using `coordination/HANDOFF_TEMPLATE.md` with result commit `NONE`.
+Format the result using `coordination/HANDOFF_TEMPLATE.md` with result commit `NONE`. Save
+it to `coordination/handoffs/PA-CLAUDE-01.md` when filesystem access is available.
 
 ## Stop conditions
 

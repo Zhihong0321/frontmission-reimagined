@@ -36,8 +36,9 @@ Read completely:
 
 ## Write scope
 
-None. Do not edit, format, create, move, or delete files. Do not commit. Remain in plan
-mode.
+Only `D:\FrontMission-RIMG\coordination\handoffs\PA-KIMI-01.md` may be created. Do not
+edit, format, move, or delete any other file. Do not commit. Treat product work as
+read-only analysis.
 
 ## Required output
 
@@ -52,7 +53,8 @@ Return one concise implementation specification containing:
 7. Exact proposed files and commands for the later implementation job.
 8. Any blocker that should prevent structural migration.
 
-Format the result using `coordination\HANDOFF_TEMPLATE.md` with result commit `NONE`.
+Write the result to `coordination\handoffs\PA-KIMI-01.md` using
+`coordination\HANDOFF_TEMPLATE.md` with result commit `NONE`.
 
 ## Stop conditions
 

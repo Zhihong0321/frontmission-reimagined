@@ -37,7 +37,8 @@ Read completely:
 
 ## Write scope
 
-None. Do not edit, format, create, move, or delete files. Do not commit.
+Only `D:\FrontMission-RIMG\coordination\handoffs\PA-CURSOR-01.md` may be created. Do not
+edit, format, move, or delete any other file. Do not commit.
 
 ## Required output
 
@@ -52,7 +53,8 @@ Return one concise implementation specification containing:
 6. Which checks run per small frontend extraction and which run only at phase checkpoints.
 7. Any blocker that should prevent Phase B from starting.
 
-Format the result using `coordination\HANDOFF_TEMPLATE.md` with result commit `NONE`.
+Write the result to `coordination\handoffs\PA-CURSOR-01.md` using
+`coordination\HANDOFF_TEMPLATE.md` with result commit `NONE`.
 
 ## Stop conditions
 
