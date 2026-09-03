@@ -7,13 +7,18 @@ Code worker must read this file before doing assigned work.
 ## Control
 
 - Overall status: `PLANNED`
-- Backup status: `IN_PROGRESS`
+- Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Ledger write policy: single writer; only the coordinator edits this file
 - Worker policy: workers read this file and return a structured handoff to the coordinator
 - Canonical ledger path: `D:\FrontMission-RIMG\MIGRATION_LEDGER.md`
 - Created: 2026-09-03
-- Baseline commit: `UNSET`
+- RIMG baseline commit: `29de90387bb2d8fcccf5d6b787def5edac2ca923`
+- RIMG recovery tag: `backup-rimg-20260903`
+- MapLab baseline commit: `df3c1baa8a83c2412607353af9994170b988dbe3`
+- MapLab recovery branch: `backup/maplab-final-20260903`
+- MapLab recovery tag: `backup-maplab-20260903`
+- GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
 - Last full verification: `NOT_RUN`
 
@@ -143,7 +148,7 @@ authorization.
 
 | Job | Description | Depends on | Owner | Status |
 |---|---|---|---|---|
-| `W0-00` | Push recoverable RIMG and finalized MapLab snapshots to the configured GitHub repository | None | `ROOT` | `ACTIVE` |
+| `W0-00` | Push recoverable RIMG and finalized MapLab snapshots to the configured GitHub repository | None | `ROOT` | `VERIFIED` |
 | `W0-01` | Inventory modified and untracked files; classify source, generated, archive, and secret material | None | `ROOT` | `PLANNED` |
 | `W0-02` | Run and record the existing acceptance baseline without unrelated fixes | `W0-01` | `ROOT` | `PLANNED` |
 | `W0-03` | Integrate finalized MapLab frontend into the main repository without redesign | `W0-02` | `ROOT` | `PLANNED` |
@@ -260,7 +265,8 @@ No migration verification has run.
 
 | Date | Commit | Scope | Command | Result | Notes |
 |---|---|---|---|---|---|
-| — | — | — | — | `NOT_RUN` | — |
+| 2026-09-03 | `29de903` | RIMG recovery snapshot | Git remote ref verification | `PASS` | Pushed as `master` and tag `backup-rimg-20260903`; application checks intentionally not run |
+| 2026-09-03 | `df3c1ba` | Finalized MapLab recovery snapshot | Git remote ref verification | `PASS` | Pushed as branch `backup/maplab-final-20260903` and tag `backup-maplab-20260903` |
 
 ## Decision log
 
@@ -271,6 +277,7 @@ No migration verification has run.
 | `D-003` | 2026-09-03 | Require isolated worktrees for concurrent writers | Protect the dirty baseline and make integration reviewable | `PROPOSED` |
 | `D-004` | 2026-09-03 | Consolidate the finalized MapLab frontend into the main repository | The frontend and backend form one product and require atomic changes | `PROPOSED` |
 | `D-005` | 2026-09-03 | Store the pre-consolidation RIMG and MapLab snapshots as separate branches in `Zhihong0321/frontmission-reimagined` | Preserve both current trees before choosing or applying the final merged layout | `ACCEPTED` |
+| `D-006` | 2026-09-03 | Exclude MapLab bytecode and empty generator logs from its source snapshot | They are transient runtime output; all source, metadata, and finalized art remain in the recovery branch | `ACCEPTED` |
 
 ## Open decisions
 
@@ -296,8 +303,10 @@ At the beginning of every coordinating session:
 
 ## Current checkpoint
 
-- Only the explicitly authorized version-control backup job has started.
+- The explicitly authorized version-control backup job is complete and remotely verified.
 - No worker has been spawned.
 - No external coding CLI has been launched against the repository.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
+- Recovery point `backup-rimg-20260903` preserves the current RIMG state.
+- Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
