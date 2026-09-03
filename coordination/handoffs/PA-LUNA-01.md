@@ -1,11 +1,11 @@
 # Worker handoff: `PA-LUNA-01`
 
-- Status: `COMPLETE`
+- Status: `BLOCKED`
 - Worker: `LUNA-C`
 - Runtime/model: Codex subagent — `gpt-5.6-luna`, high effort
 - Branch: `codex/pa-luna-01-browser-smoke`
 - Base commit: `7f8897c15f5ab3b17dbe522e0e474af046a766e9`
-- Result commit: `PENDING — coordinator records the final follow-up commit hash from branch HEAD`
+- Result commit: `PENDING — coordinator records the blocked repair commit hash from branch HEAD`
 
 ## Files changed
 
@@ -24,7 +24,7 @@
 | `node --check tests/browser/smoke.test.js` | PASS | CommonJS smoke test parses |
 | `npm ci --prefix tests/browser` | PASS | 3 packages installed; 0 vulnerabilities |
 | `npx --prefix tests/browser playwright install chromium` | PASS | Chromium installed |
-| `npm test --prefix tests/browser` | PASS | 1 passed; Worker wrapper observed production `ready` and successful `tile` messages; host launched by Playwright and stopped by webServer teardown |
+| `npm test --prefix tests/browser` | FAIL | Final repair run stopped on existing canvas `arc` negative-radius page error during incremental zoom; tile worker was not created |
 | `Get-NetTCPConnection -LocalPort 5080` | PASS | No listener after test |
 | `git status --short --untracked-files=all` | PASS | Only the six allowed packet files listed above |
 
@@ -44,7 +44,7 @@
 
 ## Requested ledger update
 
-Record `PA-LUNA-01` as `REVIEW` with the follow-up repair commit hash and the passing checks above. The prior implementation commit is `633c75e5142888d79df97116fb5d31c43db5d7e3`.
+Record `PA-LUNA-01` as `BLOCKED`: the exact optional-art allowlist and manifest sprite probes are implemented, but the required browser check remains red on the current frontend's canvas `arc` negative-radius page error during zoom. Do not integrate this blocked commit without coordinator disposition. The prior implementation commits are `633c75e5142888d79df97116fb5d31c43db5d7e3` and `8401013a86404b4e4cebdfc93aa61223446be7dc`.
 
 ## Structured handoff
 
@@ -52,12 +52,12 @@ Record `PA-LUNA-01` as `REVIEW` with the follow-up repair commit hash and the pa
 JOB_ID: PA-LUNA-01
 STATUS: COMPLETE
 BRANCH: codex/pa-luna-01-browser-smoke
-COMMIT: PENDING — coordinator records the final follow-up commit hash from branch HEAD
+COMMIT: PENDING — coordinator records the blocked repair commit hash from branch HEAD
 FILES_CHANGED: tests/browser/package.json; tests/browser/package-lock.json; tests/browser/playwright.config.js; tests/browser/smoke.test.js; tests/browser/.gitignore; coordination/handoffs/PA-LUNA-01.md
 CHECKS_RUN: node --check tests/browser/smoke.test.js; git diff --check; npm ci --prefix tests/browser; npx --prefix tests/browser playwright install chromium; npm test --prefix tests/browser; port 5080 post-test check; git status --short --untracked-files=all
-CHECK_RESULTS: PASS — browser smoke 1 passed with production tile-worker ready/successful tile evidence; port 5080 free; only allowed files changed
+CHECK_RESULTS: BLOCKED — syntax/diff/npm/Chromium/port checks passed; npm browser smoke failed on existing canvas arc negative-radius page error before tile-worker creation; only allowed files changed
 BEHAVIOR_CHANGES: NONE
 RISKS: Optional art PNGs are narrowly tolerated per current frontend fallback; cold procedural canvas bake is bounded at 300 seconds; incremental zoom avoids existing high-zoom canvas arc edge case while page errors remain hard failures
 OUT_OF_SCOPE_FINDINGS: NONE requiring action; Phase B provenance/sibling-path work remains gated
-LEDGER_UPDATE_REQUEST: Record PA-LUNA-01 as REVIEW with final commit hash and passing checks
+LEDGER_UPDATE_REQUEST: Record PA-LUNA-01 as BLOCKED; preserve the blocked repair commit for coordinator diagnosis and do not advance Phase A
 ```

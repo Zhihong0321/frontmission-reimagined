@@ -23,7 +23,7 @@ function evidence(logs) {
 }
 
 function isOptionalArt(url) {
-  return /\/chart\/art\/(?:gen\/[^/]+|tex-[a-z]+|truck)\.png(?:\?|$)/i.test(url);
+  return /\/chart\/art\/(?:tex-deep|truck)\.png(?:\?|$)/i.test(url);
 }
 
 test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', async ({ page, request }) => {
@@ -130,6 +130,11 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
     expect(world.routes, evidence(logs)).toBeGreaterThan(0);
     expect(world.manifestSprites, evidence(logs)).toBeGreaterThan(0);
 
+    const manifestFiles = await page.evaluate(() => (window.MANIFEST.sprites || [])
+      .map((sprite) => sprite.file)
+      .filter((file) => typeof file === 'string' && file.length > 0));
+    expect(manifestFiles.length, evidence(logs)).toBe(world.manifestSprites);
+
     const state = await page.evaluate(async () => {
       const result = await fetch('/api/state');
       return { status: result.status, body: await result.json() };
@@ -201,6 +206,11 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
 
     for (const asset of requiredAssets) {
       const assetResponse = await request.get(asset);
+      expect(assetResponse.status(), `${asset} ${evidence(logs)}`).toBe(200);
+    }
+    for (const relativeFile of manifestFiles) {
+      const asset = `/chart/${relativeFile.replace(/^\/+/, '')}`;
+      const assetResponse = await request.head(asset);
       expect(assetResponse.status(), `${asset} ${evidence(logs)}`).toBe(200);
     }
 
