@@ -4,7 +4,7 @@
 - Worker: `ROOT` (Claude Code, Sonnet 5, per `D-029` — Codex remains out of quota)
 - Branch: `codex/pa-root-03-determinism-fixtures`
 - Base commit: `5f6f50d` (assignment commit containing the task packet)
-- Result commit: `2250df2` (branch HEAD; three commits total — see below)
+- Result commit: `defea0d` (branch HEAD; five commits total — see below)
 
 ## Files changed
 
@@ -19,10 +19,15 @@
 - `MechaTrader.sln` (registered the new console project)
 - `coordination/handoffs/PA-ROOT-03.md`
 
-Three commits: `0b82c86` (implementation), `1e7171a` (world.js gate must skip, not fail,
+Five commits: `0b82c86` (implementation), `1e7171a` (world.js gate must skip, not fail,
 when no MapLab is reachable — found by `clean-clone-check.ps1` itself), `2250df2` (a
 Windows PowerShell 5.1 `git clone` stderr-redirect bug in `clean-clone-check.ps1`, also
-found by running it).
+found by running it), `70edb46` (this handoff), and `defea0d` (`F_content` was sensitive
+to git's line-ending checkout mode, not just JSON content — found when the coordinator
+fast-forwarded master to this branch and reran `check.ps1` there: the main
+`D:\FrontMission-RIMG` checkout and the `D:\FrontMission-RIMG-worktrees\PA-ROOT-03`
+checkout of the identical commit hash the same files' bytes differently, purely on line
+endings, and one xUnit fact failed on master that had passed in the worktree).
 
 ## What this closes
 
@@ -87,11 +92,12 @@ asserts every `Scripted` row was really issued.
 | `dotnet test tests/MechaTrader.Core.Tests/...` | PASS | 239 passed (229 existing + 10 new facts) |
 | `tools/verify-worldjs.ps1` | PASS | payload hash matches after a user-authorized one-time regeneration of the (pre-existing, out-of-scope-stale) live `world.js` — see Risks |
 | `tools/verify-api-shape.ps1` (record, then verify) | PASS | 7 raw responses recorded at seed 555555; live replay byte-identical to all 6 non-`build` fixtures; `/api/build` shape-checked (git/wall-clock fields excluded from exact match) |
-| `powershell -File .\check.ps1` (nine gates) | PASS | all nine green, including the two new gates |
-| `tools/clean-clone-check.ps1` | PASS | full nine-gate suite green in an isolated full clone; `/chart/` correctly 404s (no sibling MapLab reachable — expected pre-migration state); post-run `git status` showed only `FIGURES.md` |
+| `powershell -File .\check.ps1` (nine gates) | PASS | all nine green, re-run after `defea0d`, including the two new gates |
+| `tools/clean-clone-check.ps1` | PASS | full nine-gate suite green in an isolated full clone (a third, independent checkout), re-run after `defea0d`; `/chart/` correctly 404s (no sibling MapLab reachable — expected pre-migration state); post-run `git status` showed only `FIGURES.md` |
 | Port 5080 listener check | PASS | no `LISTENING` entry after every host-launching run above |
 | `git diff --check` (each commit) | PASS | no whitespace errors |
-| Write-scope review | PASS | only packet-allowed paths touched across all three commits |
+| Write-scope review | PASS | only packet-allowed paths touched across all five commits |
+| Cross-checkout test run | PASS (after `defea0d`) | `dotnet test` run separately against `D:\FrontMission-RIMG-worktrees\PA-ROOT-03`, `D:\FrontMission-RIMG`, and the clean-clone temp path all agree |
 
 ## Behavior changes
 
@@ -105,6 +111,18 @@ approved this specific exception before it happened).
 
 ## Risks and uncertainty
 
+- **A third finding, also resolved:** `F_content` originally hashed each data file's raw
+  UTF-8 bytes. Git's checkout line-ending behavior can differ between a clone and a
+  worktree of the identical commit — it did here — so the same committed bytes checked
+  out as CRLF in one place and LF in another, and the "content" hash differed though the
+  JSON was semantically identical. This surfaced only when the coordinator fast-forwarded
+  master to this branch and reran `check.ps1` directly on `D:\FrontMission-RIMG` (a
+  different checkout than the worktree this job used): one xUnit fact failed there that
+  had passed in the worktree. Fixed by normalizing `\r\n` to `\n` before hashing in
+  `Fingerprints.FContent`; `F_state`/`F_view` were never affected since they hash
+  `JsonSerializer` output over parsed objects, not raw file bytes. Golden values were
+  re-captured from both checkouts and confirmed identical, and again from a fresh
+  `clean-clone-check.ps1` clone (a third independent checkout).
 - **Out-of-scope finding, now resolved with authorization:** `verify-worldjs.ps1`
   initially found the live `D:\FrontMission-MapLab\world.js` genuinely stale relative to
   `data/` — confirmed by hand (regenerating from the main checkout's `data/` produced a
