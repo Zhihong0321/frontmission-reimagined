@@ -95,7 +95,7 @@ Only the coordinator changes job status.
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `COMPLETED_PA-LUNA-01` |
-| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `ASSIGNED_PA-AGY-01` |
+| `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `COMPLETED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
 | `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
@@ -192,7 +192,7 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
-| `PA-AGY-01` | `ACTIVE` | `AGY` (`gemini-3.8-flash-high`, high) | `7f8897c15f5ab3b17dbe522e0e474af046a766e9` | `D:\FrontMission-RIMG-worktrees\PA-AGY-01` | `codex/pa-agy-01-inventory` | `coordination/reports/PA-AGY-01-inventory.md`; `coordination/handoffs/PA-AGY-01.md`; `coordination/runs/PA-AGY-01/**` | 2026-09-03 |
+| None | — | — | — | — | — | — | — |
 
 ## Completed manual advisory jobs
 
@@ -214,7 +214,7 @@ below have moved to the active-jobs table with committed packets and exclusive s
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
 | `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Commit `633c75e5142888d79df97116fb5d31c43db5d7e3`; handoff received | `REVIEW` |
-| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Moved to active jobs | `ACTIVE` |
+| `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Commit `a4b9f4bd270a985f1bcc6ce14a1aee629d0dd6bc`; report and handoff received; managed log pending coordinator preservation | `REVIEW` |
 
 The coordinator launches both jobs. The user does not relay their prompts.
 
@@ -223,6 +223,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 | Order | Job | Commit | Target | Required checks | Result |
 |---|---|---|---|---|---|
 | 1 | `PA-LUNA-01` | `633c75e5142888d79df97116fb5d31c43db5d7e3` plus pending follow-up | `master` during Phase A | Scope/diff review; prove worker `ready` and successful `tile` response; `git diff --check`; `npm ci --prefix tests/browser`; Chromium install; `npm test --prefix tests/browser`; post-run port check | `REPAIR_1_ACTIVE` — initial test proved worker creation but could miss the production handler's silent `{type:'tile', err}` path |
+| 2 | `PA-AGY-01` | `a4b9f4bd270a985f1bcc6ce14a1aee629d0dd6bc` plus pending managed-log preservation | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `PENDING_REVIEW` |
 
 ## Verification ledger
 
