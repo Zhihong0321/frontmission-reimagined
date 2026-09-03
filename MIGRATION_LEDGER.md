@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: existing seven-gate `check.ps1` `PASS` at `3530cf1cf215d29c5699720b29385c5e82af2772` (isolated integration worktree, post-`PA-ROOT-02` merge); the redesigned strict browser gate is `MERGED` and `VERIFIED` on `master` at `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b`
+- Last full verification: nine-gate `check.ps1` `PASS` directly on `master` at `a5b390be1a5928162ae9f526b4111c79d51894ad` (post-`PA-ROOT-03` merge), and again in a fresh isolated clone via `tools/clean-clone-check.ps1`. `check.ps1` grew from seven gates to nine (`PA-ROOT-03`: generated-world sync, API response shape/value baseline). Phase A steps 5, 6, and 7 are all `VERIFIED`; steps 8-9 (tag `known-green/original`, create the integration branch) remain open
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -193,12 +193,15 @@ assigned worktree.
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
 | `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
-| `PA-ROOT-03` | `ACTIVE` | `ROOT` (Claude Code, per `D-029`) | `f1efe3a` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `codex/pa-root-03-determinism-fixtures` | `tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs`, `SaveFixtureTests.cs`, `Fixtures/**`; `tools/MechaTrader.Fingerprint/**`, `tools/verify-worldjs.ps1`, `tools/verify-api-shape.ps1`, `tools/clean-clone-check.ps1`; `tests/api-fixtures/**`; `check.ps1` (extension only); `MechaTrader.sln`; `coordination/handoffs/PA-ROOT-03.md` | 2026-09-04 |
+| `PA-ROOT-03` | `VERIFIED` | `ROOT` (Claude Code, per `D-029`) | `f1efe3a` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `codex/pa-root-03-determinism-fixtures` | `tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs`, `SaveFixtureTests.cs`, `Fixtures/**`; `tools/MechaTrader.Fingerprint/**`, `tools/verify-worldjs.ps1`, `tools/verify-api-shape.ps1`, `tools/clean-clone-check.ps1`; `tests/api-fixtures/**`; `check.ps1` (extension only); `MechaTrader.sln`; `coordination/handoffs/PA-ROOT-03.md` | 2026-09-04 |
 
-`PA-ROOT-03` closes Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
+`PA-ROOT-03` closed Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
 fixtures, API-shape fixtures, content hashes, `world.js` verification, and an explicit
-command-coverage matrix, per the accepted `PA-KIMI-01` design (`D-015`) and the `PA-CLAUDE-01`
-coverage-disclosure requirement (`D-016` item 7).
+21/21 command-coverage matrix, per the accepted `PA-KIMI-01` design (`D-015`) and the
+`PA-CLAUDE-01` coverage-disclosure requirement (`D-016` item 7). It also closed Phase A
+step 7 (clean-environment verification) via the new `tools/clean-clone-check.ps1`.
+`check.ps1` grew from seven gates to nine. Merged to `master` at `a5b390be1a5928162ae9f526b4111c79d51894ad`.
+No job is currently `ACTIVE`.
 
 ## Completed manual advisory jobs
 
@@ -231,6 +234,7 @@ The coordinator launches both jobs. The user does not relay their prompts.
 | 1 | `PA-LUNA-01` | diagnostic `f94f2e0`; rejected integration `1fc5206` + `30b2b69`; rollback `a6408fc` + `10b2875` | `master` during Phase A | Same required checks; stop after two focused repairs | `BLOCKED_ROLLED_BACK` — strict asset gate exposed a pre-existing uncaught negative-radius canvas `arc` error during incremental zoom before tile-worker creation; assertions were not weakened and incomplete test files were removed from master by recoverable Git reverts |
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 | 3 | `PA-ROOT-02` | worker `e4adc7b`; integrated `master` commit `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b`; integration-worktree proof `3530cf1cf215d29c5699720b29385c5e82af2772` | `master` during Phase A | Strict browser assertions from `PA-LUNA-01`; deep-link tile-worker proof; no product changes; targeted browser check x2; full existing acceptance | `VERIFIED` — deep-link (`/chart/?view=14.4,50.1,4`) drives the boot-time `startTileWorker`/`wantTile` prewarm without a synthetic wheel gesture; strict suite green twice in the worker worktree and once more after cherry-pick into an isolated integration worktree; port 5080 confirmed released after every run; post-merge `check.ps1` all seven gates green with only the expected `FIGURES.md` timing-line diff (not committed) |
+| 4 | `PA-ROOT-03` | worker branch tip `a5b390be1a5928162ae9f526b4111c79d51894ad` (five commits); fast-forwarded onto `master` at the same hash (linear ancestor, no cherry-pick needed) | `master` during Phase A | 21/21 command-coverage matrix; determinism/save/content fingerprints; API-shape/value fixtures; `world.js` sync; full nine-gate `check.ps1`; `clean-clone-check.ps1`; cross-checkout consistency | `VERIFIED` — closes Phase A steps 6 and 7. Two of the five commits were repairs the coordinator's own re-verification forced: `check.ps1` failed on `master`'s checkout of the identical commit that had passed in the worker's worktree (`F_content` was sensitive to git's line-ending checkout mode, not just JSON content — fixed by normalizing before hashing) and `verify-worldjs.ps1` initially found the live `D:\FrontMission-MapLab\world.js` genuinely stale relative to `data/`, which the user authorized regenerating once (see `D-030`). Full nine-gate suite green on `master` itself and in a fresh isolated clone after both repairs |
 
 ## Verification ledger
 
@@ -249,6 +253,9 @@ No migration verification has run.
 | 2026-09-04 | `e4adc7b495cac093e3170818c68f81d3580981ea` | `PA-ROOT-02` redesigned browser smoke, worker worktree | `node --check tests/browser/smoke.test.js`; `git diff --check`; write-scope review; `npm ci --prefix tests/browser`; `npx --prefix tests/browser playwright install chromium`; `npm test --prefix tests/browser` x2; port 5080 listener check x2 | `PASS` | Deep link `/chart/?view=14.4,50.1,4` (Praha's real coordinate) drives boot-time `startTileWorker`/`wantTile` without a synthetic wheel gesture; run 1 passed in 30.5s, run 2 in 16.2s; worker `ready`, one `tile` without `err`, no worker errors, no page/console/network/API failures either run; no listener on port 5080 after either run |
 | 2026-09-04 | `3530cf1cf215d29c5699720b29385c5e82af2772` | `PA-ROOT-02` cherry-picked onto isolated integration worktree `D:\FrontMission-RIMG-worktrees\PA-INTEGRATION-02` (detached from `master` `15b9aff`) | `npm ci --prefix tests/browser`; `npx --prefix tests/browser playwright install chromium`; `npm test --prefix tests/browser`; `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Browser smoke passed in 32.7s against the merged state; full seven-gate acceptance all green (Release build 0 warnings; Core 229 passed; BalanceSim 322.9 ms; host/API/recruitment/city/build gates passed); only diff after the run was the expected `FIGURES.md` timing line (`~220 ms -> ~320 ms`, not committed); port 5080 released |
 | 2026-09-04 | `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b` | `PA-ROOT-02` merged onto `master` | Cherry-pick from verified worker commit `e4adc7b`; ancestry and scope review | `PASS` | Fast-forward-equivalent cherry-pick of the single verified commit onto `master` at `15b9aff`; no conflicts; identical diff to the worker branch |
+| 2026-09-04 | `2250df2` (worker worktree, pre-final-fix) | `PA-ROOT-03` full nine-gate suite in worker worktree `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `dotnet build`; `dotnet test` (239 passed); `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1` (record then verify); `powershell -File .\check.ps1`; `tools/clean-clone-check.ps1` | `PASS` | All nine gates green including both new ones; isolated full clone also nine-for-nine with `/chart/` correctly 404ing (no sibling MapLab reachable) and only `FIGURES.md` differing afterward; port 5080 released after every run |
+| 2026-09-04 | `defea0d` | `PA-ROOT-03` `F_content` line-ending fix, found by the coordinator | `dotnet test` run separately against the worker worktree, `D:\FrontMission-RIMG` (master's own checkout), and a fresh `clean-clone-check.ps1` clone | `PASS` (after fix) | Fast-forwarding `master` to the worker's pre-fix branch tip and re-running `check.ps1` directly on `D:\FrontMission-RIMG` failed one xUnit fact that had passed in the worktree: `F_content` hashed raw file bytes, and git's line-ending checkout mode differed between the two checkouts of the identical commit. Fixed by normalizing `\r\n`→`\n` before hashing; all three checkouts then agreed |
+| 2026-09-04 | `a5b390be1a5928162ae9f526b4111c79d51894ad` | `PA-ROOT-03` merged onto `master` | Fast-forward from verified worker branch tip (linear ancestor of `master`, no cherry-pick); full nine-gate `check.ps1` re-run directly on `master` | `PASS` | Clean fast-forward, no divergence; post-merge `check.ps1` all nine gates green on `master` itself; port 5080 released |
 
 ## Decision log
 
@@ -283,6 +290,7 @@ No migration verification has run.
 | `D-027` | 2026-09-04 | Stop `PA-LUNA-01` after repair 2, preserve diagnostic branch `codex/pa-luna-01-browser-smoke` at `f94f2e0`, and roll back its incomplete master integration with `a6408fc` + `10b2875` | The strict required smoke remains red on a pre-existing frontend canvas error; the stop-loss forbids weakening the assertion or stacking dependent Phase A work on a false-green safety net | `ACCEPTED` |
 | `D-028` | 2026-09-04 | Resume Phase A with coordinator job `PA-ROOT-02`, using the existing `?view=lon,lat,zoom` deep-link prewarm path to exercise the tile worker before considering a product fix | The user authorized proceeding. The frontend already contains a bounded high-zoom deep-link worker path; testing it avoids the synthetic wheel sequence that triggered the canvas error and preserves the no-product-change preference. A product fix remains out of scope unless this redesign cannot meet the strict gate | `ACCEPTED` |
 | `D-029` | 2026-09-04 | Let Claude Code finish and integrate `PA-ROOT-02` after the Codex coordinator ran out of usage quota mid-job, resolving the `sonnet`-alias open decision as Sonnet 5 | The `PA-ROOT-02` worktree held the redesign's scaffolding (four implementation files plus `.gitignore`) uncommitted and unchecked when Codex stopped. The user directly instructed Claude Code to continue, and then explicitly authorized it to also perform the coordinator-only integration steps (cherry-pick review, full `check.ps1`, ledger update) that the ledger normally reserves for `ROOT`, given `ROOT` was unavailable. Claude Code self-reports its resolved model as Sonnet 5, settling the second open decision below | `ACCEPTED` |
+| `D-030` | 2026-09-04 | Assign `PA-ROOT-03` (deterministic fingerprints, save/API/`world.js` fixtures) to close Phase A steps 6-7, continuing to let Claude Code act as `ROOT` per `D-029`; separately authorize a one-time regeneration of `D:\FrontMission-MapLab\world.js` | This is the next unstarted Phase A gate named in the plan and was already scoped by the accepted `PA-KIMI-01`/`PA-CLAUDE-01` designs, so it needed no new design review, only user confirmation to start. Mid-job, `tools/verify-worldjs.ps1` found the live `world.js` genuinely stale relative to `data/` (confirmed by hand, not a script bug) — pre-existing, unrelated to this session, and outside the packet's write scope (`D:\FrontMission-MapLab\**` prohibited). The user was asked and chose to authorize a one-time regeneration identical to what `play.ps1::Update-ChartData` already performs automatically on every normal launch, rather than leaving the new gate permanently red or dropping it from `check.ps1` | `ACCEPTED` |
 
 ## Open decisions
 
@@ -290,6 +298,11 @@ These decisions must be resolved before their dependent jobs become `READY`:
 
 1. Exact dead directories approved for removal in addition to the sibling MapLab folder;
    decide only after runtime/network inventory and quarantine evidence.
+2. `CLAUDE.md`'s project brief still says "seven gates, one verdict line" (Start Here and
+   Run/Verify sections); `check.ps1` has had nine gates since `PA-ROOT-03`. `CLAUDE.md`
+   was outside that packet's write scope, so this is recorded rather than fixed. Low
+   stakes, but should be corrected in a documentation-only pass before it misleads a
+   future session's first ninety seconds.
 
 Resolved: whether the Claude Code CLI `sonnet` alias resolves to the intended Sonnet 5
 model. `PA-ROOT-02` confirms it does; see `D-029`.
@@ -319,9 +332,10 @@ At the beginning of every coordinating session:
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
 - The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
-  only the expected `FIGURES.md` timing-line change. This is baseline evidence, not yet the
-  `known-green/original` checkpoint because browser, determinism/save, generated-world,
-  API-shape, content-hash, and clean-layout Phase A gates remain open.
+  only the expected `FIGURES.md` timing-line change. This was baseline evidence; the
+  browser, determinism/save, generated-world, API-shape, content-hash, and clean-layout
+  Phase A gates it named as still open are now all closed (see below). `check.ps1` is a
+  nine-gate suite as of `PA-ROOT-03`.
 - `PA-AGY-01` is integrated and verified as evidence-only work. Its no-delete inventory
   identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
   facts without authorizing cleanup or Phase B.
@@ -334,11 +348,27 @@ At the beginning of every coordinating session:
   authorization — also performed the coordinator-only integration: cherry-pick into an
   isolated worktree, full seven-gate `check.ps1`, and this ledger update. See `D-029`.
   `PA-ROOT-02` is `VERIFIED` and merged to `master` at `6cbcd23`. The strict browser gate
-  is green, so the browser-gate blocker on dependent determinism/save/API jobs is lifted;
-  those jobs are still unassigned and nothing beyond this integration has been started.
-- No pre-existing product, data, asset, or sibling-repository file or directory has been
-  moved or deleted. The rejected browser-test integration was removed only by recoverable
-  Git revert commits under the stop-loss rule.
+  is green, so the browser-gate blocker on dependent determinism/save/API jobs is lifted.
+- `PA-ROOT-03` closed Phase A steps 6 and 7 in the same session: a 21/21 command-coverage
+  matrix, determinism/save/content fingerprints, API-shape/value fixtures, `world.js`
+  sync verification, and a clean-isolated-clone run, all under the same Claude-Code-as-
+  `ROOT` substitution (`D-029`). Its own re-verification found and fixed two more issues
+  before integrating: `F_content` was sensitive to git's line-ending checkout mode (fixed
+  by normalizing before hashing — `D-030`'s decision entry has the detail), and the live
+  `D:\FrontMission-MapLab\world.js` was genuinely stale relative to `data/`, which the
+  user separately authorized regenerating once (`D-030`). `PA-ROOT-03` is `VERIFIED` and
+  merged (fast-forwarded, no cherry-pick) to `master` at `a5b390b`. `check.ps1` is nine
+  gates, all green on `master` itself and in a fresh isolated clone.
+- Phase A steps 1-7 are now `VERIFIED`. Steps 8-9 (tag `known-green/original`; create the
+  integration branch and worker worktrees from that commit) remain open and unassigned —
+  nothing beyond `PA-ROOT-03`'s integration has been started. Phases B-F remain
+  unauthorized.
+- No pre-existing product, data, asset, or sibling-repository *source* file or directory
+  has been moved or deleted. The rejected browser-test integration was removed only by
+  recoverable Git revert commits under the stop-loss rule. The one MapLab file changed by
+  this session is the **generated** `world.js`, regenerated in place under explicit user
+  authorization (`D-030`) — the same action `play.ps1` performs automatically on every
+  normal launch.
 - Phase A verification has started and is recorded above. Consolidation, cleanup, and
   refactoring have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
