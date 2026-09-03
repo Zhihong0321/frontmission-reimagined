@@ -39,7 +39,15 @@ while ($dir -and -not $mapLab) {
     if (Test-Path (Join-Path $candidate 'make-world.js')) { $mapLab = $candidate }
     $dir = $dir.Parent
 }
-if (-not $mapLab) { Fail 'FrontMission-MapLab (with make-world.js) not found above this repository.' }
+if (-not $mapLab) {
+    # The expected pre-migration state for a clean/isolated clone (Phase A step 7):
+    # with no sibling MapLab reachable, play.ps1 itself skips regeneration rather than
+    # failing (`Update-ChartData`'s "chart data left as-is" branch), and /chart/ is
+    # expected to 404 there too. This is not the drift the gate exists to catch — it
+    # would fail identically on Phase A's own current two-folder layout by design.
+    Write-Host 'SKIP  no FrontMission-MapLab sibling reachable above this checkout (expected in an isolated clone)' -ForegroundColor DarkGray
+    exit 0
+}
 
 $makeWorld = Join-Path $mapLab 'make-world.js'
 $liveWorldJs = Join-Path $mapLab 'world.js'
