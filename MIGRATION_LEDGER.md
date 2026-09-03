@@ -193,9 +193,12 @@ assigned worktree.
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
 | `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
+| `PA-ROOT-03` | `ACTIVE` | `ROOT` (Claude Code, per `D-029`) | `f1efe3a` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `codex/pa-root-03-determinism-fixtures` | `tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs`, `SaveFixtureTests.cs`, `Fixtures/**`; `tools/MechaTrader.Fingerprint/**`, `tools/verify-worldjs.ps1`, `tools/verify-api-shape.ps1`, `tools/clean-clone-check.ps1`; `tests/api-fixtures/**`; `check.ps1` (extension only); `MechaTrader.sln`; `coordination/handoffs/PA-ROOT-03.md` | 2026-09-04 |
 
-No job is currently `ACTIVE`. The next Phase A jobs (deterministic and save fixtures) are
-unassigned; the browser gate is no longer the blocker for them.
+`PA-ROOT-03` closes Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
+fixtures, API-shape fixtures, content hashes, `world.js` verification, and an explicit
+command-coverage matrix, per the accepted `PA-KIMI-01` design (`D-015`) and the `PA-CLAUDE-01`
+coverage-disclosure requirement (`D-016` item 7).
 
 ## Completed manual advisory jobs
 
