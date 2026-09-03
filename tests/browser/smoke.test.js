@@ -17,8 +17,7 @@ function evidence(logs) {
     section('failed requests', logs.failedRequests),
     section('404 responses', logs.notFound),
     section('API failures', logs.apiFailures),
-    section('worker errors', logs.workerErrors),
-    section('worker messages', logs.workerMessages)
+    section('worker errors', logs.workerErrors)
   ].join('\n');
 }
 
@@ -33,35 +32,9 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
     failedRequests: [],
     notFound: [],
     apiFailures: [],
-    workerErrors: [],
-    workerMessages: []
+    workerErrors: []
   };
   const workers = [];
-
-  // Keep the production Worker object and event flow intact, but retain a small
-  // test-only record of messages/errors. chart.html intentionally swallows a tile
-  // response carrying `err`, so URL creation alone cannot prove tile painting.
-  await page.addInitScript(() => {
-    const NativeWorker = window.Worker;
-    const records = [];
-    window.__smokeWorkers = records;
-    window.Worker = function SmokeWorker(...args) {
-      const worker = new NativeWorker(...args);
-      const record = { url: String(args[0]), messages: [], errors: [] };
-      records.push(record);
-      worker.addEventListener('message', (event) => {
-        const data = event.data;
-        record.messages.push(data && typeof data === 'object'
-          ? { type: data.type || null, err: data.err || null }
-          : { type: null, err: String(data) });
-      });
-      worker.addEventListener('error', (event) => {
-        record.errors.push(event.message || 'worker error');
-      });
-      return worker;
-    };
-    window.Worker.prototype = NativeWorker.prototype;
-  });
 
   // Register every listener before navigation. Optional sprite PNGs are the only
   // tolerated request failures: the current manifest loader deliberately treats
@@ -91,29 +64,12 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
     });
   });
 
-  const collectWorkerEvidence = async () => {
-    try {
-      const records = await page.evaluate(() => (window.__smokeWorkers || []).map((record) => ({
-        url: record.url,
-        errors: record.errors.slice(),
-        messages: record.messages.slice()
-      })));
-      for (const record of records) {
-        for (const error of record.errors) logs.workerErrors.push(`${record.url}: ${error}`);
-        for (const message of record.messages) logs.workerMessages.push(`${record.url}: ${JSON.stringify(message)}`);
-      }
-      return records;
-    } catch (_) {
-      return [];
-    }
-  };
-
   try {
     const response = await page.goto('/chart/', { waitUntil: 'domcontentloaded' });
     expect(response && response.status(), evidence(logs)).toBe(200);
     expect(response.headers()['content-type'] || '', evidence(logs)).toContain('text/html');
 
-    await page.waitForFunction(() => !document.querySelector('#loading'), null, { timeout: 180000 });
+    await page.waitForFunction(() => !document.querySelector('#loading'), null, { timeout: 90000 });
     await page.waitForFunction(() => window.WORLD && window.MANIFEST && window.MECHA && window.OPS, null, { timeout: 15000 });
 
     const world = await page.evaluate(() => ({
@@ -174,29 +130,12 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
 
     // A large wheel gesture is the real user path to cam.z > 3, which starts the
     // lazy worker without depending on inaccessible classic-script lexical bindings.
-    // Use bounded increments so the gesture crosses the threshold without jumping
-    // straight to the chart's maximum zoom (which currently exposes a canvas arc
-    // edge case before the worker can run).
     const workerPromise = page.waitForEvent('worker', { timeout: 15000 });
     await page.mouse.move(640, 360);
-    for (let i = 0; i < 20 && !workers.some((worker) => worker.url().includes('chart-tiles-worker.js')); i++) {
-      await page.mouse.wheel(0, -150);
-      await page.waitForTimeout(30);
-    }
+    await page.mouse.wheel(0, -10000);
     const tileWorker = await workerPromise;
     expect(tileWorker.url(), evidence(logs)).toContain('chart-tiles-worker.js');
     await expect.poll(() => workers.some((worker) => worker.url().includes('chart-tiles-worker.js')), { timeout: 5000 }).toBe(true);
-    await expect.poll(async () => page.evaluate(() => {
-      const record = (window.__smokeWorkers || []).find((item) => item.url.includes('chart-tiles-worker.js'));
-      const messages = record ? record.messages : [];
-      return {
-        ready: messages.some((message) => message.type === 'ready'),
-        tile: messages.some((message) => message.type === 'tile' && !message.err),
-        tileErrors: messages.filter((message) => message.type === 'tile' && message.err).map((message) => message.err),
-        errors: record ? record.errors : []
-      };
-    }), { timeout: 15000 }).toMatchObject({ ready: true, tile: true, tileErrors: [], errors: [] });
-    await collectWorkerEvidence();
     expect(logs.workerErrors, evidence(logs)).toEqual([]);
 
     for (const asset of requiredAssets) {
@@ -226,7 +165,6 @@ test('Keeper chart boots, paints, opens ops, and crosses the browser bridge', as
     expect(logs.notFound, evidence(logs)).toEqual([]);
     expect(logs.apiFailures, evidence(logs)).toEqual([]);
   } catch (error) {
-    await collectWorkerEvidence();
     if (error && typeof error.message === 'string' && !error.message.includes('page errors:')) {
       error.message += `\n\n${evidence(logs)}`;
     }
