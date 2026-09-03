@@ -13,6 +13,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
+- Coordination directory: `D:\FrontMission-RIMG\coordination`
 - Ledger write policy: single writer; only the coordinator edits this file
 - Worker policy: workers read this file and return a structured handoff to the coordinator
 - Canonical ledger path: `D:\FrontMission-RIMG\MIGRATION_LEDGER.md`
@@ -93,7 +94,10 @@ Only the coordinator changes job status.
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `UNSPAWNED` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `UNSPAWNED` |
+| `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `UNSPAWNED` |
+| `CURSOR` | Cursor 3.18.25 | requested Grok 4.6; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `AVAILABLE_MANUAL` |
 | `CLAUDE` | Claude Code 2.1.229 | `sonnet`, effort `high` | Independent architecture and regression review | `UNSPAWNED` |
+| `CLAUDE-DESKTOP` | Claude Desktop | user-selected model | User-relayed review or bounded implementation | `AVAILABLE_MANUAL` |
 
 The exact model resolved by the Claude `sonnet` alias must be recorded when the first
 Claude job is launched.
@@ -206,6 +210,8 @@ No migration verification has run.
 | `D-008` | 2026-09-03 | Move MapLab deletion to final cleanup | Prevent false-positive verification and preserve a working reference during migration | `ACCEPTED` |
 | `D-009` | 2026-09-03 | Preserve classic-script semantics during initial frontend extraction | Avoid combining file splitting with runtime module-semantics changes | `ACCEPTED` |
 | `D-010` | 2026-09-03 | Keep the integration branch green and discard failed worker branches before dependent work | Prevent a half-migrated failure chain and avoid restarting the whole migration | `ACCEPTED` |
+| `D-011` | 2026-09-03 | Use committed physical task packets and handoffs for every local or user-relayed worker | Make cross-tool delegation reproducible without relying on chat context | `ACCEPTED` |
+| `D-012` | 2026-09-03 | Let the coordinator launch installed CLIs; use user relay only for UI-specific workers | Reduce manual task passing while preserving access to requested IDE and desktop models | `ACCEPTED` |
 
 ## Open decisions
 
@@ -228,6 +234,7 @@ At the beginning of every coordinating session:
 5. Run no job whose dependencies or ownership are unclear.
 6. Update the ledger before assigning new work.
 7. Tell the user which jobs will start before spawning workers.
+8. Create and commit a physical task packet before every assignment.
 
 ## Current checkpoint
 

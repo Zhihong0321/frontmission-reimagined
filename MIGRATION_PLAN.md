@@ -28,6 +28,7 @@ to physical disk before dependent work begins.
 
 - Durable process and acceptance criteria: `MIGRATION_PLAN.md`
 - Live state and evidence: `MIGRATION_LEDGER.md`
+- Cross-tool task packets and handoffs: `coordination/`
 - Worker implementation: committed on an assigned branch/worktree
 - Worker handoff: returned to the coordinator and then recorded in the ledger
 - Architectural decision that survives the migration: later promoted into `docs/decisions/`
@@ -339,6 +340,23 @@ Use AGY CLI for:
 - Repetitive path/reference audits.
 - Mechanical scripts with precise output schemas.
 
+Use Kimi CLI with the configured `kimi-k3` model for:
+
+- Independent bounded implementation or review jobs.
+- Repository inspection that benefits from a separate model family.
+- Mechanical tasks whose scope and checks fit one physical task packet.
+
+Use Cursor with Grok 4.6 for:
+
+- User-relayed IDE work until a model-selectable non-interactive agent invocation is
+  verified.
+- Independent review or a bounded implementation in its own worktree.
+
+Use Claude Desktop for:
+
+- User-relayed independent review or bounded implementation using a physical task packet.
+- Work that does not require the coordinator to automate the desktop UI.
+
 Use Claude Code Sonnet High for:
 
 - Independent consolidation review.
@@ -348,6 +366,9 @@ Use Claude Code Sonnet High for:
 External agents run non-interactively in coordinator-created worktrees. They do not use
 dangerous permission bypasses, edit the ledger, integrate commits, or delete source
 directories.
+
+UI-only workers use the manual relay procedure in `coordination/README.md`; the user needs
+to provide only the task-file path and later return the job ID plus commit or handoff path.
 
 ## Completion criteria
 
