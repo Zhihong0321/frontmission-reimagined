@@ -91,7 +91,7 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PHASE_A` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `BLOCKED_AT_PHASE_A_BROWSER_GATE` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
@@ -297,11 +297,12 @@ At the beginning of every coordinating session:
 ## Current checkpoint
 
 - The explicitly authorized version-control backup job is complete and remotely verified.
-- No implementation worker has been spawned.
+- Both authorized Phase A workers were launched from committed packets in isolated
+  worktrees and have returned durable handoffs.
 - The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
   physical handoffs were reviewed, accepted or accepted with modifications, and retained.
 - Plan version 3 contains the resulting safety changes. Phase A only is authorized and is
-  `ACTIVE`; phases B-F remain unauthorized and gated.
+  now `BLOCKED` at the browser gate; phases B-F remain unauthorized and gated.
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
 - The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
@@ -317,7 +318,10 @@ At the beginning of every coordinating session:
   asset checks but exposed a pre-existing uncaught zoom/canvas error, so the job is
   `BLOCKED`; the diagnostic branch is pushed and the incomplete integration was rolled
   back. Phase A is stopped at this redesign/product-fix gate and no dependent work began.
-- No repository files or directories have been moved or deleted.
-- Consolidation, cleanup, refactoring, and verification have not started.
+- No pre-existing product, data, asset, or sibling-repository file or directory has been
+  moved or deleted. The rejected browser-test integration was removed only by recoverable
+  Git revert commits under the stop-loss rule.
+- Phase A verification has started and is recorded above. Consolidation, cleanup, and
+  refactoring have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
 - Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
