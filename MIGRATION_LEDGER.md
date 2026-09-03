@@ -25,7 +25,7 @@ live state; the plan owns process. Chat is not a source of truth.
 - MapLab recovery tag: `backup-maplab-20260903`
 - GitHub repository: `https://github.com/Zhihong0321/frontmission-reimagined`
 - Integration branch: `UNSET`
-- Last full verification: `NOT_RUN`
+- Last full verification: `PASS` at `18bb16e99a02611c580ebeed837633d03a922a9a` (existing seven-gate `check.ps1`; browser gate not yet integrated)
 - Preflight advisory synthesis: `COMPLETE`
 - Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
 
@@ -236,6 +236,7 @@ No migration verification has run.
 | 2026-09-03 | `29de903` | RIMG recovery snapshot | Git remote ref verification | `PASS` | Pushed as `master` and tag `backup-rimg-20260903`; application checks intentionally not run |
 | 2026-09-03 | `df3c1ba` | Finalized MapLab recovery snapshot | Git remote ref verification | `PASS` | Pushed as branch `backup/maplab-final-20260903` and tag `backup-maplab-20260903` |
 | 2026-09-03 | `24c1fca` | Three manual preflight jobs | Coordinator review of physical handoffs and scope compliance | `PASS` | All three changed only their assigned handoff; no product code, migration, test run, move, or deletion occurred |
+| 2026-09-03 | `18bb16e` | Phase A pre-change baseline in isolated `D:\FrontMission-RIMG-worktrees\PA-BASELINE-01` | `powershell -NoProfile -ExecutionPolicy Bypass -File .\check.ps1` | `PASS` | Release build: 0 warnings; Core: 229 passed; BalanceSim: 316.5 ms and green; host/API gates all passed; post-run diff only `FIGURES.md` timing `~220 ms -> ~320 ms`; port 5080 released |
 
 ## Decision log
 
@@ -297,6 +298,10 @@ At the beginning of every coordinating session:
   `ACTIVE`; phases B-F remain unauthorized and gated.
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
+- The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
+  only the expected `FIGURES.md` timing-line change. This is baseline evidence, not yet the
+  `known-green/original` checkpoint because browser, determinism/save, generated-world,
+  API-shape, content-hash, and clean-layout Phase A gates remain open.
 - No repository files or directories have been moved or deleted.
 - Consolidation, cleanup, refactoring, and verification have not started.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
