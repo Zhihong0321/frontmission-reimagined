@@ -150,6 +150,8 @@ public class CommandTests
         Assert.False(game.Apply(new SellCommand("scrap", 1)).Ok);
         Assert.False(game.Apply(new BuyCommand("nonsense", 1)).Ok);
         Assert.False(game.Apply(new DepartCommand("atlantis")).Ok);
+        Assert.False(game.Apply(new CityFavorCommand("kneel")).Ok);
+        Assert.False(game.Apply(new AssignCrewCommand("nobody", "trading")).Ok);
 
         Assert.Equal(cash, game.State.Cash);
         Assert.Equal(stock, game.State.StockOf(Start, "scrap"));
@@ -185,17 +187,30 @@ public class CommandTests
         Assert.False(game.Apply(new BuyCommand("steel", 1)).Ok);
         Assert.False(game.Apply(new SellCommand("steel", 1)).Ok);
         Assert.False(game.Apply(new BuyTruckCommand("kite")).Ok);
+        Assert.False(game.Apply(new CityFavorCommand("donate")).Ok);
     }
 
     [Fact]
-    public void DepartIsRejectedForACityWithNoRoad()
+    public void DepartIsRejectedForAnUnknownDestination()
+    {
+        var game = NewGame();
+
+        var result = game.Apply(new DepartCommand("atlantis"));
+
+        Assert.False(result.Ok);
+        Assert.Contains("destination", result.Error!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DepartReachesACityThatIsNotAdjacentByRoad()
     {
         var game = NewGame();
 
         var result = game.Apply(new DepartCommand(NoRoadTo));
 
-        Assert.False(result.Ok);
-        Assert.Contains("road", result.Error!, StringComparison.OrdinalIgnoreCase);
+        Assert.True(result.Ok, result.Error);
+        Assert.NotNull(game.State.Caravan.Travel);
+        Assert.Equal(NoRoadTo, game.State.Caravan.Travel!.ToId);
     }
 
     [Fact]
@@ -204,16 +219,21 @@ public class CommandTests
         var game = NewGame();
         var world = TestWorld.Shipping;
 
-        var route = world.Routes.Between(Start, Neighbour)!;
-        var expected = CaravanMath.TravelDays(game.State.Caravan, world, route);
+        var from = MapMath.Position(game.State, world);
+        var to = world.Map.CellOfCity(Neighbour);
+        var plan = MapMath.Pathfind(game.State.Caravan, world, from, to);
+        Assert.NotNull(plan);
 
         var startDay = game.State.Day;
         Assert.True(game.Apply(new DepartCommand(Neighbour)).Ok);
         Assert.Null(game.State.Caravan.LocationId);
+        var expected = game.State.Caravan.Travel!.TotalDays;
 
-        // One day short: still on the road.
-        game.Apply(new WaitCommand(expected - 1));
-        Assert.Null(game.State.Caravan.LocationId);
+        if (expected > 1)
+        {
+            game.Apply(new WaitCommand(expected - 1));
+            Assert.Null(game.State.Caravan.LocationId);
+        }
 
         game.Apply(new WaitCommand(1));
         Assert.Equal(Neighbour, game.State.Caravan.LocationId);

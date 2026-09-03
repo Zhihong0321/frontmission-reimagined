@@ -12,10 +12,18 @@ public sealed record CommandRequest(
     string? GoodId,
     int? Units,
     string? ToCityId,
+    string? ToId,
     int? Days,
     string? TruckTypeId,
+    string? GearId,
     string? CandidateId,
-    string? CrewId);
+    string? CrewId,
+    string? PostId,
+    string? ActionId,
+    long? Price,
+    string? TruckId,
+    string? UpgradeId,
+    string? ContractId);
 
 public sealed record LogEntry(int Day, string Kind, string Message);
 
@@ -104,9 +112,10 @@ public sealed class GameSession
                 return true;
 
             case "depart":
-                if (request.ToCityId is null)
-                    return Reject("depart needs a toCityId.", out error);
-                command = new DepartCommand(request.ToCityId);
+                var dest = request.ToId ?? request.ToCityId;
+                if (dest is null)
+                    return Reject("depart needs a toId.", out error);
+                command = new DepartCommand(dest);
                 return true;
 
             case "wait":
@@ -119,6 +128,12 @@ public sealed class GameSession
                 command = new BuyTruckCommand(request.TruckTypeId);
                 return true;
 
+            case "buygear":
+                if (request.GearId is null)
+                    return Reject("buyGear needs a gearId.", out error);
+                command = new BuyGearCommand(request.GearId);
+                return true;
+
             case "hirecrew":
                 if (request.CandidateId is null)
                     return Reject("hireCrew needs a candidateId.", out error);
@@ -129,6 +144,80 @@ public sealed class GameSession
                 if (request.CrewId is null)
                     return Reject("dismissCrew needs a crewId.", out error);
                 command = new DismissCrewCommand(request.CrewId);
+                return true;
+
+            case "assigncrew":
+                if (request.CrewId is null)
+                    return Reject("assignCrew needs a crewId (and a postId, empty to stand down).", out error);
+                command = new AssignCrewCommand(request.CrewId, request.PostId ?? "");
+                return true;
+
+            case "favor":
+                if (string.IsNullOrWhiteSpace(request.ActionId))
+                    return Reject("favor needs an actionId.", out error);
+                command = new CityFavorCommand(request.ActionId);
+                return true;
+
+            case "rentwarehouse":
+                command = new RentWarehouseCommand();
+                return true;
+
+            case "warehousedeposit":
+                if (request.GoodId is null || request.Units is null)
+                    return Reject("warehouseDeposit needs a goodId and units.", out error);
+                command = new WarehouseDepositCommand(request.GoodId, request.Units.Value);
+                return true;
+
+            case "warehousewithdraw":
+                if (request.GoodId is null || request.Units is null)
+                    return Reject("warehouseWithdraw needs a goodId and units.", out error);
+                command = new WarehouseWithdrawCommand(request.GoodId, request.Units.Value);
+                return true;
+
+            case "warehousesell":
+                if (request.GoodId is null || request.Price is null)
+                    return Reject("warehouseSell needs a goodId and price.", out error);
+                command = new SetWarehouseSellCommand(request.GoodId, request.Price.Value);
+                return true;
+
+            case "warehouseprocure":
+                if (request.GoodId is null || request.Price is null)
+                    return Reject("warehouseProcure needs a goodId and price.", out error);
+                command = new SetWarehouseProcureCommand(request.GoodId, request.Price.Value);
+                return true;
+
+            case "selltruck":
+                if (request.TruckId is null)
+                    return Reject("sellTruck needs a truckId.", out error);
+                command = new SellTruckCommand(request.TruckId);
+                return true;
+
+            case "upgradetruck":
+                if (request.TruckId is null || request.UpgradeId is null)
+                    return Reject("upgradeTruck needs a truckId and upgradeId.", out error);
+                command = new UpgradeTruckCommand(request.TruckId, request.UpgradeId);
+                return true;
+
+            case "acceptcontract":
+                if (request.ContractId is null)
+                    return Reject("acceptContract needs a contractId.", out error);
+                command = new AcceptContractCommand(request.ContractId);
+                return true;
+
+            case "delivercontract":
+                if (request.ContractId is null)
+                    return Reject("deliverContract needs a contractId.", out error);
+                command = new DeliverContractCommand(request.ContractId);
+                return true;
+
+            case "exporegister":
+                command = new ExpoRegisterCommand();
+                return true;
+
+            case "expolist":
+                if (request.GoodId is null || request.Price is null)
+                    return Reject("expoList needs a goodId and price.", out error);
+                command = new ExpoListCommand(request.GoodId, request.Price.Value);
                 return true;
 
             default:

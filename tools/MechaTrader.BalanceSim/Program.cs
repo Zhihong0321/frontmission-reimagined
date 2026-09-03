@@ -12,8 +12,9 @@ namespace MechaTrader.BalanceSim;
 /// <summary>
 /// The headless gate on the economy. Runs the world unattended for a long stretch and
 /// asserts it stays sane, stays interesting, and stays fast; then asserts that playing
-/// well beats playing badly. Exits non-zero if any of that fails, so it can be run in
-/// CI or from a script without a human reading the output.
+/// well beats playing badly, and that a HouseTrader play-tester still finishes up while
+/// touching crew, trucks or standing. Exits non-zero if any of that fails, so it can be
+/// run in CI or from a script without a human reading the output.
 /// </summary>
 public static class Program
 {
@@ -65,15 +66,23 @@ public static class Program
         Header("BEST ONE-HOP RUNS ON DAY 200");
         PrintOpportunities(world, failures);
 
+        Header("NAIVE HAULS - BUY A MAKER'S SURPLUS, SELL NEXT DOOR");
+        var naive = NaiveHaulProbe(world);
+        PrintNaiveHauls(naive);
+        AssertNaiveHauls(world, naive, failures);
+
         Header($"SKILL EXPRESSION, {BotDays} DAYS x {BotSeeds} SEEDS");
         var greedy = RunBots(world, () => new GreedyTrader());
         var random = RunBots(world, () => new RandomTrader());
+        var house = RunBots(world, () => new HouseTrader());
 
         PrintBotRow("greedy", greedy);
         PrintBotRow("random", random);
+        PrintBotRow("house", house);
 
         var greedyMean = greedy.Average(r => (double)r.Profit);
         var randomMean = random.Average(r => (double)r.Profit);
+        var houseMean = house.Average(r => (double)r.Profit);
 
         if (greedyMean <= 0)
             failures.Add($"A greedy trader averages {greedyMean:N0} cr over {BotDays} days. " +
@@ -86,7 +95,9 @@ public static class Program
         if (greedyMean <= randomMean)
             failures.Add("A greedy trader does not out-earn a random one; the economy has no skill expression.");
 
-        var figuresPath = WriteFigures(world, report, greedy, random);
+        AssertPlaytest(house, houseMean, failures);
+
+        var figuresPath = WriteFigures(world, report, greedy, random, house, naive);
 
         Header("RESULT");
         if (failures.Count == 0)
@@ -96,6 +107,7 @@ public static class Program
             Console.WriteLine($"  skilled play: {greedyMean:N0} cr over {BotDays} days");
             Console.WriteLine($"  careless play: {randomMean:N0} cr over {BotDays} days");
             Console.WriteLine($"  edge: {greedyMean - randomMean:N0} cr");
+            Console.WriteLine($"  house playtest: {houseMean:N0} cr over {BotDays} days");
             return 0;
         }
 
@@ -143,7 +155,9 @@ public static class Program
                     if (double.IsNaN(stock) || double.IsInfinity(stock) || stock < 0)
                         failures.Add($"{city.Id}/{good.Id} stock became {stock} on day {day}.");
 
-                    var price = Economy.UnitPrice(good, city.Market[good.Id], stock, eco);
+                    var price = Economy.UnitPrice(
+                        good, city.Market[good.Id], stock, eco,
+                        WorldEvents.PriceMultiplier(state, world, city.Id, good.Id));
 
                     if (double.IsNaN(price) || double.IsInfinity(price) || price <= 0)
                         failures.Add($"{city.Id}/{good.Id} price became {price} on day {day}.");
@@ -238,15 +252,22 @@ public static class Program
 
                 foreach (var good in world.Goods)
                 {
+                    // A stranger cannot buy a locked grade; the opening map is judged on what it can.
+                    if (!Standing.TierOpen(world.TierOf(good), Standing.Of(state, fromId))) continue;
+
+                    var buyMult = WorldEvents.PriceMultiplier(state, world, fromId, good.Id);
+                    var sellMult = WorldEvents.PriceMultiplier(state, world, toId, good.Id);
+
+                    var gradeMult = QualityMath.SellMultiplier(state.StockOf(fromId, good.Id).OutQuality, world.Quality);
                     var units = Economy.MaxAffordableUnits(
                         good, from.Market[good.Id], state.StockOf(fromId, good.Id),
-                        world.Config.StartCash, capacity, eco, terms);
+                        world.Config.StartCash, capacity, eco, terms, buyMult, gradeMult);
                     if (units <= 0) continue;
 
                     var cost = Economy.ApproximateBuyCost(
-                        good, from.Market[good.Id], state.StockOf(fromId, good.Id), units, eco, terms);
+                        good, from.Market[good.Id], state.StockOf(fromId, good.Id), units, eco, terms, buyMult) * gradeMult;
                     var revenue = Economy.ApproximateSellRevenue(
-                        good, to.Market[good.Id], state.StockOf(toId, good.Id), units, eco, terms);
+                        good, to.Market[good.Id], state.StockOf(toId, good.Id), units, eco, terms, sellMult) * gradeMult;
 
                     if (cost <= 0) continue;
 
@@ -274,6 +295,152 @@ public static class Program
 
         if (profitable == 0)
             failures.Add("No single-hop run on the entire map is profitable after fuel and upkeep.");
+    }
+
+    /// <summary>One plain haul: a city's own surplus, bought at full purse, sold next door.</summary>
+    private sealed record NaiveHaul(string Label, bool DestMakes, double Return, double Net);
+
+    /// <summary>
+    /// The owner's complaint, measured. Before the flat-price fix, buying what a city
+    /// makes and selling it next door lost money on 84% of the map and the worst case
+    /// lost half the purse. This probe is the durable version of that measurement: no
+    /// planning, no crew, full purse, straight to a road neighbour.
+    /// </summary>
+    private static List<NaiveHaul> NaiveHaulProbe(WorldData world)
+    {
+        var game = Game.New(world, 20260901UL);
+        var state = game.State;
+        var eco = world.Config.Economy;
+        var caravan = state.Caravan;
+        var terms = CrewMath.Terms(caravan, world);
+        var upkeep = CaravanMath.DailyUpkeep(caravan, world);
+        var capacity = CaravanMath.Capacity(caravan, world);
+        var cash = world.Config.StartCash;
+
+        var runs = new List<NaiveHaul>();
+
+        foreach (var city in world.Cities)
+        {
+            foreach (var route in world.Routes.All)
+            {
+                if (route.FromId != city.Id && route.ToId != city.Id) continue;
+                var neighbor = world.City(route.Other(city.Id));
+
+                foreach (var good in world.Goods)
+                {
+                    var profile = city.Market[good.Id];
+
+                    // "Buy in city product": the city's own produce, in surplus.
+                    if (profile.Production <= profile.Consumption) continue;
+                    if (!Standing.TierOpen(world.TierOf(good), Standing.Of(state, city.Id))) continue;
+
+                    var stockFrom = state.StockOf(city.Id, good.Id);
+                    var stockTo = state.StockOf(neighbor.Id, good.Id);
+
+                    var buyMult = WorldEvents.PriceMultiplier(state, world, city.Id, good.Id);
+                    var sellMult = WorldEvents.PriceMultiplier(state, world, neighbor.Id, good.Id);
+
+                    var gradeBuy = QualityMath.SellMultiplier(stockFrom.OutQuality, world.Quality);
+                    var gradeSell = QualityMath.SellMultiplier(stockTo.OutQuality, world.Quality);
+
+                    var days = CaravanMath.TravelDays(caravan, world, route);
+                    var fixedCost = CaravanMath.TravelFuel(caravan, world, route) + upkeep * days;
+
+                    var units = Economy.MaxAffordableUnits(
+                        good, profile, stockFrom, cash, capacity, eco, terms, buyMult, gradeBuy);
+                    if (units <= 0) continue;
+
+                    var cost = Economy.ApproximateBuyCost(
+                        good, profile, stockFrom, units, eco, terms, buyMult) * gradeBuy;
+                    var revenue = Economy.ApproximateSellRevenue(
+                        good, neighbor.Market[good.Id], stockTo, units, eco, terms, sellMult) * gradeSell;
+
+                    if (cost <= 0) continue;
+
+                    var net = revenue - cost - fixedCost;
+                    runs.Add(new NaiveHaul(
+                        $"{good.Name}: {city.Name}->{neighbor.Name}",
+                        neighbor.Market[good.Id].Production > 0.0,
+                        net / cost,
+                        net));
+                }
+            }
+        }
+
+        return runs;
+    }
+
+    private static void PrintNaiveHauls(List<NaiveHaul> runs)
+    {
+        if (runs.Count == 0)
+        {
+            Console.WriteLine("no naive producer->neighbour hauls to measure");
+            return;
+        }
+
+        var nonMaker = runs.Where(r => !r.DestMakes).ToList();
+        var maker = runs.Where(r => r.DestMakes).ToList();
+
+        Console.WriteLine();
+        Console.WriteLine($"naive producer->neighbour runs: {runs.Count}, " +
+                          $"losing {100.0 * runs.Count(r => r.Return < 0) / runs.Count:0.0}%, " +
+                          $"median {Median(runs.Select(r => r.Return).ToList()):+0.0%;-0.0%}");
+        Console.WriteLine($"  to a city that does NOT make the good: {nonMaker.Count} runs, " +
+                          $"{100.0 * nonMaker.Count(r => r.Return < 0) / nonMaker.Count:0.0}% lose, " +
+                          $"median {Median(nonMaker.Select(r => r.Return).ToList()):+0.0%;-0.0%}");
+        if (maker.Count > 0)
+        {
+            Console.WriteLine($"  to a city that makes it too: {maker.Count} runs, " +
+                              $"{100.0 * maker.Count(r => r.Return < 0) / maker.Count:0.0}% lose, " +
+                              $"median {Median(maker.Select(r => r.Return).ToList()):+0.0%;-0.0%} " +
+                              "(the direction mistake)");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"{"worst naive hauls",-44}{"net",12}");
+        Console.WriteLine(new string('-', 56));
+        foreach (var r in runs.OrderBy(r => r.Net).Take(5))
+            Console.WriteLine($"{r.Label,-44}{r.Net,12:N0} ({r.Return:+0.0%;-0.0%})");
+    }
+
+    /// <summary>
+    /// The guard that keeps the owner's "this is torture" complaint from coming back:
+    /// a plain haul of a maker's surplus to a city that does not make it must pay, most
+    /// plain producer->neighbour hauls must not lose, and no naive full-hold haul may
+    /// lose half the starting purse.
+    /// </summary>
+    private static void AssertNaiveHauls(WorldData world, List<NaiveHaul> runs, List<string> failures)
+    {
+        if (runs.Count == 0)
+        {
+            failures.Add("No naive producer->neighbour haul exists to measure; the probe is empty.");
+            return;
+        }
+
+        var nonMaker = runs.Where(r => !r.DestMakes).ToList();
+        var medianNonMaker = Median(nonMaker.Select(r => r.Return).ToList());
+
+        if (medianNonMaker <= 0)
+        {
+            failures.Add($"The median haul of a maker's surplus to a city that does not make it is " +
+                         $"{medianNonMaker:P0}. A plain good-direction trade must pay, or the owner's " +
+                         $"complaint is back by construction.");
+        }
+
+        var losingShare = (double)runs.Count(r => r.Return < 0) / runs.Count;
+        if (losingShare >= 0.5)
+        {
+            failures.Add($"{losingShare:P0} of naive producer->neighbour hauls lose money " +
+                         "(the pre-fix figure was 84%, the post-fix figure 32%).");
+        }
+
+        var worst = runs.Min(r => r.Net);
+        var purse = world.Config.StartCash;
+        if (worst <= -0.5 * purse)
+        {
+            failures.Add($"A naive full-hold haul lost {worst:N0} cr, half the {purse:N0} cr start purse. " +
+                         "The 'losses up to 50% of capital' complaint is back.");
+        }
     }
 
     /// <summary>
@@ -342,10 +509,13 @@ public static class Program
         }
 
         // A maxed-out roster: the strongest terms the game can ever offer.
+        // Each ceiling hand sits on the post that claims their lever, or the terms would
+        // never see them.
         var maxed = cfg.Skills.Select(s => new CrewMember
         {
             Id = $"ceiling-{s.Id}",
             Name = s.Name,
+            PostId = cfg.PostFor(s.Lever)?.Id ?? "",
             Skills = cfg.Skills.ToDictionary(x => x.Id, x => x.Id == s.Id ? cfg.MaxSkill : 1)
         }).ToList();
 
@@ -402,7 +572,9 @@ public static class Program
         WorldData world,
         EconomyReport report,
         IReadOnlyList<BotRunResult> greedy,
-        IReadOnlyList<BotRunResult> random)
+        IReadOnlyList<BotRunResult> random,
+        IReadOnlyList<BotRunResult> house,
+        IReadOnlyList<NaiveHaul> naive)
     {
         var path = Path.Combine(RepositoryRoot(), "FIGURES.md");
 
@@ -427,8 +599,12 @@ public static class Program
 
         text.AppendLine("## World");
         text.AppendLine();
-        text.AppendLine($"- {world.Cities.Count} cities, {world.Goods.Count} goods, " +
-                        $"{world.Routes.All.Count} roads, {world.Industries.Count} industry archetypes");
+        text.AppendLine($"- {world.Cities.Count} cities, {world.Goods.Count} goods in {world.Categories.Count} categories " +
+                        $"and {world.Tiers.Count} tiers, {world.Routes.All.Count} roads, {world.Industries.Count} industry archetypes");
+        text.AppendLine($"- {world.TruckUpgrades.Count} truck fittings, {world.Contracts.Kinds.Count} contract kinds, " +
+                        $"{world.Expos.Themes.Count} expo themes on a {world.Expos.CycleDays}-day cycle");
+        text.AppendLine($"- Standing: {world.Standing.Segments.Count} segments of {world.Standing.SegmentMax:0}; " +
+                        string.Join(", ", world.Tiers.Where(t => t.MinStanding > 0).Select(t => $"{t.Name} needs {t.MinStanding:0}")));
         text.AppendLine($"- {world.Trucks.Count} truck types, {crew.Skills.Count} crew skills, " +
                         $"{crew.Roles.Count} hiring roles");
         text.AppendLine($"- Start: {start.Name}, {world.Config.StartCash:N0} cr, " +
@@ -486,6 +662,40 @@ public static class Program
         }
 
         text.AppendLine();
+        text.AppendLine("## Naive routes");
+        text.AppendLine();
+        text.AppendLine("A plain haul of a city's own surplus to a road neighbour, full purse, no planning,");
+        text.AppendLine("no crew. The check that keeps the 'sell next door and lose half the purse'");
+        text.AppendLine("complaint from coming back.");
+        text.AppendLine();
+
+        var nonMaker = naive.Where(r => !r.DestMakes).ToList();
+        var maker = naive.Where(r => r.DestMakes).ToList();
+        var purse = world.Config.StartCash;
+        var worstNet = naive.Min(r => r.Net);
+        double LosingShare(IReadOnlyList<NaiveHaul> slice)
+            => slice.Count == 0 ? 0.0 : (double)slice.Count(r => r.Return < 0) / slice.Count;
+
+        text.AppendLine($"- {naive.Count} producer->neighbour runs: " +
+                        $"{LosingShare(naive):P0} lose, " +
+                        $"median {Median(naive.Select(r => r.Return).ToList()):+0.0%;-0.0%}");
+        if (nonMaker.Count > 0)
+        {
+            text.AppendLine($"- hauling to a city that does not make the good: {nonMaker.Count} runs, " +
+                            $"{LosingShare(nonMaker):P0} lose, " +
+                            $"median {Median(nonMaker.Select(r => r.Return).ToList()):+0.0%;-0.0%}");
+        }
+        if (maker.Count > 0)
+        {
+            text.AppendLine($"- hauling to a city that makes it too: {maker.Count} runs, " +
+                            $"{LosingShare(maker):P0} lose, " +
+                            $"median {Median(maker.Select(r => r.Return).ToList()):+0.0%;-0.0%} " +
+                            "- the direction mistake");
+        }
+        text.AppendLine($"- worst naive loss: {worstNet:N0} cr" +
+                        $"{((purse > 0) ? $" ({worstNet / purse:P0} of the {purse:N0} cr start purse)" : "")}");
+
+        text.AppendLine();
         text.AppendLine("## Skill expression");
         text.AppendLine();
         text.AppendLine($"Over {BotDays} days x {BotSeeds} seeds on {world.Config.StartCash:N0} starting capital. " +
@@ -494,6 +704,8 @@ public static class Program
         text.AppendLine($"- Greedy (plays well): {greedy.Average(r => (double)r.Profit):N0} cr");
         text.AppendLine($"- Random (plays badly): {random.Average(r => (double)r.Profit):N0} cr");
         text.AppendLine($"- Edge: {greedy.Average(r => (double)r.Profit) - random.Average(r => (double)r.Profit):N0} cr");
+
+        AppendPlaytest(text, world, house);
 
         text.AppendLine();
         text.AppendLine("## Crew");
@@ -575,9 +787,100 @@ public static class Program
         var best = runs.Max(r => r.Profit);
         var worst = runs.Min(r => r.Profit);
         var rejected = runs.Sum(r => r.CommandsRejected);
+        var cities = runs.Average(r => (double)r.CitiesVisited.Count);
+
+        var systems = new List<string>();
+        if (runs.Any(r => r.UsedCrew)) systems.Add("crew");
+        if (runs.Any(r => r.UsedTrucks)) systems.Add("trucks");
+        if (runs.Any(r => r.UsedFavor)) systems.Add("standing");
+        if (runs.Any(r => r.UsedStation)) systems.Add("station");
+        if (runs.Any(r => r.UsedContracts)) systems.Add("contracts");
+        if (runs.Any(r => r.UsedExpo)) systems.Add("expo");
+        var systemText = systems.Count == 0 ? "haulage" : string.Join("+", systems);
 
         Console.WriteLine($"{label,-8} mean {mean,12:N0} cr   best {best,12:N0}   worst {worst,12:N0}" +
-                          $"   rejected {rejected,4}");
+                          $"   rejected {rejected,4}   cities {cities,4:0.0}   {systemText}");
+    }
+
+    private const double MaxHouseRejectionRate = 0.10;
+
+    private static void AssertPlaytest(IReadOnlyList<BotRunResult> house, double houseMean, List<string> failures)
+    {
+        if (houseMean <= 0)
+            failures.Add($"A house trader averages {houseMean:N0} cr over {BotDays} days. " +
+                         "The play-tester must still finish up or it is not a player.");
+
+        var rejectRate = house.Average(r => r.RejectionRate);
+        if (rejectRate > MaxHouseRejectionRate)
+            failures.Add($"A house trader rejects {rejectRate:P0} of its commands (budget {MaxHouseRejectionRate:P0}). " +
+                         "A stuck policy is not play-testing the game.");
+
+        var cities = house.Average(r => (double)r.CitiesVisited.Count);
+        if (cities < 2)
+            failures.Add($"A house trader visits {cities:0.0} cities on average. " +
+                         "Play-testing a trade game requires leaving town.");
+
+        if (!house.Any(r => r.UsedCrew || r.UsedTrucks || r.UsedFavor))
+            failures.Add("A house trader never hired, bought a truck, or courted a governor. " +
+                         "Those systems are then untested by play.");
+    }
+
+    private static void AppendPlaytest(
+        System.Text.StringBuilder text,
+        WorldData world,
+        IReadOnlyList<BotRunResult> house)
+    {
+        text.AppendLine();
+        text.AppendLine("## Playtest");
+        text.AppendLine();
+        text.AppendLine($"HouseTrader, same {BotDays} days x {BotSeeds} seeds on {world.Config.StartCash:N0} starting capital. " +
+                        "Haulage plus hire / extra mule / an economy fitting / donate. Contracts and the expo stall are " +
+                        "player-only for now (see BRAIN.md). Live rivals are not in this world yet.");
+        text.AppendLine();
+
+        var mean = house.Average(r => (double)r.Profit);
+        var best = house.Max(r => r.Profit);
+        var worst = house.Min(r => r.Profit);
+        var rejectRate = house.Average(r => r.RejectionRate);
+        var cities = house.Average(r => (double)r.CitiesVisited.Count);
+        var goods = house.SelectMany(r => r.GoodsTraded).Distinct().Count();
+        var peak = house.Max(r => r.PeakNetWorth);
+        var trough = house.Min(r => r.TroughNetWorth);
+        var crew = house.Average(r => (double)r.EndCrewCount);
+        var trucks = house.Average(r => (double)r.EndTruckCount);
+        var standing = house.Max(r => r.MaxStanding);
+        var events = house.Count(r => r.SawWorldEvent);
+        var bankrupt = house.Count(r => r.WentBankrupt);
+
+        var systems = new List<string>();
+        if (house.Any(r => r.UsedCrew)) systems.Add("crew");
+        if (house.Any(r => r.UsedTrucks)) systems.Add("trucks");
+        if (house.Any(r => r.UsedFavor)) systems.Add("standing");
+        if (house.Any(r => r.UsedStation)) systems.Add("station");
+        if (house.Any(r => r.UsedContracts)) systems.Add("contracts");
+        if (house.Any(r => r.UsedExpo)) systems.Add("expo");
+        var systemText = systems.Count == 0 ? "none" : string.Join(", ", systems);
+
+        text.AppendLine($"- Mean profit: {mean:N0} cr (best {best:N0}, worst {worst:N0})");
+        text.AppendLine($"- Rejection rate: {rejectRate:P0}");
+        text.AppendLine($"- Cities visited: {cities:0.0} average; {goods} distinct goods traded");
+        text.AppendLine($"- Net worth range: {trough:N0} – {peak:N0} cr");
+        text.AppendLine($"- End crew: {crew:0.0}; end trucks: {trucks:0.0}; max standing: {standing:0.#}");
+        text.AppendLine($"- World events seen in {events} of {house.Count} seeds; bankruptcies: {bankrupt}");
+        text.AppendLine($"- Systems touched: {systemText}");
+        text.AppendLine();
+
+        var mix = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var run in house)
+        {
+            foreach (var (kind, count) in run.CommandMix)
+                mix[kind] = mix.TryGetValue(kind, out var n) ? n + count : count;
+        }
+
+        text.AppendLine("Command mix across the seed set:");
+        text.AppendLine();
+        foreach (var (kind, count) in mix.OrderBy(kv => kv.Key))
+            text.AppendLine($"- `{kind}`: {count:N0}");
     }
 
     private static double Median(List<double> values)

@@ -13,5 +13,14 @@
     "maxPriceMult": 2.5,
     "roadDetourFactor": 1.25,
     "restockRate": 0.35
+  },
+  "warehouse": {
+    "rentCost": 800,
+    "dailyRent": 35,
+    "capacity": 400
+  },
+  "crewBrief": {
+    "enabled": true,
+    "minMargin": 0.035
   }
 }

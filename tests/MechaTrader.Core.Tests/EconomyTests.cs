@@ -49,20 +49,25 @@ public class EconomyTests
     }
 
     [Fact]
-    public void LargeOrdersMoveThePriceAgainstYou()
+    public void AnOrderSettlesAtTheDaysPriceAndTheShelfMovesTomorrow()
     {
-        // The property the whole trade loop rests on: you cannot dump a full hold at
-        // the price the first unit quoted.
+        // Bulk is never penalised inside a deal or inside a day: the second order today
+        // pays what the first did. What a deal does is move the stock, so after the
+        // tick the shelf is scarcer and the price is higher.
         var (good, profile, cfg) = Sample();
         var stock = CityStock.Shelved(profile.Equilibrium);
 
-        var exactCost = Economy.QuoteBuy(good, profile, stock, 200, cfg, TradeTerms.Market).Total;
-        var marginalCost = Economy.EstimateBuyCost(good, profile, stock, 200, cfg, TradeTerms.Market);
-        Assert.True(exactCost > marginalCost, "Buying 200 units should cost more than 200x the first unit.");
+        var first = Economy.QuoteBuy(good, profile, stock, 200, cfg, TradeTerms.Market);
+        Assert.Equal(200 * Economy.BuyUnitPrice(good, profile, stock, cfg, TradeTerms.Market), first.Total, 0);
+        Assert.True(first.ResultingStock.Out < stock.Out, "The shelf should drain by the order.");
 
-        var exactRevenue = Economy.QuoteSell(good, profile, stock, 200, cfg, TradeTerms.Market).Total;
-        var marginalRevenue = Economy.EstimateSellRevenue(good, profile, stock, 200, cfg, TradeTerms.Market);
-        Assert.True(exactRevenue < marginalRevenue, "Selling 200 units should earn less than 200x the first unit.");
+        var second = Economy.QuoteBuy(good, profile, first.ResultingStock, 200, cfg, TradeTerms.Market);
+        Assert.Equal(first.Total, second.Total);
+
+        var tomorrow = Economy.TickStock(second.ResultingStock, profile, cfg, new Rng(1));
+        Assert.True(Economy.BuyUnitPrice(good, profile, tomorrow, cfg, TradeTerms.Market)
+                    > Economy.BuyUnitPrice(good, profile, stock, cfg, TradeTerms.Market),
+            "After buying out most of the shelf, tomorrow's price should be higher.");
     }
 
     [Theory]
@@ -159,18 +164,22 @@ public class EconomyTests
     }
 
     [Fact]
-    public void SellingStillCratersWhatTheCityWillPay()
+    public void SellingStillLowersWhatTheCityWillPayTomorrow()
     {
-        // Diminishing returns on dumping have to survive the split, or a full hold
-        // would always be worth unloading in one place.
+        // Diminishing returns on dumping survive the split at the day boundary: the
+        // second hundred today fetches what the first did, but a city that took a
+        // hold yesterday pays less for more of it today.
         var (good, profile, cfg) = Sample();
         var stock = CityStock.Shelved(profile.Equilibrium);
 
         var first = Economy.QuoteSell(good, profile, stock, 100, cfg, TradeTerms.Market);
         var second = Economy.QuoteSell(good, profile, first.ResultingStock, 100, cfg, TradeTerms.Market);
+        Assert.Equal(first.Total, second.Total);
 
-        Assert.True(second.Total < first.Total,
-            $"The second hundred fetched {second.Total} against the first hundred's {first.Total}.");
+        var tomorrow = Economy.TickStock(second.ResultingStock, profile, cfg, new Rng(1));
+        var third = Economy.QuoteSell(good, profile, tomorrow, 100, cfg, TradeTerms.Market);
+        Assert.True(third.Total < first.Total,
+            $"The day after taking two hundred, the city still paid {third.Total} against {first.Total}.");
     }
 
     [Fact]

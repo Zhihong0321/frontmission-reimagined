@@ -40,9 +40,27 @@ public sealed class City
     public required double X { get; init; }
     public required double Y { get; init; }
 
+    /// <summary>
+    /// The city's founding vitals, keyed by the ids declared in citystats.json. This is
+    /// where a city starts, not where it is: the live values are copied into
+    /// <c>GameState</c> when a run begins so that events can move them.
+    /// </summary>
+    public required IReadOnlyDictionary<string, double> Vitals { get; init; }
+
+    /// <summary>
+    /// Founding population, and so the scale every industry's output and appetite is
+    /// multiplied by. Pulled out of <see cref="Vitals"/> at load time because market
+    /// generation needs it before any state exists.
+    /// </summary>
     public required double Population { get; init; }
+
     public required IReadOnlyList<string> Industries { get; init; }
     public required IReadOnlyDictionary<string, CityGoodProfile> Market { get; init; }
+
+    /// <summary>The person whose favour you court in this city. Content, not state.</summary>
+    public required string GovernorName { get; init; }
+
+    public required string GovernorTitle { get; init; }
 }
 
 /// <summary>An undirected road link between two cities.</summary>

@@ -1,12 +1,84 @@
 {
+  "_comment": "Categories are the knowledge domains crew specialise in. Tiers are the product grade, 1 to 5: each tier declares a colour, the standing a city demands before it will sell that grade to you (total across every segment), the price-per-volume floor every good of that tier must clear (higher tier = denser value, enforced by the loader), and how far its resting stock shrinks (rare goods do not sit in piles of 150). Quality knobs live here so a retune does not require C#: a fresh crate grades base + random(0..random) + the city craft vital x cityVitalWeight/100; nominal is the grade that sells at 1.0x.",
+
+  "quality": {
+    "nominal": 70,
+    "base": 50,
+    "random": 15,
+    "cityVitalId": "craft",
+    "cityVitalWeight": 25,
+    "spread": 22,
+    "sTierAt": 90,
+    "sTierSellBonus": 0.30
+  },
+
+  "tiers": [
+    { "tier": 1, "name": "Common",     "color": "#d6dee9", "minStanding": 0,   "minPricePerVolume": 0,    "equilibriumScale": 1.0 },
+    { "tier": 2, "name": "Standard",   "color": "#45c281", "minStanding": 0,   "minPricePerVolume": 40,   "equilibriumScale": 1.0 },
+    { "tier": 3, "name": "Fine",       "color": "#5aa2ff", "minStanding": 0,   "minPricePerVolume": 120,  "equilibriumScale": 0.6 },
+    { "tier": 4, "name": "Exotic",     "color": "#b07cff", "minStanding": 60,  "minPricePerVolume": 400,  "equilibriumScale": 0.2 },
+    { "tier": 5, "name": "Masterwork", "color": "#e0a030", "minStanding": 150, "minPricePerVolume": 1200, "equilibriumScale": 0.08 }
+  ],
+
+  "categories": [
+    { "id": "metals",      "name": "Metals",      "blurb": "Ores, scrap, mill stock. The bones of every frame." },
+    { "id": "energy",      "name": "Energy",      "blurb": "Cells and fuel. What keeps a city and a convoy moving." },
+    { "id": "provisions",  "name": "Provisions",  "blurb": "Grain and rations. The first thing a city misses." },
+    { "id": "ceramics",    "name": "Ceramics",    "blurb": "Silica, plate and glass. Heat and sight." },
+    { "id": "components",  "name": "Components",  "blurb": "Bearings and servos. What an assembler actually fits." },
+    { "id": "optics",      "name": "Optics",      "blurb": "Glass and sensors. Precision, or it is scrap." },
+    { "id": "composites",  "name": "Composites",  "blurb": "Polymer and armour. Light, hard, expensive to get wrong." },
+    { "id": "electronics", "name": "Electronics", "blurb": "Boards, chips and cores. The nerves of a machine." },
+    { "id": "machinery",   "name": "Machinery",   "blurb": "Parts, drives and rigs. The muscle of a works floor." },
+    { "id": "medicine",    "name": "Medicine",    "blurb": "Dressings, drugs and serum. Cities pay whatever it costs." },
+    { "id": "tools",       "name": "Tools",       "blurb": "Hand tools to precision kits. Every trade starts with one." }
+  ],
+
   "goods": [
-    { "id": "scrap",    "name": "Scrap Alloy",     "tier": "raw",       "basePrice": 12,  "unitVolume": 1.0, "elasticity": 0.55 },
-    { "id": "ore",      "name": "Rare Earth Ore",  "tier": "raw",       "basePrice": 42,  "unitVolume": 0.8, "elasticity": 0.62 },
-    { "id": "rations",  "name": "Rations",         "tier": "raw",       "basePrice": 20,  "unitVolume": 0.6, "elasticity": 0.50 },
-    { "id": "steel",    "name": "Refined Steel",   "tier": "refined",   "basePrice": 58,  "unitVolume": 1.0, "elasticity": 0.60 },
-    { "id": "ceramics", "name": "Ceramic Plating", "tier": "refined",   "basePrice": 95,  "unitVolume": 0.7, "elasticity": 0.62 },
-    { "id": "cells",    "name": "Power Cells",     "tier": "refined",   "basePrice": 150, "unitVolume": 0.5, "elasticity": 0.65 },
-    { "id": "servos",   "name": "Actuator Servos", "tier": "component", "basePrice": 230, "unitVolume": 0.5, "elasticity": 0.68 },
-    { "id": "optics",   "name": "Optical Sensors", "tier": "component", "basePrice": 340, "unitVolume": 0.3, "elasticity": 0.70 }
+    { "id": "scrap",       "name": "Scrap Alloy",        "category": "metals",      "tier": 1, "basePrice": 12,   "unitVolume": 1.0, "elasticity": 0.55 },
+    { "id": "copper_ore",  "name": "Copper Ore",         "category": "metals",      "tier": 1, "basePrice": 28,   "unitVolume": 0.9, "elasticity": 0.58 },
+    { "id": "grain",       "name": "Grain",              "category": "provisions",  "tier": 1, "basePrice": 14,   "unitVolume": 0.8, "elasticity": 0.48 },
+    { "id": "silica",      "name": "Silica Sand",        "category": "ceramics",    "tier": 1, "basePrice": 18,   "unitVolume": 1.0, "elasticity": 0.52 },
+    { "id": "fuel",        "name": "Haulage Fuel",       "category": "energy",      "tier": 1, "basePrice": 38,   "unitVolume": 1.0, "elasticity": 0.55 },
+    { "id": "rations",     "name": "Rations",            "category": "provisions",  "tier": 1, "basePrice": 20,   "unitVolume": 0.6, "elasticity": 0.50 },
+    { "id": "medkits",     "name": "Field Dressings",    "category": "medicine",    "tier": 1, "basePrice": 30,   "unitVolume": 0.8, "elasticity": 0.52 },
+    { "id": "handtools",   "name": "Hand Tools",         "category": "tools",       "tier": 1, "basePrice": 34,   "unitVolume": 0.9, "elasticity": 0.52 },
+
+    { "id": "ore",         "name": "Rare Earth Ore",     "category": "metals",      "tier": 2, "basePrice": 42,   "unitVolume": 0.8, "elasticity": 0.62 },
+    { "id": "steel",       "name": "Refined Steel",      "category": "metals",      "tier": 2, "basePrice": 58,   "unitVolume": 1.0, "elasticity": 0.60 },
+    { "id": "copper",      "name": "Copper Stock",       "category": "metals",      "tier": 2, "basePrice": 48,   "unitVolume": 0.9, "elasticity": 0.58 },
+    { "id": "ceramics",    "name": "Ceramic Plating",    "category": "ceramics",    "tier": 2, "basePrice": 95,   "unitVolume": 0.9, "elasticity": 0.62 },
+    { "id": "glass",       "name": "Optical Glass",      "category": "optics",      "tier": 2, "basePrice": 55,   "unitVolume": 0.5, "elasticity": 0.64 },
+    { "id": "polymer",     "name": "Polymer Sheet",      "category": "composites",  "tier": 2, "basePrice": 70,   "unitVolume": 0.6, "elasticity": 0.60 },
+    { "id": "circuit",     "name": "Circuit Boards",     "category": "electronics", "tier": 2, "basePrice": 90,   "unitVolume": 0.8, "elasticity": 0.60 },
+    { "id": "parts",       "name": "Machine Parts",      "category": "machinery",   "tier": 2, "basePrice": 75,   "unitVolume": 0.9, "elasticity": 0.58 },
+    { "id": "antibiotics", "name": "Antibiotics",        "category": "medicine",    "tier": 2, "basePrice": 80,   "unitVolume": 0.7, "elasticity": 0.60 },
+    { "id": "powertools",  "name": "Power Tools",        "category": "tools",       "tier": 2, "basePrice": 85,   "unitVolume": 0.8, "elasticity": 0.58 },
+    { "id": "meals",       "name": "Preserved Meals",    "category": "provisions",  "tier": 2, "basePrice": 45,   "unitVolume": 0.6, "elasticity": 0.52 },
+
+    { "id": "cells",       "name": "Power Cells",        "category": "energy",      "tier": 3, "basePrice": 150,  "unitVolume": 0.5, "elasticity": 0.65 },
+    { "id": "bearings",    "name": "Load Bearings",      "category": "components",  "tier": 3, "basePrice": 120,  "unitVolume": 0.4, "elasticity": 0.66 },
+    { "id": "servos",      "name": "Actuator Servos",    "category": "components",  "tier": 3, "basePrice": 230,  "unitVolume": 0.7, "elasticity": 0.68 },
+    { "id": "optics",      "name": "Optical Sensors",    "category": "optics",      "tier": 3, "basePrice": 340,  "unitVolume": 0.9, "elasticity": 0.70 },
+    { "id": "armor",       "name": "Armour Laminate",    "category": "composites",  "tier": 3, "basePrice": 160,  "unitVolume": 0.8, "elasticity": 0.64 },
+    { "id": "titanium",    "name": "Titanium Billet",    "category": "metals",      "tier": 3, "basePrice": 210,  "unitVolume": 0.9, "elasticity": 0.64 },
+    { "id": "chips",       "name": "Control Chips",      "category": "electronics", "tier": 3, "basePrice": 260,  "unitVolume": 0.7, "elasticity": 0.68 },
+    { "id": "drivetrain",  "name": "Drive Train",        "category": "machinery",   "tier": 3, "basePrice": 240,  "unitVolume": 1.0, "elasticity": 0.64 },
+    { "id": "toolkit",     "name": "Precision Toolkit",  "category": "tools",       "tier": 3, "basePrice": 190,  "unitVolume": 0.6, "elasticity": 0.64 },
+    { "id": "shield",      "name": "Heat Shield Tiles",  "category": "ceramics",    "tier": 3, "basePrice": 180,  "unitVolume": 0.7, "elasticity": 0.64 },
+    { "id": "capacitor",   "name": "Capacitor Bank",     "category": "energy",      "tier": 3, "basePrice": 220,  "unitVolume": 0.8, "elasticity": 0.66 },
+    { "id": "serum",       "name": "Trauma Serum",       "category": "medicine",    "tier": 3, "basePrice": 150,  "unitVolume": 0.5, "elasticity": 0.66 },
+
+    { "id": "gyro",        "name": "Gyro Assembly",      "category": "components",  "tier": 4, "basePrice": 520,  "unitVolume": 0.6, "elasticity": 0.74 },
+    { "id": "targeting",   "name": "Targeting Array",    "category": "optics",      "tier": 4, "basePrice": 700,  "unitVolume": 0.7, "elasticity": 0.76 },
+    { "id": "nanoweave",   "name": "Nanoweave Plate",    "category": "composites",  "tier": 4, "basePrice": 480,  "unitVolume": 0.8, "elasticity": 0.72 },
+    { "id": "fusion",      "name": "Fusion Cell",        "category": "energy",      "tier": 4, "basePrice": 640,  "unitVolume": 0.6, "elasticity": 0.74 },
+    { "id": "fabricator",  "name": "Fabricator Rig",     "category": "machinery",   "tier": 4, "basePrice": 900,  "unitVolume": 1.0, "elasticity": 0.72 },
+    { "id": "regen",       "name": "Regen Serum",        "category": "medicine",    "tier": 4, "basePrice": 420,  "unitVolume": 0.5, "elasticity": 0.74 },
+    { "id": "logic",       "name": "Logic Cores",        "category": "electronics", "tier": 4, "basePrice": 580,  "unitVolume": 0.5, "elasticity": 0.76 },
+
+    { "id": "neural",      "name": "Neural Core",        "category": "electronics", "tier": 5, "basePrice": 1500, "unitVolume": 0.5, "elasticity": 0.80 },
+    { "id": "frame",       "name": "Mech Frame",         "category": "machinery",   "tier": 5, "basePrice": 2400, "unitVolume": 1.2, "elasticity": 0.78 },
+    { "id": "reactor",     "name": "Reactor Core",       "category": "energy",      "tier": 5, "basePrice": 1800, "unitVolume": 1.0, "elasticity": 0.80 }
   ]
 }

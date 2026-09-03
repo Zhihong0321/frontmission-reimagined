@@ -39,24 +39,38 @@ public sealed class Game
             Bankrupt = false,
             Caravan = new CaravanState
             {
-                LocationId = config.StartCityId,
-                TruckTypeIds = new List<string>(config.StartTruckIds)
+                LocationId = config.StartCityId
             }
         };
+
+        foreach (var typeId in config.StartTruckIds)
+            state.Caravan.Trucks.Add(CaravanMath.NewTruck(state.Caravan, typeId));
 
         // Open on a settled economy rather than a flat day zero, so the first day of
         // play already has real price gradients to read.
         foreach (var city in world.Cities)
         {
             var market = new Dictionary<string, CityStock>(world.Goods.Count);
+            var craft = string.IsNullOrWhiteSpace(world.Quality.CityVitalId)
+                ? 50.0
+                : CityStats.Founding(city, world.Quality.CityVitalId);
+            var grade = QualityMath.OpeningQuality(world.Quality, craft);
             foreach (var good in world.Goods)
             {
                 // A new world opens with nothing in any city's intake: nobody has sold
-                // into these markets yet.
-                market[good.Id] = CityStock.Shelved(Economy.InitialStock(city.Market[good.Id], eco));
+                // into these markets yet. The shelf grades the way this city's works
+                // floors grade, on an average day.
+                market[good.Id] = CityStock.Shelved(
+                    Economy.InitialStock(city.Market[good.Id], eco), grade);
             }
             state.Stock[city.Id] = market;
+
+            // Every city opens on its founding stats. From here they are state, not
+            // content: whatever moves them later writes here and nowhere else.
+            state.CityVitals[city.Id] = new Dictionary<string, double>(city.Vitals);
         }
+
+        state.MiningSites = MapMath.PlaceDeposits(world, seed);
 
         return new Game(world, state);
     }

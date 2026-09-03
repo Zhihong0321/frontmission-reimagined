@@ -28,15 +28,22 @@ public readonly record struct Quote(int Units, long Total, CityStock ResultingSt
 /// That asymmetry is load-bearing: since price falls as stock rises and the total is
 /// never less than the shelf, the sell quote can never exceed the buy quote. No amount of
 /// crew skill or retuning can turn standing still into an income.
+///
+/// Prices move at the day tick, never inside a deal. Every quote reads the shelf and
+/// intake as the day opened (<see cref="CityStock.PriceShelf"/>, <see cref="CityStock.PriceTotal"/>);
+/// an order settles at one price for the whole lot and bulk is never penalised. What a
+/// deal does is move the stock, so tomorrow meets a different shelf. Depth lives in the
+/// size of the stocks, not in a walk inside the order.
 /// </summary>
 public static class Economy
 {
-    public static double UnitPrice(GoodDef good, CityGoodProfile profile, double stock, EconomyConfig cfg)
+    public static double UnitPrice(
+        GoodDef good, CityGoodProfile profile, double stock, EconomyConfig cfg, double eventMult = 1.0)
     {
         var effective = Math.Max(stock, cfg.MinStock);
         var ratio = profile.Equilibrium / effective;
         var mult = Math.Clamp(Math.Pow(ratio, good.Elasticity), cfg.MinPriceMult, cfg.MaxPriceMult);
-        return good.BasePrice * profile.PriceModifier * mult;
+        return good.BasePrice * profile.PriceModifier * eventMult * mult;
     }
 
     /// <summary>
@@ -45,15 +52,17 @@ public static class Economy
     /// spread to nothing but never invert it, so buying and selling in the same city is
     /// at best free and never a profit.
     /// </summary>
-    /// <summary>Priced off the shelf: you can only be sold what is on it.</summary>
+    /// <summary>Priced off the shelf as the day opened: you can only be sold what is on it.</summary>
     public static double BuyUnitPrice(
-        GoodDef good, CityGoodProfile profile, CityStock stock, EconomyConfig cfg, TradeTerms terms)
-        => UnitPrice(good, profile, stock.Out, cfg) * (1.0 + cfg.Spread * terms.BuySpreadShare);
+        GoodDef good, CityGoodProfile profile, CityStock stock, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
+        => UnitPrice(good, profile, stock.PriceShelf, cfg, eventMult) * (1.0 + cfg.Spread * terms.BuySpreadShare);
 
-    /// <summary>Priced off everything the city holds, shelved or not.</summary>
+    /// <summary>Priced off everything the city held as the day opened, shelved or not.</summary>
     public static double SellUnitPrice(
-        GoodDef good, CityGoodProfile profile, CityStock stock, EconomyConfig cfg, TradeTerms terms)
-        => UnitPrice(good, profile, stock.Total, cfg) * (1.0 - cfg.Spread * terms.SellSpreadShare);
+        GoodDef good, CityGoodProfile profile, CityStock stock, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
+        => UnitPrice(good, profile, stock.PriceTotal, cfg, eventMult) * (1.0 - cfg.Spread * terms.SellSpreadShare);
 
     /// <summary>
     /// How many units the city can actually hand over, keeping the shelf above the floor
@@ -63,140 +72,82 @@ public static class Economy
         => (int)Math.Floor(Math.Max(0.0, stock.Out - cfg.MinStock));
 
     /// <summary>
-    /// Exact cost of buying <paramref name="units"/>, walking the price up as stock drains.
+    /// Cost of buying <paramref name="units"/>: one price for the whole lot, the day's
+    /// price. The shelf drains by the order, so tomorrow's shelf is scarcer and dearer;
+    /// bulk is never penalised inside a deal or inside a day.
     /// </summary>
     public static Quote QuoteBuy(
-        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms)
+        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
     {
         if (units <= 0) return new Quote(0, 0, stock);
 
-        double total = 0;
-        var s = stock;
-
-        for (var i = 0; i < units; i++)
-        {
-            total += BuyUnitPrice(good, profile, s, cfg, terms);
-            s = s with { Out = Math.Max(cfg.MinStock, s.Out - 1.0) };
-        }
-
-        return new Quote(units, (long)Math.Round(total), s);
+        var total = BuyUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
+        var resulting = stock with { Out = Math.Max(cfg.MinStock, stock.Out - units) };
+        return new Quote(units, (long)Math.Round(total), resulting);
     }
 
     /// <summary>
-    /// Exact revenue from selling <paramref name="units"/>, walking the price down as
-    /// stock fills. Sell 500 into a small market and the last unit is worth a fraction
-    /// of the first.
+    /// Revenue from selling <paramref name="units"/>: one price for the whole lot, the
+    /// day's price. The lot lands in the intake, so tomorrow the city is fuller and pays
+    /// less. Sell ≤ buy still holds per unit at every holding (see the class remarks).
     /// </summary>
     public static Quote QuoteSell(
-        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms)
+        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
     {
         if (units <= 0) return new Quote(0, 0, stock);
 
-        double total = 0;
-        var s = stock;
-
-        for (var i = 0; i < units; i++)
-        {
-            // Straight into the intake: the shelf, and so the buy price, does not move.
-            s = s with { In = s.In + 1.0 };
-            total += SellUnitPrice(good, profile, s, cfg, terms);
-        }
-
-        return new Quote(units, (long)Math.Round(total), s);
+        var total = SellUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
+        // Straight into the intake: the shelf, and so the buy price, does not move.
+        var resulting = stock with { In = stock.In + units };
+        return new Quote(units, (long)Math.Round(total), resulting);
     }
 
-    /// <summary>
-    /// Marginal price times quantity. Only honest for small orders: it ignores the fact
-    /// that a large order moves the price against you. Used for display, never for
-    /// planning a full hold.
-    /// </summary>
+    /// <summary>Unit price times quantity: exactly what a single order settles at.</summary>
     public static double EstimateBuyCost(
-        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms)
-        => BuyUnitPrice(good, profile, stock, cfg, terms) * units;
+        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
+        => BuyUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
 
     public static double EstimateSellRevenue(
-        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms)
-        => SellUnitPrice(good, profile, stock, cfg, terms) * units;
-
-    private const int DefaultApproximationSteps = 8;
+        GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
+        double eventMult = 1.0)
+        => SellUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
 
     /// <summary>
-    /// Midpoint approximation of <see cref="QuoteBuy"/>, accurate to about a percent but
-    /// independent of order size. Planning code ranks hundreds of candidate orders per
-    /// decision, and walking every unit for each would dominate the frame; settlement
-    /// still goes through the exact quote.
+    /// Planning cost of an order. Orders settle flat at the day's price, so this is the
+    /// unit price times the quantity; kept as a named call so planners and settlement
+    /// read one rule.
     /// </summary>
     public static double ApproximateBuyCost(
         GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
-        int steps = DefaultApproximationSteps)
-    {
-        if (units <= 0) return 0;
+        double eventMult = 1.0)
+        => units <= 0 ? 0 : BuyUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
 
-        steps = Math.Clamp(Math.Min(steps, units), 1, DefaultApproximationSteps);
-        var chunk = (double)units / steps;
-
-        double total = 0;
-        var s = stock;
-
-        for (var i = 0; i < steps; i++)
-        {
-            var midpoint = s with { Out = Math.Max(cfg.MinStock, s.Out - chunk * 0.5) };
-            total += BuyUnitPrice(good, profile, midpoint, cfg, terms) * chunk;
-            s = s with { Out = Math.Max(cfg.MinStock, s.Out - chunk) };
-        }
-
-        return total;
-    }
-
-    /// <summary>Midpoint approximation of <see cref="QuoteSell"/>. See <see cref="ApproximateBuyCost"/>.</summary>
+    /// <summary>Planning revenue of an order. See <see cref="ApproximateBuyCost"/>.</summary>
     public static double ApproximateSellRevenue(
         GoodDef good, CityGoodProfile profile, CityStock stock, int units, EconomyConfig cfg, TradeTerms terms,
-        int steps = DefaultApproximationSteps)
-    {
-        if (units <= 0) return 0;
-
-        steps = Math.Clamp(Math.Min(steps, units), 1, DefaultApproximationSteps);
-        var chunk = (double)units / steps;
-
-        double total = 0;
-        var s = stock;
-
-        for (var i = 0; i < steps; i++)
-        {
-            var midpoint = s with { In = s.In + chunk * 0.5 };
-            total += SellUnitPrice(good, profile, midpoint, cfg, terms) * chunk;
-            s = s with { In = s.In + chunk };
-        }
-
-        return total;
-    }
+        double eventMult = 1.0)
+        => units <= 0 ? 0 : SellUnitPrice(good, profile, stock, cfg, terms, eventMult) * units;
 
     /// <summary>
     /// Largest order affordable within a cash and volume budget, and within what the
-    /// city actually has on the shelf.
+    /// city actually has on the shelf. <paramref name="gradeMult"/> is the shop's grade
+    /// premium on the crates taken (see <c>QualityMath.SellMultiplier</c>); pass the
+    /// best single crate's multiplier to size conservatively.
     /// </summary>
     public static int MaxAffordableUnits(
         GoodDef good, CityGoodProfile profile, CityStock stock, long cash, double freeVolume, EconomyConfig cfg,
-        TradeTerms terms)
+        TradeTerms terms, double eventMult = 1.0, double gradeMult = 1.0)
     {
         var volumeCap = good.UnitVolume > 0 ? (int)Math.Floor(freeVolume / good.UnitVolume) : int.MaxValue;
         var cap = Math.Min(volumeCap, UnitsOnTheShelf(stock, cfg));
         if (cap <= 0 || cash <= 0) return 0;
 
-        double spent = 0;
-        var s = stock;
-        var units = 0;
-
-        while (units < cap)
-        {
-            var next = BuyUnitPrice(good, profile, s, cfg, terms);
-            if (spent + next > cash) break;
-            spent += next;
-            s = s with { Out = Math.Max(cfg.MinStock, s.Out - 1.0) };
-            units++;
-        }
-
-        return units;
+        var unit = BuyUnitPrice(good, profile, stock, cfg, terms, eventMult) * Math.Max(0.0, gradeMult);
+        if (unit <= 0) return cap;
+        return Math.Min(cap, (int)Math.Floor(cash / unit));
     }
 
     /// <summary>
@@ -212,27 +163,50 @@ public static class Economy
     /// the same single random number, so a world nobody has traded in behaves and
     /// replays identically.
     /// </summary>
-    public static CityStock TickStock(CityStock stock, CityGoodProfile profile, EconomyConfig cfg, Rng rng)
+    public static CityStock TickStock(
+        CityStock stock, CityGoodProfile profile, EconomyConfig cfg, Rng rng, double nominalQuality = 70.0)
     {
         var intake = stock.In;
         var shelf = stock.Out;
+        var quality = stock.OutQuality;
 
         var eatenFromIntake = Math.Min(intake, profile.Consumption);
         intake -= eatenFromIntake;
-        shelf += profile.Production - (profile.Consumption - eatenFromIntake);
+        var shelfDelta = profile.Production - (profile.Consumption - eatenFromIntake);
+        if (shelfDelta > 0)
+        {
+            quality = QualityMath.BlendAdded(shelf, quality, shelfDelta, nominalQuality);
+            shelf += shelfDelta;
+        }
+        else
+        {
+            shelf += shelfDelta;
+        }
 
         var shelved = intake * cfg.RestockRate;
         intake -= shelved;
+        quality = QualityMath.BlendAdded(shelf, quality, shelved, nominalQuality);
         shelf += shelved;
 
         // Trade with the outside world settles the city's whole holding, and lands on
         // the shelf, which is where the outside world buys and sells.
-        shelf += (profile.Equilibrium - (shelf + intake)) * cfg.DriftRate;
+        var drift = (profile.Equilibrium - (shelf + intake)) * cfg.DriftRate;
+        if (drift > 0)
+        {
+            quality = QualityMath.BlendAdded(shelf, quality, drift, nominalQuality);
+            shelf += drift;
+        }
+        else
+        {
+            shelf += drift;
+        }
 
         if (cfg.NoiseSigma > 0)
             shelf *= 1.0 + rng.NextSigned() * cfg.NoiseSigma;
 
-        return new CityStock(Math.Max(cfg.MinStock, shelf), Math.Max(0.0, intake));
+        shelf = Math.Max(cfg.MinStock, shelf);
+        // Today's figures are tomorrow's prices: the tick is the only place a quote moves.
+        return new CityStock(shelf, Math.Max(0.0, intake), Math.Clamp(quality, 0.0, 100.0)).Opened();
     }
 
     /// <summary>

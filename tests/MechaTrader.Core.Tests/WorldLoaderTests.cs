@@ -12,9 +12,21 @@ public class WorldLoaderTests
         var world = TestWorld.Shipping;
 
         Assert.Equal(20, world.Cities.Count);
-        Assert.Equal(8, world.Goods.Count);
+        Assert.True(world.Goods.Count >= 17, "The catalog shrank below the original seventeen goods.");
+        Assert.Equal(5, world.Tiers.Count);
+        Assert.NotEmpty(world.TruckUpgrades);
+        Assert.NotEmpty(world.Contracts.Kinds);
+        Assert.NotEmpty(world.Expos.Themes);
+        Assert.Equal(4, world.Standing.Segments.Count);
         Assert.NotEmpty(world.Routes.All);
         Assert.NotEmpty(world.Trucks);
+        Assert.All(world.Cities, c => Assert.False(string.IsNullOrWhiteSpace(c.GovernorName)));
+        Assert.NotEmpty(world.Standing.Actions);
+        Assert.NotEmpty(world.Standing.Permits);
+        Assert.NotEmpty(world.Events.Events);
+        Assert.True(world.Map.Width > 1);
+        Assert.NotEmpty(world.Gear);
+        Assert.All(world.Cities, c => Assert.True(world.Map.CellOfCity(c.Id).Land));
     }
 
     [Fact]
@@ -109,8 +121,8 @@ public class WorldLoaderTests
     {
         var files = MinimalWorld.With(WorldLoader.CitiesKey, """
         { "cities": [
-          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "population": 1, "industries": ["nope"] },
-          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "population": 1, "industries": ["works"] }
+          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "industries": ["nope"], "stats": { "population": 1 } },
+          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "industries": ["works"], "stats": { "population": 1 } }
         ] }
         """);
 
@@ -165,6 +177,98 @@ public class WorldLoaderTests
     }
 
     [Fact]
+    public void CityStatOutsideItsDeclaredRangeIsRejected()
+    {
+        // A founding value the catalogue does not allow is a content bug, and one that
+        // would otherwise show up much later as a bar drawn past the end of its track.
+        var files = MinimalWorld.With(WorldLoader.CitiesKey, """
+        { "cities": [
+          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "industries": ["works"], "stats": { "population": 1, "peace": 400 } },
+          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "industries": [], "stats": { "population": 1 } }
+        ] }
+        """);
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("peace", error.Message);
+    }
+
+    [Fact]
+    public void CityStatThatIsNotInTheCatalogueIsRejected()
+    {
+        var files = MinimalWorld.With(WorldLoader.CitiesKey, """
+        { "cities": [
+          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "industries": ["works"], "stats": { "population": 1, "moralw": 50 } },
+          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "industries": [], "stats": { "population": 1 } }
+        ] }
+        """);
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("moralw", error.Message);
+    }
+
+    [Fact]
+    public void SupplyReadingAnUnknownGoodIsRejected()
+    {
+        var files = MinimalWorld.With(WorldLoader.CityStatsKey,
+            MinimalWorld.Files[WorldLoader.CityStatsKey].Replace("\"widget\"", "\"unobtainium\""));
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("unobtainium", error.Message);
+    }
+
+    [Fact]
+    public void FavorActionNamingAnUnknownVitalIsRejected()
+    {
+        var files = MinimalWorld.With(WorldLoader.StandingKey,
+            MinimalWorld.Files[WorldLoader.StandingKey].Replace("\"peace\"", "\"mood\""));
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("mood", error.Message);
+    }
+
+    [Fact]
+    public void EventNamingAnUnknownGoodIsRejected()
+    {
+        var files = MinimalWorld.With(WorldLoader.EventsKey,
+            MinimalWorld.Files[WorldLoader.EventsKey].Replace("\"widget\"", "\"unobtainium\""));
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("unobtainium", error.Message);
+    }
+
+    [Fact]
+    public void EventWithNoEffectIsRejected()
+    {
+        var files = MinimalWorld.With(WorldLoader.EventsKey, """
+        { "maxConcurrent": 1, "dailyChance": 0.5,
+          "events": [
+            { "id": "noop", "name": "Nothing", "headline": "Quiet day", "durationDays": 2, "weight": 1 }
+          ] }
+        """);
+
+        var error = Assert.Throws<WorldLoadException>(() => WorldLoader.Load(files));
+        Assert.Contains("no effect", error.Message);
+    }
+
+    [Fact]
+    public void CityAuthoringNoStatsFallsBackToTheCatalogueDefaults()
+    {
+        // Content should be able to add a stat without every city having to be edited
+        // in the same commit.
+        var files = MinimalWorld.With(WorldLoader.CitiesKey, """
+        { "cities": [
+          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "industries": ["works"], "stats": { "population": 1 } },
+          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "industries": [], "stats": { "population": 1 } }
+        ] }
+        """);
+
+        var world = WorldLoader.Load(files);
+        var peace = world.CityStats.Vital("peace")!;
+
+        Assert.Equal(peace.Default, world.City("alpha").Vitals["peace"]);
+    }
+
+    [Fact]
     public void MissingContentFileIsRejected()
     {
         var files = MinimalWorld.Files.Where(kv => kv.Key != WorldLoader.GoodsKey)
@@ -186,24 +290,31 @@ internal static class MinimalWorld
                        "roadDetourFactor": 1.0 } }
         """,
         [WorldLoader.GoodsKey] = """
-        { "goods": [ { "id": "widget", "name": "Widget", "tier": "raw", "basePrice": 10,
+        { "quality": { "nominal": 70, "base": 50, "random": 15, "cityVitalId": "", "cityVitalWeight": 0, "spread": 22, "sTierAt": 90, "sTierSellBonus": 0.3 },
+          "tiers": [ { "tier": 1, "name": "Common", "color": "#fff", "minStanding": 0, "minPricePerVolume": 0 },
+                     { "tier": 2, "name": "Fine",   "color": "#0f0", "minStanding": 30, "minPricePerVolume": 40, "equilibriumScale": 0.5 } ],
+          "goods": [ { "id": "widget", "name": "Widget", "tier": 1, "basePrice": 10,
+                       "unitVolume": 1.0, "elasticity": 0.6 },
+                     { "id": "gadget", "name": "Gadget", "tier": 2, "basePrice": 50,
                        "unitVolume": 1.0, "elasticity": 0.6 } ] }
         """,
         [WorldLoader.TerrainKey] = """
         { "terrain": [ { "id": "plain", "name": "Open Road", "speedMultiplier": 1.0, "costMultiplier": 1.0 } ] }
         """,
         [WorldLoader.TrucksKey] = """
-        { "trucks": [ { "id": "van", "name": "Van", "capacity": 50, "speedKmPerDay": 100,
-                        "upkeepPerDay": 5, "fuelPerKm": 0.5, "price": 500 } ] }
+        { "resaleFraction": 0.5,
+          "trucks": [ { "id": "van", "name": "Van", "capacity": 50, "speedKmPerDay": 100,
+                        "upkeepPerDay": 5, "fuelPerKm": 0.5, "price": 500 } ],
+          "upgrades": [ { "id": "rack", "name": "Rack", "price": 100, "kinds": ["truck"], "capacityBonus": 10 } ] }
         """,
         [WorldLoader.IndustriesKey] = """
-        { "baseConsumptionPerPop": { "widget": 1 },
+        { "baseConsumptionPerPop": { "widget": 1, "gadget": 0.2 },
           "industries": [ { "id": "works", "name": "Works", "production": { "widget": 20 }, "consumption": {} } ] }
         """,
         [WorldLoader.CitiesKey] = """
         { "cities": [
-          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "population": 1, "industries": ["works"] },
-          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "population": 1, "industries": [] }
+          { "id": "alpha", "name": "Alpha", "region": "R", "lon": 0, "lat": 45, "industries": ["works"], "stats": { "population": 1, "peace": 40 } },
+          { "id": "beta",  "name": "Beta",  "region": "R", "lon": 1, "lat": 45, "industries": [], "stats": { "population": 1, "peace": 80 } }
         ] }
         """,
         [WorldLoader.RoutesKey] = """
@@ -218,6 +329,68 @@ internal static class MinimalWorld
                           "primaryMin": 4, "primaryMax": 9, "secondaryMin": 1, "secondaryMax": 4 },
           "industryAffinity": { "works": { "haggling": 1 } },
           "firstNames": [ "Ada" ], "surnames": [ "Brandt" ] }
+        """,
+        [WorldLoader.CityStatsKey] = """
+        { "populationVitalId": "population",
+          "vitals": [
+            { "id": "population", "name": "Population", "unit": "M", "default": 1,
+              "min": 0.1, "max": 5, "decimals": 1, "displayScale": 2 },
+            { "id": "peace", "name": "Peacefulness", "unit": "%", "default": 50, "min": 0, "max": 100,
+              "bands": [ { "id": "uneasy", "name": "Uneasy", "upTo": 50, "tone": "warn" },
+                         { "id": "calm",   "name": "Calm",   "tone": "good" } ] }
+          ],
+          "supplies": [ { "id": "trade", "name": "Widget Supply", "goods": [ "widget" ] } ],
+          "supplyBands": [ { "id": "short",  "name": "Short",  "upTo": 85, "tone": "bad" },
+                           { "id": "steady", "name": "Steady", "tone": "good" } ] }
+        """,
+        [WorldLoader.StandingKey] = """
+        { "max": 200, "segmentMax": 100, "reservePerPoint": 0.01, "reserveMax": 0.4,
+          "tradersPerThousandCr": 0, "contractLapsePenalty": 2,
+          "segments": [ { "id": "governor", "name": "Governor" }, { "id": "citizens", "name": "Citizens" }, { "id": "traders", "name": "Traders" } ],
+          "ranks": [
+            { "id": "stranger", "name": "Stranger", "upTo": 50, "tone": "muted" },
+            { "id": "patron",   "name": "Patron",   "tone": "good" }
+          ],
+          "permits": [
+            { "id": "shop",    "name": "Shop permit",    "standing": 40, "blurb": "A stall." },
+            { "id": "factory", "name": "Factory permit", "standing": 80, "blurb": "A works." }
+          ],
+          "actions": [
+            { "id": "donate", "name": "Donate", "cost": 100, "standing": 10, "blurb": "A gift." },
+            { "id": "invest", "name": "Invest", "cost": 200, "standing": 8, "vitalId": "peace", "vitalDelta": 5, "blurb": "Capital." },
+            { "id": "aid",    "name": "Aid",    "cost": 150, "standing": 6, "stockPerGood": 10, "blurb": "Ship in goods." }
+          ] }
+        """,
+        [WorldLoader.EventsKey] = """
+        { "maxConcurrent": 2, "dailyChance": 0,
+          "events": [
+            { "id": "boom", "name": "Boom", "kind": "market", "headline": "Boom in {city}",
+              "detail": "Prices jump.", "tone": "warn", "durationDays": 3, "weight": 1,
+              "goods": ["widget"], "priceMult": 1.2, "vitalDeltas": { "peace": -5 } }
+          ] }
+        """,
+        [WorldLoader.MapKey] = """
+        { "cellKm": 50, "originLon": -0.5, "originLat": 45.5, "width": 6, "height": 4,
+          "defaultBiome": "plain",
+          "mining": { "spotCount": 1, "goodId": "widget", "reserveMin": 40, "reserveMax": 40 },
+          "offRoad": { "plain": { "speedMultiplier": 0.85, "costMultiplier": 1.15 },
+                       "hill":  { "speedMultiplier": 0.65, "costMultiplier": 1.35 } },
+          "regions": [ { "biome": "hill", "rings": [[[0.3, 44.6], [0.7, 44.6], [0.7, 44.9], [0.3, 44.9]]] } ] }
+        """,
+        [WorldLoader.GearKey] = """
+        { "gear": [ { "id": "pick", "name": "Pick", "price": 50, "volume": 2,
+                      "capabilities": ["mine"], "mineYield": 5 } ] }
+        """,
+        [WorldLoader.ContractsKey] = """
+        { "refreshDays": 10, "offersPerCity": 2, "deadlineDaysMin": 10, "deadlineDaysMax": 20,
+          "tierWeights": { "1": 1, "2": 1 },
+          "kinds": [ { "id": "supply", "name": "Supply", "weight": 1, "unitsMin": 5, "unitsMax": 10, "priceMult": 1.2, "standing": 3, "blurb": "A standing order." } ] }
+        """,
+        [WorldLoader.ExposKey] = """
+        { "cycleDays": 10, "feeBase": 100, "feePerPop": 0, "buyersBase": 3, "buyersPerPop": 0,
+          "buffMax": 0.5, "buffMin": 0.1, "premiumMult": 0.3, "noise": 0.1, "closeBand": 0.2, "lotMax": 5,
+          "themes": [ { "id": "fair", "title": "Fair", "categories": ["a", "b"], "durationDays": 4, "weight": 1 } ],
+          "remarks": { "bought": ["Sold."], "tooDear": ["No."] } }
         """
     };
 

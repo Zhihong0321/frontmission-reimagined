@@ -51,6 +51,7 @@ $simDetail = ''
 if ($sim -match 'tick time: ([\d.]+) ms') { $simDetail = "tick $($Matches[1]) ms" }
 if ($sim -match 'skilled play: ([\-\d,]+) cr') { $simDetail += "; skilled $($Matches[1]) cr" }
 if ($sim -match 'careless play: ([\-\d,]+) cr') { $simDetail += "; careless $($Matches[1]) cr" }
+if ($sim -match 'house playtest: ([\-\d,]+) cr') { $simDetail += "; house $($Matches[1]) cr" }
 if ($sim -match 'figures written to (.+)') { $simDetail += '; FIGURES.md regenerated' }
 Record 'Balance harness green (1000 days, skill beats luck)' $simOk $simDetail
 
@@ -60,6 +61,10 @@ $hostOk = $false
 $hostDetail = ''
 $crewOk = $false
 $crewDetail = 'not reached'
+$cityOk = $false
+$cityDetail = 'not reached'
+$buildOk2 = $false
+$buildDetail2 = 'not reached'
 try {
     $host_ = Start-Process -FilePath 'dotnet' `
         -ArgumentList 'run', '--project', 'src/MechaTrader.Host', '-c', 'Release', '--no-build' `
@@ -143,6 +148,89 @@ try {
                               "$($hand.signingFee) cr + $($hand.dailyWage) cr/day; " +
                               "unknown recruit refused=$([bool]$ghost.error); paid off clean=$offTheBoard"
             }
+
+            # 6 - the city page reports a living city, not a static one.
+            # Read from a fresh run so the world is known to be settled, then confirm
+            # the supply figures actually respond to a convoy.
+            $fresh = Invoke-RestMethod "$base/api/new" -Method Post -Body '{"seed":777}' `
+                        -ContentType 'application/json'
+            $here = $fresh.view.location
+
+            $vitalsComplete = ($here.vitals.Count -gt 0) -and
+                              -not ($here.vitals | Where-Object {
+                                  [string]::IsNullOrWhiteSpace($_.display) -or
+                                  [string]::IsNullOrWhiteSpace($_.name) -or
+                                  $_.fill -lt 0 -or $_.fill -gt 1 })
+
+            $standing = $here.standing
+            $standingOk = $standing -and
+                          -not [string]::IsNullOrWhiteSpace($standing.governorName) -and
+                          ($standing.actions.Count -gt 0) -and
+                          ($standing.permits.Count -gt 0)
+
+            $donate = $standing.actions | Where-Object { $_.id -eq 'donate' } | Select-Object -First 1
+            $courted = Cmd '{"type":"favor","actionId":"donate"}'
+            $standingRose = (-not $courted.error) -and
+                            ($courted.view.location.standing.value -gt $standing.value)
+
+            # A settled world has every city sitting on its own resting stock.
+            $atNominal = ($here.supplies.Count -gt 0) -and
+                         -not ($here.supplies | Where-Object { [Math]::Abs($_.index - 100) -ge 1 })
+
+            # Re-scout after the gift: donate spends cash, so the day-1 recommendation
+            # sized against starting capital may no longer be affordable.
+            $parkedAfter = if ($courted.view) { $courted.view } else { $fresh.view }
+            $haul = $parkedAfter.routes | Where-Object { $_.bestProfit -gt 0 } | Select-Object -First 1
+            $shelf = $parkedAfter.market | Where-Object { $_.goodId -eq $haul.bestGoodId } |
+                     Select-Object -First 1
+            $band = $parkedAfter.location.supplies | Where-Object { $_.goods -contains $shelf.name } |
+                    Select-Object -First 1
+            $units = $haul.bestUnits
+
+            if (-not $band) {
+                $cityDetail = "no supply band reads $($shelf.name)"
+            }
+            else {
+                $drained = Cmd ("{`"type`":`"buy`",`"goodId`":`"$($shelf.goodId)`",`"units`":$units}")
+                $after = $drained.view.location.supplies |
+                         Where-Object { $_.id -eq $band.id } | Select-Object -First 1
+                $afterRow = $drained.view.market |
+                            Where-Object { $_.goodId -eq $shelf.goodId } | Select-Object -First 1
+
+                # The printed index is a whole percent of a four-good band, so a real
+                # haul can leave the label at 100 while still emptying the shelf.
+                $shelfDropped = $afterRow -and ([double]$afterRow.shelf -lt [double]$shelf.shelf)
+
+                $cityOk = $vitalsComplete -and $atNominal -and $standingOk -and $standingRose -and
+                          (-not $drained.error) -and $shelfDropped
+
+                $cityDetail = "$($here.name): $($here.vitals.Count) vitals, " +
+                              "$($here.supplies.Count) supplies at nominal; " +
+                              "$($standing.governorTitle) $($standing.governorName); " +
+                              "donate raised standing $($standing.value) -> $($courted.view.location.standing.value); " +
+                              "buying $units $($shelf.name) moved $($band.name) $([Math]::Round($band.index))% " +
+                              "-> $([Math]::Round($after.index))%; shelf $($shelf.shelf) -> $($afterRow.shelf)"
+            }
+
+            # 7 - the build page tells the truth about what is running.
+            # The solution was rebuilt by criterion 1 and nothing has been edited since,
+            # so a correct staleness check must report this build as current. If it says
+            # otherwise the detector is broken, and a warning nobody can trust is worse
+            # than none at all.
+            $bi = Invoke-RestMethod "$base/api/build" -TimeoutSec 10
+            $declared = (Get-Content (Join-Path $root 'VERSION') -Raw).Trim()
+
+            $buildOk2 = ($bi.version -eq $declared) -and
+                        $bi.gitAvailable -and
+                        ($bi.log.Count -gt 0) -and
+                        ($bi.log[0].isHead) -and
+                        ($bi.commit -eq $bi.log[0].hash) -and
+                        (-not [string]::IsNullOrWhiteSpace($bi.branch)) -and
+                        (-not $bi.stale)
+
+            $buildDetail2 = "$($bi.version) built $($bi.builtAgo) from $($bi.commit) on " +
+                            "$($bi.branch); $($bi.log.Count) commits listed; stale=$($bi.stale)" +
+                            $(if ($bi.stale) { " ($($bi.staleReason))" } else { '' })
         }
     }
 }
@@ -154,6 +242,8 @@ finally {
 }
 Record 'Web host serves a playable buy-haul-sell cycle' $hostOk $hostDetail
 Record 'Recruitment centre hires, pays wages and pays off' $crewOk $crewDetail
+Record 'City page reports founding stats and living supply' $cityOk $cityDetail
+Record 'Build page names the running build and its commit log' $buildOk2 $buildDetail2
 
 # ----- verdict -----
 Write-Host ('-' * 52)

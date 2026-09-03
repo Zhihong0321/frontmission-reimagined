@@ -10,6 +10,9 @@ public sealed record CrewCandidate(
     string RoleId,
     string RoleName,
     IReadOnlyDictionary<string, int> Skills,
+    IReadOnlyDictionary<string, double> Knowledge,
+    IReadOnlyList<string> TraitIds,
+    IReadOnlyList<string> TraitNames,
     long DailyWage,
     long SigningFee);
 
@@ -61,13 +64,14 @@ public static class Recruitment
 
         for (var index = 0; index < count; index++)
         {
-            pool.Add(Generate(cfg, city, affinity, seed, round, index));
+            pool.Add(Generate(world, cfg, city, affinity, seed, round, index));
         }
 
         return pool;
     }
 
     private static CrewCandidate Generate(
+        WorldData world,
         CrewConfig cfg,
         City city,
         IReadOnlyDictionary<string, int> affinity,
@@ -94,11 +98,21 @@ public static class Recruitment
             skills[skill.Id] = Math.Clamp(level, 1, cfg.MaxSkill);
         }
 
-        var wage = CrewMath.WageFor(skills, cfg);
+        var knowledge = RollKnowledge(world, cfg, role, rng);
+        var traitIds = RollTraits(cfg, rng);
+
+        var wage = CrewMath.WageFor(skills, knowledge, traitIds, cfg);
 
         var name = cfg.FirstNames.Count > 0 && cfg.Surnames.Count > 0
             ? $"{cfg.FirstNames[rng.NextInt(cfg.FirstNames.Count)]} {cfg.Surnames[rng.NextInt(cfg.Surnames.Count)]}"
             : $"Hand {index + 1}";
+
+        var traitNames = new List<string>(traitIds.Count);
+        foreach (var id in traitIds)
+        {
+            var trait = cfg.Trait(id);
+            traitNames.Add(trait is null ? id : trait.Name);
+        }
 
         return new CrewCandidate(
             Id: $"{city.Id}-r{round}-{index}",
@@ -106,8 +120,42 @@ public static class Recruitment
             RoleId: role.Id,
             RoleName: string.IsNullOrWhiteSpace(role.Name) ? role.Id : role.Name,
             Skills: skills,
+            Knowledge: knowledge,
+            TraitIds: traitIds,
+            TraitNames: traitNames,
             DailyWage: wage,
             SigningFee: wage * Math.Max(0, cfg.SigningFeeDays));
+    }
+
+    private static Dictionary<string, double> RollKnowledge(
+        WorldData world, CrewConfig cfg, CrewRoleDef role, Rng rng)
+    {
+        var knowledge = new Dictionary<string, double>();
+        var cap = Math.Max(0, cfg.MaxKnowledge);
+        if (cap <= 0 || world.Categories.Count == 0) return knowledge;
+
+        foreach (var category in world.Categories)
+        {
+            var specialist = !string.IsNullOrWhiteSpace(role.CategoryId) &&
+                             string.Equals(role.CategoryId, category.Id, StringComparison.OrdinalIgnoreCase);
+            var min = specialist ? cfg.SpecialistKnowledgeMin : cfg.GeneralKnowledgeMin;
+            var max = specialist ? cfg.SpecialistKnowledgeMax : cfg.GeneralKnowledgeMax;
+            min = Math.Clamp(min, 0, cap);
+            max = Math.Clamp(Math.Max(min, max), 0, cap);
+            knowledge[category.Id] = min + rng.NextInt(Math.Max(1, max - min + 1));
+        }
+
+        return knowledge;
+    }
+
+    private static List<string> RollTraits(CrewConfig cfg, Rng rng)
+    {
+        var ids = new List<string>();
+        if (cfg.Traits.Count == 0 || rng.NextDouble() >= Math.Clamp(cfg.TraitChance, 0.0, 1.0))
+            return ids;
+
+        ids.Add(cfg.Traits[rng.NextInt(cfg.Traits.Count)].Id);
+        return ids;
     }
 
     /// <summary>

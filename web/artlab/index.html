@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Art Lab — Mecha Trader</title>
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+  <header>
+    <div class="brand"><span>◆</span> ART LAB</div>
+    <p class="sub">Locked isometric style · gpt-image-2 · transparent PNG · map is on hold until the kit is good</p>
+  </header>
+
+  <main>
+    <section class="col">
+      <h2>1. Style lock</h2>
+      <p class="hint">Prepended to every prompt. Edit here to finetune the whole set. Do not name checkerboards or white cards — the model will paint them.</p>
+      <textarea id="style-edit" rows="8" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="btn-reset-style" class="ghost" type="button">Reset lock</button>
+      </div>
+
+      <h2>2. Subject</h2>
+      <div id="cats" class="chips"></div>
+      <div class="row">
+        <select id="type"></select>
+        <button id="btn-rand-type" type="button">Random type</button>
+      </div>
+      <div class="row">
+        <button id="btn-rand-bldg" class="ghost" type="button">Random building</button>
+        <button id="btn-surprise" class="ghost" type="button">Surprise (any)</button>
+      </div>
+      <p id="cat-hint" class="hint"></p>
+      <label>Extra notes (optional)</label>
+      <input id="extra" type="text" placeholder="e.g. more rust, shorter, no windows">
+      <div class="row">
+        <label class="inline"><input type="checkbox" id="auto-roll" checked> new seed each generate</label>
+        <span class="muted">seed <input id="seed" type="number" value="1" min="1"></span>
+      </div>
+      <div class="row">
+        <button id="btn-build" class="ghost" type="button">Rebuild prompt</button>
+        <button id="btn-gen" class="go" type="button">Generate PNG</button>
+        <button id="btn-batch" class="ghost" type="button">Batch 4 random</button>
+      </div>
+      <p id="status" class="hint"></p>
+    </section>
+
+    <section class="col">
+      <h2>3. Prompt</h2>
+      <p class="hint">Fully editable. Generate sends this text. Alpha comes from the API <code>background=transparent</code> flag, not from the words.</p>
+      <textarea id="prompt" rows="18" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="btn-copy" class="ghost" type="button">Copy prompt</button>
+        <select id="model" title="model">
+          <option value="gpt-image-2" selected>gpt-image-2</option>
+          <option value="gpt-image-1">gpt-image-1 (native alpha)</option>
+          <option value="gpt-image-1.5">gpt-image-1.5</option>
+        </select>
+        <select id="size">
+          <option value="1024x1024" selected>1024²</option>
+          <option value="1536x1536">1536²</option>
+        </select>
+        <select id="quality">
+          <option value="low" selected>low (faster)</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="inline"><input type="checkbox" id="knockout" checked> knock out solid card if the PNG has no alpha</label>
+      </div>
+    </section>
+
+    <section class="col preview-col">
+      <h2>4. Result</h2>
+      <p class="hint">Checkerboard is the <em>page</em>. If the sprite sits on a white square, the PNG failed — knock-out will try to cut it, then tighten the lock.</p>
+      <div id="stage" class="stage">
+        <div class="empty">No image yet.</div>
+      </div>
+      <p id="alpha" class="hint"></p>
+      <div class="row">
+        <a id="btn-dl" class="ghost" hidden download="asset.png">Download PNG</a>
+      </div>
+      <h2>Library</h2>
+      <p class="hint">Saved under <code>web/artlab/out/</code> (gitignored). Click a thumb to inspect.</p>
+      <div id="gallery" class="gallery"></div>
+    </section>
+  </main>
+
+  <script src="prompt.js?v=3"></script>
+  <script src="app.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<!-- ARCHIVED. Dead isometric ops console. Live map: D:\FrontMission-MapLab\chart.html at /chart/. Do not restore. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mecha Trader — Ops Console</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css?v=31">
+</head>
+<body>
+
+<canvas id="wcv"></canvas>
+<canvas id="cv"></canvas>
+
+<div id="hud">
+<div id="topbar">
+  <header id="status">
+    <div class="brand"><span class="mark">◆</span>MECHA<span>TRADER</span></div>
+    <div class="stat"><label>Day</label><span id="stat-day">—</span></div>
+    <div class="stat"><label>Credits</label><span id="stat-cash">—</span><span id="stat-cash-delta" class="delta"></span></div>
+    <div class="stat"><label>Net worth</label><span id="stat-worth">—</span></div>
+    <div class="stat wide"><label>Position</label><span id="stat-where">—</span></div>
+    <div class="stat"><label>Hold</label><span id="stat-hold">—</span></div>
+    <div class="stat"><label>Burn / day</label><span id="stat-burn">—</span></div>
+    <div class="spacer"></div>
+    <button id="build-badge" class="ghost badge" title="Which build you are playing">—</button>
+    <button id="btn-new" class="ghost">New run</button>
+  </header>
+  <nav id="modules">
+    <button data-module="map" class="active">Map <kbd>1</kbd></button>
+    <button data-module="faction">Faction <kbd>2</kbd></button>
+    <button data-module="city">City <kbd>3</kbd></button>
+  </nav>
+</div>
+
+<div id="keys">
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move
+  <kbd>DRAG</kbd> look · <kbd>WHEEL</kbd> zoom · <kbd>T</kbd> tilt
+  · dbl-click anywhere to travel
+</div>
+
+<p id="error" hidden></p>
+
+<main>
+  <section id="view-map" class="view active">
+    <aside class="side-col">
+      <div class="panel" id="travel-panel"></div>
+      <div class="panel" id="select-panel"></div>
+      <div class="panel">
+        <h2>Route board</h2>
+        <div id="routes-body"></div>
+      </div>
+    </aside>
+  </section>
+
+  <section id="view-faction" class="view">
+    <div class="overlay-scroll">
+      <div class="faction-grid">
+        <div class="panel"><h2>House accounts</h2><div id="fin-body"></div></div>
+        <div class="panel"><h2>Convoy</h2><div id="convoy-body"></div></div>
+        <div class="panel"><h2>Hold manifest</h2><div id="cargo-body"></div></div>
+        <div class="panel"><h2>Crew &amp; recruitment</h2><div id="crew-body"></div></div>
+        <div class="panel"><h2>Depot <span class="hint">trucks · machines · tools</span></h2><div id="shipyard-body"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-city" class="view">
+    <div class="overlay-scroll">
+      <div id="city-body"></div>
+    </div>
+  </section>
+</main>
+
+<footer id="log-dock">
+  <div class="dock-head">
+    <span class="dock-title">▮▮▮ Activity feed</span>
+    <button id="btn-log-toggle" class="ghost">collapse</button>
+  </div>
+  <ol id="log-body"></ol>
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+<div id="modal-root"></div>
+
+</div>
+
+<script src="iso/core.js?v=31"></script>
+<script src="iso/vol.js?v=31"></script>
+<script src="iso/art.js?v=31"></script>
+<script src="iso/sprites.js?v=31"></script>
+<script src="iso/world.js?v=31"></script>
+<script src="app.js?v=31"></script>
+</body>
+</html>

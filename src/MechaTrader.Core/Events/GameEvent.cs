@@ -8,6 +8,9 @@ public enum GameEventKind
     Arrival,
     Expense,
     Crew,
+    Standing,
+    World,
+    Mine,
     Warning
 }
 

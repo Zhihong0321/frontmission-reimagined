@@ -20,20 +20,27 @@ public class CrewTests
 
     private static Game NewGame() => Game.New(World, Seed);
 
-    /// <summary>A hand who is perfect at one skill and hopeless at the rest.</summary>
+    /// <summary>
+    /// A hand who is perfect at one skill and hopeless at the rest, standing on the post
+    /// that claims that skill's lever (if any) so the convoy actually feels it.
+    /// </summary>
     private static CrewMember Specialist(string skillId, int level)
     {
         var skills = World.Crew.Skills.ToDictionary(s => s.Id, s => s.Id == skillId ? level : 1);
+        var lever = World.Crew.Skills.First(s => s.Id == skillId).Lever;
 
         return new CrewMember
         {
             Id = $"test-{skillId}",
             Name = $"Test {skillId}",
             RoleId = "hand",
+            PostId = World.Crew.PostFor(lever)?.Id ?? "",
             DailyWage = CrewMath.WageFor(skills, World.Crew),
             Skills = skills
         };
     }
+
+    private static string PostClaiming(string lever) => World.Crew.PostFor(lever)!.Id;
 
     private static List<CrewMember> PerfectCrew()
         => World.Crew.Skills.Select(s => Specialist(s.Id, World.Crew.MaxSkill)).ToList();
@@ -433,5 +440,256 @@ public class CrewTests
         Assert.Contains(Model.CrewLever.Buy, levers);
         Assert.Contains(Model.CrewLever.Sell, levers);
         Assert.Contains(Model.CrewLever.Upkeep, levers);
+        Assert.Contains(Model.CrewLever.Intel, levers);
+    }
+
+    /* ---------- posts: who sits where ---------- */
+
+    [Fact]
+    public void ShippingContentPostsTradingAndInformation()
+    {
+        var cfg = World.Crew;
+
+        Assert.Equal(PostClaiming(Model.CrewLever.Buy), PostClaiming(Model.CrewLever.Sell));
+        Assert.NotEqual(PostClaiming(Model.CrewLever.Buy), PostClaiming(Model.CrewLever.Intel));
+        Assert.Null(cfg.PostFor(Model.CrewLever.Speed));
+        Assert.Null(cfg.PostFor(Model.CrewLever.Upkeep));
+    }
+
+    [Fact]
+    public void OnlyAHandAtTheCounterHaggles()
+    {
+        var cfg = World.Crew;
+        var buyLever = cfg.SkillFor(Model.CrewLever.Buy)!;
+
+        var posted = Specialist(buyLever.Id, cfg.MaxSkill);
+        var idle = Specialist(buyLever.Id, cfg.MaxSkill);
+        idle.PostId = "";
+
+        var counter = CrewMath.Terms(new List<CrewMember> { posted }, cfg);
+        var back = CrewMath.Terms(new List<CrewMember> { idle }, cfg);
+
+        Assert.True(counter.BuySpreadShare < 1.0, "A posted negotiator did nothing to the buy terms.");
+        Assert.Equal(TradeTerms.Market.BuySpreadShare, back.BuySpreadShare);
+        Assert.Equal(0, CrewMath.Level(new List<CrewMember> { idle }, cfg, buyLever.Id));
+        Assert.Equal(cfg.MaxSkill, CrewMath.Level(new List<CrewMember> { idle }, buyLever.Id));
+    }
+
+    [Fact]
+    public void ARoadSkillIsConvoyWideWhateverThePost()
+    {
+        var cfg = World.Crew;
+        var navigation = cfg.SkillFor(Model.CrewLever.Speed)!;
+
+        var driver = Specialist(navigation.Id, cfg.MaxSkill);
+        driver.PostId = PostClaiming(Model.CrewLever.Intel);
+
+        Assert.True(CrewMath.SpeedMultiplier(new List<CrewMember> { driver }, cfg) > 1.0);
+    }
+
+    [Fact]
+    public void AHandSignsOnToThePostTheirTradeImplies()
+    {
+        var game = NewGame();
+        var cfg = World.Crew;
+        var state = game.State;
+
+        var pool = Recruitment.PoolFor(World, World.City(Start), state.Seed, state.Day);
+        foreach (var candidate in pool)
+        {
+            var expected = cfg.DefaultPost(cfg.Role(candidate.RoleId));
+            state.Cash = candidate.SigningFee + 1;
+            Assert.True(game.Apply(new HireCrewCommand(candidate.Id)).Ok);
+            Assert.Equal(expected, state.Caravan.Crew[^1].PostId);
+            game.Apply(new DismissCrewCommand(candidate.Id));
+            state.Cash = World.Config.StartCash;
+        }
+
+        // The rule itself: a broker goes to the counter, a scout to information, a
+        // navigator nowhere in particular.
+        var broker = cfg.Roles.First(r => r.Primary == cfg.SkillFor(Model.CrewLever.Buy)!.Id);
+        var scout = cfg.Roles.First(r => r.Primary == cfg.SkillFor(Model.CrewLever.Intel)!.Id);
+        var navigator = cfg.Roles.First(r => r.Primary == cfg.SkillFor(Model.CrewLever.Speed)!.Id);
+
+        Assert.Equal(PostClaiming(Model.CrewLever.Buy), cfg.DefaultPost(broker));
+        Assert.Equal(PostClaiming(Model.CrewLever.Intel), cfg.DefaultPost(scout));
+        Assert.Equal("", cfg.DefaultPost(navigator));
+    }
+
+    [Fact]
+    public void AssigningAPostIsACommandThatSurvivesASave()
+    {
+        var game = NewGame();
+        var candidate = FirstCandidate(game.State);
+        game.State.Cash = candidate.SigningFee + 1;
+        Assert.True(game.Apply(new HireCrewCommand(candidate.Id)).Ok);
+
+        var member = game.State.Caravan.Crew[0];
+        var info = PostClaiming(Model.CrewLever.Intel);
+        var trading = PostClaiming(Model.CrewLever.Buy);
+
+        var target = member.PostId == info ? trading : info;
+        Assert.True(game.Apply(new AssignCrewCommand(member.Id, target)).Ok);
+        Assert.Equal(target, member.PostId);
+
+        // Same post again is a refusal, not a silent no-op.
+        Assert.False(game.Apply(new AssignCrewCommand(member.Id, target)).Ok);
+
+        Assert.True(game.Apply(new AssignCrewCommand(member.Id, "")).Ok);
+        Assert.Equal("", member.PostId);
+
+        Assert.True(game.Apply(new AssignCrewCommand(member.Id, target)).Ok);
+        var restored = JsonSerializer.Deserialize<GameState>(JsonSerializer.Serialize(game.State))!;
+        Assert.Equal(target, restored.Caravan.Crew[0].PostId);
+    }
+
+    [Fact]
+    public void ABadAssignmentLeavesStateUntouched()
+    {
+        var game = NewGame();
+        var candidate = FirstCandidate(game.State);
+        game.State.Cash = candidate.SigningFee + 1;
+        Assert.True(game.Apply(new HireCrewCommand(candidate.Id)).Ok);
+
+        var before = JsonSerializer.Serialize(game.State);
+
+        Assert.False(game.Apply(new AssignCrewCommand(candidate.Id, "helm")).Ok);
+        Assert.False(game.Apply(new AssignCrewCommand("nobody", PostClaiming(Model.CrewLever.Buy))).Ok);
+
+        Assert.Equal(before, JsonSerializer.Serialize(game.State));
+    }
+
+    [Fact]
+    public void PostsCanChangeOnTheRoad()
+    {
+        var game = NewGame();
+        var candidate = FirstCandidate(game.State);
+        game.State.Cash = candidate.SigningFee + 1;
+        Assert.True(game.Apply(new HireCrewCommand(candidate.Id)).Ok);
+
+        var next = World.Routes.From(Start)[0].Other(Start);
+        Assert.True(game.Apply(new DepartCommand(next)).Ok);
+        Assert.NotNull(game.State.Caravan.Travel);
+
+        var member = game.State.Caravan.Crew[0];
+        var target = member.PostId == "" ? PostClaiming(Model.CrewLever.Buy) : "";
+        Assert.True(game.Apply(new AssignCrewCommand(member.Id, target)).Ok);
+    }
+
+    /* ---------- the information post ---------- */
+
+    private static CrewMember Informant(int level)
+    {
+        var skill = World.Crew.SkillFor(Model.CrewLever.Intel)!;
+        return Specialist(skill.Id, level);
+    }
+
+    [Fact]
+    public void NobodyOnInformationMeansNoWordFromElsewhere()
+    {
+        var game = NewGame();
+
+        Assert.Equal(0, Intel.Reach(game.State.Caravan.Crew, World.Crew));
+        Assert.All(game.View().Market, row => Assert.Empty(row.Elsewhere));
+        Assert.False(game.View().Crew.Intel.Active);
+    }
+
+    [Fact]
+    public void AnInformantReadsTheNearestMarketsAndBetterOnesReadMore()
+    {
+        var cfg = World.Crew;
+        var game = NewGame();
+
+        game.State.Caravan.Crew.Add(Informant(1));
+        var few = game.View();
+        var fewReach = few.Crew.Intel.Reach;
+
+        game.State.Caravan.Crew.Clear();
+        game.State.Caravan.Crew.Add(Informant(cfg.MaxSkill));
+        var many = game.View();
+
+        Assert.True(fewReach >= cfg.Intel.MinCities && fewReach > 0);
+        Assert.Equal(cfg.Intel.MaxCities, many.Crew.Intel.Reach);
+        Assert.True(many.Crew.Intel.Reach >= fewReach);
+
+        var row = many.Market[0];
+        Assert.Equal(Math.Min(cfg.Intel.MaxCities, World.Cities.Count - 1), row.Elsewhere.Count);
+        Assert.DoesNotContain(row.Elsewhere, r => r.CityId == Start);
+
+        // Closest first, by road.
+        for (var i = 1; i < row.Elsewhere.Count; i++)
+            Assert.True(row.Elsewhere[i - 1].DistanceKm <= row.Elsewhere[i].DistanceKm);
+    }
+
+    [Fact]
+    public void ReportsTightenWithIntelligenceAndAreExactAtTheTop()
+    {
+        var cfg = World.Crew;
+        var game = NewGame();
+
+        var dull = new List<CrewMember> { Informant(1) };
+        var sharp = new List<CrewMember> { Informant(cfg.MaxSkill) };
+
+        Assert.True(Intel.Error(dull, cfg) > Intel.Error(sharp, cfg));
+        Assert.Equal(0.0, Intel.Error(sharp, cfg), 9);
+        Assert.True(Intel.Error(dull, cfg) <= cfg.Intel.MaxError);
+
+        // A perfect informant reports the market's own quote, to the rounding.
+        game.State.Caravan.Crew.Add(Informant(cfg.MaxSkill));
+        var view = game.View();
+        var good = World.Goods[0];
+        var eco = World.Config.Economy;
+        var terms = CrewMath.Terms(game.State.Caravan, World, good.Category);
+
+        foreach (var report in view.Market[0].Elsewhere)
+        {
+            var city = World.City(report.CityId);
+            var stock = game.State.StockOf(city.Id, good.Id);
+            var truth = Economy.SellUnitPrice(good, city.Market[good.Id], stock, eco, terms);
+            Assert.Equal(Math.Round(truth, 1), report.Sell, 1);
+            Assert.Equal(0.0, report.ErrorPct);
+        }
+    }
+
+    [Fact]
+    public void AReportNeverSaysASaleBeatsABuyAtTheSameCounter()
+    {
+        // The error is symmetric and the two sides draw independently, so this is a
+        // property of the reporter, not of the price model: the honest fix is that a
+        // dull informant's numbers are what they are. What must hold is the error bound.
+        var cfg = World.Crew;
+        var game = NewGame();
+        game.State.Caravan.Crew.Add(Informant(1));
+
+        var bound = Intel.Error(game.State.Caravan.Crew, cfg);
+        var good = World.Goods[0];
+        var eco = World.Config.Economy;
+        var terms = CrewMath.Terms(game.State.Caravan, World, good.Category);
+
+        foreach (var report in game.View().Market[0].Elsewhere)
+        {
+            var city = World.City(report.CityId);
+            var stock = game.State.StockOf(city.Id, good.Id);
+            var truth = Economy.SellUnitPrice(good, city.Market[good.Id], stock, eco, terms);
+            Assert.InRange(report.Sell, truth * (1 - bound) - 0.1, truth * (1 + bound) + 0.1);
+        }
+    }
+
+    [Fact]
+    public void ReadingTheReportsDoesNotAdvanceTheWorldAndIsStableForTheDay()
+    {
+        var game = NewGame();
+        game.State.Caravan.Crew.Add(Informant(3));
+
+        var rng = game.State.RngState;
+        var first = JsonSerializer.Serialize(game.View().Market.Select(m => m.Elsewhere));
+        var second = JsonSerializer.Serialize(game.View().Market.Select(m => m.Elsewhere));
+
+        Assert.Equal(rng, game.State.RngState);
+        Assert.Equal(first, second);
+
+        game.Apply(new WaitCommand(1));
+        var tomorrow = JsonSerializer.Serialize(game.View().Market.Select(m => m.Elsewhere));
+        Assert.NotEqual(first, tomorrow);
     }
 }
