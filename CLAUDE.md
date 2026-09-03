@@ -8,7 +8,7 @@ happens next and will tell you.
 
 1. **The one rule:** `MechaTrader.Core` is a pure simulation library. Every front-end is
    a view over it and owns no rule. A test enforces this.
-2. **Verify with one command:** `.\check.ps1` — seven gates, one verdict line, exit code
+2. **Verify with one command:** `.\check.ps1` — nine gates, one verdict line, exit code
    is the answer. Run it before you claim anything works.
 3. **Read before you touch:** the *Core API* and *Change-impact map* sections below tell
    you which files a change lands in. Read those two instead of reading the codebase.
@@ -70,7 +70,7 @@ isometric ops console is in `web/archive/`.
 | Play | double-click the desktop launcher, or `Play.cmd` (builds, serves, opens `/chart/` — Keeper's Chart) |
 | Put the launcher on the desktop | double-click `Install-Launcher.cmd` (run again to repair) |
 | See which build is running | the badge in the game's header, or `GET /api/build` |
-| Verify everything | `.\check.ps1` — seven gates, one verdict line, exit code 0 or 1 |
+| Verify everything | `.\check.ps1` — nine gates, one verdict line, exit code 0 or 1 |
 | Economy report + regenerate `FIGURES.md` | `dotnet run --project tools/MechaTrader.BalanceSim` |
 | Tests | `dotnet test` |
 
@@ -90,7 +90,7 @@ reference rather than a rewrite, and it is enforced by a test, not by discipline
 ```
 MechaTrader.sln
 Play.cmd / play.ps1        launcher: build, serve, open browser
-check.ps1                  acceptance gate; seven checks, exit code is the answer
+check.ps1                  acceptance gate; nine checks, exit code is the answer
 BRAIN.md                   how to update the AI (HouseTrader → factions / auto-caravans)
 VERSION                    the one place the version string is set
 Install-Launcher.cmd / install-launcher.ps1   puts the desktop shortcut in place
