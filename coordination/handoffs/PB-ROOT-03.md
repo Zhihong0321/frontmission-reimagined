@@ -4,14 +4,14 @@
 JOB_ID: PB-ROOT-03
 STATUS: COMPLETE
 BRANCH: codex/pb-root-03-path-switch
-COMMIT: 71d68ecc774ba51f371b6bf9d0528ecb5cf31583
+COMMIT: 71d68ecca4c0d41d168e060a275f1a58190f5c04
 FILES_CHANGED: src/MechaTrader.Host/Program.cs; play.ps1; tests/browser/smoke.test.js; tools/clean-clone-check.ps1
 CHECKS_RUN: assignment/base/hash reconciliation; PowerShell 5.1 parser; node --check; Release host build; repository-local world verifier; full nine-gate check.ps1; npm ci; Playwright Chromium install; browser smoke with exact world provenance; committed full-history clean-clone verification; two fatal launcher controls; port/process cleanup; tracked-diff and exact-scope review; repository/MapLab source immutability hashes and status
 CHECK_RESULTS: PASS — zero-warning/zero-error Release build; 239 unit tests and all nine gates green; browser smoke 1/1; clean-clone generator/input failures fatal before host startup; clean-clone regeneration exact at SHA-256 26063b3e3680a190b79843604107977331922c77397dfe2a1bf23a5a3160712a; clean-clone browser provenance green; port 5080 clean; only FIGURES.md timing output permitted in disposable clone
 BEHAVIOR_CHANGES: /chart is served only from repository-local web/chart; launcher regenerates from repository-local data and fails on missing Node/generator/data/input/output or generator failure; browser smoke pins the served world.js provenance header and complete byte hash
 RISKS: This job proves the atomic path switch only; it does not delete MapLab, refactor frontend/backend code, change host configuration beyond the /chart provider, or authorize another Phase B job
 OUT_OF_SCOPE_FINDINGS: NONE
-LEDGER_UPDATE_REQUEST: Mark PB-ROOT-03 REVIEW at implementation commit 71d68ecc774ba51f371b6bf9d0528ecb5cf31583 and integrate only this job into integration if the independent coordinator review and repeated checks remain green
+LEDGER_UPDATE_REQUEST: Mark PB-ROOT-03 REVIEW at implementation commit 71d68ecca4c0d41d168e060a275f1a58190f5c04 and integrate only this job into integration if the independent coordinator review and repeated checks remain green
 ```
 
 ## Base and ownership
