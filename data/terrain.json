@@ -1,9 +1,0 @@
-{
-  "terrain": [
-    { "id": "plain",   "name": "Open Road",     "speedMultiplier": 1.00, "costMultiplier": 1.00 },
-    { "id": "coastal", "name": "Coast Road",    "speedMultiplier": 0.90, "costMultiplier": 1.05 },
-    { "id": "hills",   "name": "Highland",      "speedMultiplier": 0.80, "costMultiplier": 1.15 },
-    { "id": "alpine",  "name": "Alpine Pass",   "speedMultiplier": 0.55, "costMultiplier": 1.60 },
-    { "id": "strait",  "name": "Strait Ferry",  "speedMultiplier": 0.50, "costMultiplier": 2.00 }
-  ]
-}
