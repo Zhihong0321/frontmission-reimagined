@@ -1,0 +1,20 @@
+{
+  "gear": [
+    {
+      "id": "picks",
+      "name": "Prospecting Kit",
+      "price": 800,
+      "volume": 4,
+      "capabilities": ["mine"],
+      "mineYield": 4
+    },
+    {
+      "id": "drillkit",
+      "name": "Survey Drill",
+      "price": 2400,
+      "volume": 12,
+      "capabilities": ["mine"],
+      "mineYield": 10
+    }
+  ]
+}

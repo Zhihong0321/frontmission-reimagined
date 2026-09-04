@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+artifacts/
+web/artlab/.secret
+web/artlab/out/
+.artlab-secret

@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "godot": {
+    "import": "Texture2D, filter nearest, mipmaps off, repeat disabled. Sprite2D centered=false; offset = -size * anchor.",
+    "folder": "art/map"
+  },
+  "style": {
+    "id": "mecha-iso-pixel",
+    "projection": "dimetric-2:1",
+    "light": "upper-left",
+    "outlinePx": 1,
+    "filter": "nearest",
+    "palette": ["#0b0d11", "#232b36", "#6b8296", "#6f8f52", "#d9a13c", "#c05f3c", "#4b83c2", "#e7eaef"]
+  },
+  "assets": [
+    {
+      "id": "style-board",
+      "file": "map-style-board.png",
+      "kind": "meta",
+      "tags": ["style", "reference", "do-not-place"],
+      "biomes": [],
+      "place": "none",
+      "role": "reference",
+      "cluster": null,
+      "weight": 0,
+      "draw": false
+    },
+    {
+      "id": "bldg-warehouse",
+      "file": "bldg-warehouse.png",
+      "kind": "building",
+      "tags": ["city", "lot", "industrial", "warehouse", "building"],
+      "biomes": ["*"],
+      "place": "city-lot",
+      "role": "lot",
+      "cluster": "district",
+      "footprint": 88,
+      "anchor": { "x": 0.50, "y": 0.86 },
+      "drawScale": 1,
+      "weight": 3
+    },
+    {
+      "id": "bldg-tower",
+      "file": "bldg-tower.png",
+      "kind": "building",
+      "tags": ["city", "lot", "industrial", "tower", "building"],
+      "biomes": ["*"],
+      "place": "city-lot",
+      "role": "lot",
+      "cluster": "district",
+      "footprint": 70,
+      "anchor": { "x": 0.50, "y": 0.90 },
+      "drawScale": 1,
+      "weight": 2
+    },
+    {
+      "id": "bldg-tank",
+      "file": "bldg-tank.png",
+      "kind": "building",
+      "tags": ["city", "lot", "industrial", "tank", "building"],
+      "biomes": ["*"],
+      "place": "city-lot",
+      "role": "lot",
+      "cluster": "district",
+      "footprint": 78,
+      "anchor": { "x": 0.50, "y": 0.84 },
+      "drawScale": 1,
+      "weight": 2
+    },
+    {
+      "id": "bldg-ruin",
+      "file": "bldg-ruin.png",
+      "kind": "building",
+      "tags": ["city", "lot", "ruin", "industrial", "building", "filler"],
+      "biomes": ["P", "H"],
+      "place": "city-lot",
+      "role": "filler",
+      "cluster": "district",
+      "footprint": 80,
+      "anchor": { "x": 0.50, "y": 0.84 },
+      "drawScale": 1,
+      "weight": 1
+    },
+    {
+      "id": "rock-small",
+      "file": "rock-small.png",
+      "kind": "rock",
+      "tags": ["rock", "scree", "combinable", "clutter"],
+      "biomes": ["P", "H", "M", "A", "T"],
+      "place": "wild",
+      "role": "scree",
+      "cluster": "mountain",
+      "stackWith": ["rock-boulder", "rock-ridge", "rock-peak"],
+      "footprint": 28,
+      "anchor": { "x": 0.50, "y": 0.82 },
+      "drawScale": 1,
+      "weight": 3
+    },
+    {
+      "id": "rock-boulder",
+      "file": "rock-boulder.png",
+      "kind": "rock",
+      "tags": ["rock", "boulder", "mountain", "body", "combinable"],
+      "biomes": ["H", "M", "A"],
+      "place": "wild",
+      "role": "body",
+      "cluster": "mountain",
+      "stackWith": ["rock-ridge", "rock-peak", "rock-small"],
+      "footprint": 64,
+      "anchor": { "x": 0.50, "y": 0.84 },
+      "drawScale": 1,
+      "weight": 2
+    },
+    {
+      "id": "rock-ridge",
+      "file": "rock-ridge.png",
+      "kind": "rock",
+      "tags": ["rock", "ridge", "mountain", "body", "combinable", "module"],
+      "biomes": ["M", "H"],
+      "place": "wild",
+      "role": "body",
+      "cluster": "mountain",
+      "stackWith": ["rock-boulder", "rock-peak", "rock-small"],
+      "footprint": 92,
+      "anchor": { "x": 0.50, "y": 0.84 },
+      "drawScale": 1,
+      "weight": 2
+    },
+    {
+      "id": "rock-peak",
+      "file": "rock-peak.png",
+      "kind": "rock",
+      "tags": ["rock", "peak", "mountain", "cap", "combinable", "module"],
+      "biomes": ["M", "H"],
+      "place": "wild",
+      "role": "cap",
+      "cluster": "mountain",
+      "stackWith": ["rock-ridge", "rock-boulder"],
+      "footprint": 52,
+      "anchor": { "x": 0.50, "y": 0.88 },
+      "drawScale": 1,
+      "weight": 1
+    },
+    {
+      "id": "tree-pine",
+      "file": "tree-pine.png",
+      "kind": "tree",
+      "tags": ["tree", "pine", "forest", "copse"],
+      "biomes": ["F", "H", "P", "T"],
+      "place": "wild",
+      "role": "solo",
+      "cluster": "copse",
+      "footprint": 48,
+      "anchor": { "x": 0.50, "y": 0.90 },
+      "drawScale": 1,
+      "weight": 3
+    },
+    {
+      "id": "tree-broad",
+      "file": "tree-broad.png",
+      "kind": "tree",
+      "tags": ["tree", "broadleaf", "forest", "copse"],
+      "biomes": ["F", "P", "S"],
+      "place": "wild",
+      "role": "solo",
+      "cluster": "copse",
+      "footprint": 52,
+      "anchor": { "x": 0.50, "y": 0.88 },
+      "drawScale": 1,
+      "weight": 3
+    },
+    {
+      "id": "convoy-truck",
+      "file": "convoy-truck.png",
+      "kind": "vehicle",
+      "tags": ["convoy", "truck", "player"],
+      "biomes": ["*"],
+      "place": "convoy",
+      "role": "solo",
+      "cluster": null,
+      "footprint": 56,
+      "anchor": { "x": 0.50, "y": 0.82 },
+      "drawScale": 1,
+      "weight": 0
+    }
+  ],
+  "recipes": {
+    "city-lot": {
+      "query": { "place": "city-lot", "tags": ["lot"] }
+    },
+    "copse": {
+      "query": { "kind": "tree" },
+      "count": [1, 1]
+    },
+    "scree": {
+      "query": { "tags": ["scree"] },
+      "count": [1, 1]
+    },
+    "mountain": {
+      "body": { "tags": ["mountain", "body"] },
+      "cap": { "tags": ["mountain", "cap"] },
+      "scree": { "tags": ["scree"] },
+      "bodyCount": [2, 4],
+      "screeCount": [2, 5],
+      "offsets": {
+        "body": [[0, 0], [22, 10], [-20, 12], [8, -14]],
+        "cap": [0, -18],
+        "scree": [[28, 16], [-26, 18], [14, 24], [-12, -8], [32, -6]]
+      }
+    }
+  },
+  "biomeFill": {
+    "P": [{ "recipe": "copse", "step": 64, "dens": 0.55 }, { "recipe": "scree", "step": 110, "dens": 0.22 }],
+    "F": [{ "recipe": "copse", "step": 56, "dens": 0.78 }],
+    "H": [{ "recipe": "copse", "step": 72, "dens": 0.40 }, { "recipe": "scree", "step": 90, "dens": 0.35 }, { "recipe": "mountain", "step": 210, "dens": 0.16 }],
+    "M": [{ "recipe": "mountain", "step": 180, "dens": 0.42 }, { "recipe": "scree", "step": 86, "dens": 0.40 }],
+    "A": [{ "recipe": "scree", "step": 96, "dens": 0.38 }],
+    "T": [{ "recipe": "scree", "step": 120, "dens": 0.22 }, { "recipe": "copse", "step": 140, "dens": 0.12 }],
+    "S": [{ "recipe": "copse", "step": 80, "dens": 0.50 }]
+  }
+}

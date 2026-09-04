@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>ops home test</title></head>
+<body style="margin:0;background:#222">
+<iframe id="f" src="chart.html" style="width:1500px;height:950px;border:0;display:block"></iframe>
+<pre id="out" style="color:#9fdc8f;font-size:12px;margin:6px">running</pre>
+<script>
+'use strict';
+const out = document.getElementById('out');
+const f = document.getElementById('f');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function waitFor(fn, tries, gap) {
+  for (let i = 0; i < tries; i++) { try { const x = fn(); if (x) return x; } catch (e) {} await sleep(gap); }
+  throw new Error('timeout waiting');
+}
+
+function travelView(realView) {
+  const L = realView.location;
+  const v = Object.assign({}, realView, {
+    location: null, site: null, field: null, expo: null, market: [], routes: [],
+    travel: { fromName: L ? L.name : 'Somewhere', toName: 'Wien', totalDays: 2, daysRemaining: 1, fuelPerDay: 120, path: [{ X: 0, Y: 0 }, { X: 50, Y: 0 }], convoyX: 25, convoyY: 0 },
+    crewBrief: null
+  });
+  return v;
+}
+
+async function main() {
+  try {
+    const w = f.contentWindow;
+    const errs = [];
+    w.addEventListener('error', (e) => errs.push(String(e.message || e)));
+    await waitFor(() => w.MECHA && w.MECHA.snapshot && w.OPS && w.OPS.state && w.OPS.update, 100, 200);
+    await waitFor(() => w.MECHA.snapshot() && w.MECHA.snapshot().view, 50, 200);
+    await sleep(600); // let the ops shell mount
+
+    const real = w.MECHA.snapshot();
+    const cityId = real.view.location ? real.view.location.id : null;
+    const report = { cityId, errs: [], checks: {} };
+
+    // 1) simulate travel (shell stays closed, no auto-open)
+    w.OPS.update({ view: travelView(real.view), log: real.log, error: null });
+    await sleep(150);
+    let S = w.OPS.state();
+    report.checks.travelNoOpen = (!S.open && S.page === 'overview');
+
+    // 2) simulate arrival at the same city -> auto-open City / Home
+    w.OPS.update(real);
+    await sleep(250);
+    S = w.OPS.state();
+    report.checks.autoOpenCity = S.open === true && S.page === 'city';
+    report.checks.homeTab = S.tab && S.tab.city === 'home';
+    report.checks.arrivalStored = !!(S.arrival && S.arrival.cityId === cityId && S.arrival.prev === null);
+    report.checks.memoStored = !!(S.memo && S.memo[cityId] && S.memo[cityId].day >= 1);
+
+    const doc = w.document;
+    const tabOn = doc.querySelector('#ops .ops-tab.on');
+    report.checks.domTab = tabOn ? tabOn.textContent.trim() : null;
+    const mainTxt = doc.querySelector('#ops .ops-main') ? doc.querySelector('#ops .ops-main').textContent : '';
+    report.checks.domWire = mainTxt.includes('Latest events');
+    report.checks.domExpo = mainTxt.includes('Trade expo');
+    report.checks.domPrices = mainTxt.includes('Prices moved');
+    report.checks.domFirstPark = mainTxt.includes('First park');
+
+    // 3) leave, then arrive again with the board moved -> movers render
+    const moved = structuredClone(real.view);
+    for (let i = 0; i < moved.market.length; i++) {
+      if (i % 3 === 0) moved.market[i].buy = Math.round(moved.market[i].buy * 1.28 * 10) / 10;
+      else if (i % 3 === 1) moved.market[i].buy = Math.round(moved.market[i].buy * 0.82 * 10) / 10;
+    }
+    w.OPS.update({ view: travelView(real.view), log: real.log, error: null });
+    await sleep(150);
+    w.OPS.update({ view: moved, log: real.log, error: null });
+    await sleep(250);
+    S = w.OPS.state();
+    report.checks.secondArrival = S.open === true && S.page === 'city' && S.tab.city === 'home';
+    report.checks.memoBaseline = !!(S.arrival && S.arrival.prev && S.arrival.prev.day >= 1);
+    const mainTxt2 = doc.querySelector('#ops .ops-main') ? doc.querySelector('#ops .ops-main').textContent : '';
+    report.checks.domMovers = (doc.querySelectorAll('#ops .stat-row').length) + ' rows';
+    report.checks.domSinceDay = /since day \d+/.test(mainTxt2);
+    report.checks.domMovedPct = /\+2\d%|−2\d%/.test(mainTxt2);
+
+    report.errs = errs;
+    out.textContent = 'RESULT ' + JSON.stringify(report, null, 2);
+  } catch (e) {
+    out.textContent = 'FAILED ' + (e && e.stack || String(e));
+  }
+  document.title = 'OPS_TEST_DONE';
+}
+main();
+</script>
+</body>
+</html>

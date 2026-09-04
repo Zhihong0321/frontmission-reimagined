@@ -1,0 +1,363 @@
+{
+  "_comment": "World events. Templates are content; live instances live in GameState. Price multipliers and vital deltas are derived from the active set (they vanish when the event ends). Stock shocks are one-shot writes to the shelf, because goods do not teleport back. A template may name goods or whole categories. A shortage names reliefStanding: a convoy that sells that good into the city while the event runs earns that much citizen standing per reliefUnits sold. {city} {region} {governor} {good} {category} are filled when the dispatch is built.",
+  "maxConcurrent": 4,
+  "dailyChance": 0.22,
+  "events": [
+    {
+      "id": "mill-walkout",
+      "name": "Mill walkout",
+      "kind": "city",
+      "tone": "warn",
+      "headline": "Walkout at the {city} mills",
+      "detail": "Shifts have stopped. Refined metal and plating are dear until the floor goes back to work.",
+      "durationDays": 7,
+      "weight": 12,
+      "industries": [
+        "refining",
+        "ceramics",
+        "assembly",
+        "precision"
+      ],
+      "goods": [
+        "steel",
+        "ceramics"
+      ],
+      "priceMult": 1.22,
+      "vitalDeltas": {
+        "peace": -8,
+        "growth": -0.4
+      }
+    },
+    {
+      "id": "cave-in",
+      "name": "Cave-in",
+      "kind": "supply",
+      "tone": "bad",
+      "headline": "Cave-in at {city}",
+      "detail": "A shaft is lost. Ore has left the shelf and will take days to dig out.",
+      "durationDays": 6,
+      "weight": 10,
+      "industries": [
+        "mining"
+      ],
+      "goods": [
+        "ore"
+      ],
+      "stockMult": 0.75,
+      "vitalDeltas": {
+        "growth": -0.3
+      }
+    },
+    {
+      "id": "grid-strain",
+      "name": "Grid strain",
+      "kind": "market",
+      "tone": "warn",
+      "headline": "{city} grid runs short",
+      "detail": "The plant cannot keep the city in cells. What is left on the shelf is priced as a shortage.",
+      "durationDays": 8,
+      "weight": 10,
+      "industries": [
+        "energy"
+      ],
+      "goods": [
+        "cells"
+      ],
+      "priceMult": 1.25
+    },
+    {
+      "id": "bumper-harvest",
+      "name": "Bumper harvest",
+      "kind": "supply",
+      "tone": "good",
+      "headline": "Bumper harvest around {city}",
+      "detail": "The granaries are full. Rations are cheap and the books look healthier.",
+      "durationDays": 9,
+      "weight": 11,
+      "industries": [
+        "agriculture"
+      ],
+      "goods": [
+        "rations"
+      ],
+      "priceMult": 0.88,
+      "stockDelta": 90,
+      "vitalDeltas": {
+        "growth": 0.3
+      }
+    },
+    {
+      "id": "trade-fair",
+      "name": "Trade fair",
+      "kind": "market",
+      "tone": "good",
+      "headline": "Trade fair opens in {city}",
+      "detail": "Houses are buying components. Servos and sensors fetch a premium while the stalls are up.",
+      "durationDays": 5,
+      "weight": 12,
+      "industries": [
+        "hub"
+      ],
+      "goods": [
+        "servos",
+        "optics"
+      ],
+      "priceMult": 1.18,
+      "vitalDeltas": {
+        "growth": 0.3,
+        "peace": 5
+      }
+    },
+    {
+      "id": "street-unrest",
+      "name": "Street unrest",
+      "kind": "city",
+      "tone": "bad",
+      "headline": "Unrest in {city}",
+      "detail": "{governor} has the streets to think about. The city is no quieter for it.",
+      "durationDays": 6,
+      "weight": 8,
+      "vitalDeltas": {
+        "peace": -12
+      }
+    },
+    {
+      "id": "sensor-orders",
+      "name": "Sensor orders",
+      "kind": "market",
+      "tone": "ok",
+      "headline": "Sensor orders flood {city}",
+      "detail": "Precision works cannot keep up. Optical sensors are bid up across the floor.",
+      "durationDays": 7,
+      "weight": 10,
+      "industries": [
+        "precision"
+      ],
+      "goods": [
+        "optics"
+      ],
+      "priceMult": 1.22
+    },
+    {
+      "id": "yard-overflow",
+      "name": "Yard overflow",
+      "kind": "supply",
+      "tone": "ok",
+      "headline": "{city} yards overflow",
+      "detail": "Salvage has nowhere to go. Scrap is cheap on the shelf until the heaps are bought down.",
+      "durationDays": 6,
+      "weight": 10,
+      "industries": [
+        "salvage"
+      ],
+      "goods": [
+        "scrap"
+      ],
+      "priceMult": 0.9,
+      "stockDelta": 80
+    },
+    {
+      "id": "cell-scare",
+      "name": "Cell scare",
+      "kind": "market",
+      "tone": "warn",
+      "headline": "Power-cell scare across the continent",
+      "detail": "A rumour of shortage has every city paying up for cells, plant town or not.",
+      "durationDays": 5,
+      "weight": 6,
+      "global": true,
+      "goods": [
+        "cells"
+      ],
+      "priceMult": 1.12
+    },
+    {
+      "id": "medicine-shortage",
+      "name": "Ward shortage",
+      "kind": "shortage",
+      "tone": "bad",
+      "headline": "{city} wards run out of {category}",
+      "detail": "The clinics are rationing. Anything medical sells at a shortage price, and the streets remember who brings it.",
+      "durationDays": 8,
+      "weight": 11,
+      "industries": [
+        "hub",
+        "assembly",
+        "mining",
+        "salvage",
+        "precision"
+      ],
+      "categories": [
+        "medicine"
+      ],
+      "priceMult": 1.35,
+      "stockMult": 0.45,
+      "reliefStanding": 4,
+      "reliefUnits": 40,
+      "vitalDeltas": {
+        "peace": -6
+      }
+    },
+    {
+      "id": "tools-shortage",
+      "name": "Tool famine",
+      "kind": "shortage",
+      "tone": "warn",
+      "headline": "{city} works floors short of {category}",
+      "detail": "Worn kit and nothing to replace it. Tools fetch a shortage price until somebody hauls some in.",
+      "durationDays": 7,
+      "weight": 10,
+      "industries": [
+        "assembly",
+        "precision",
+        "refining",
+        "mining",
+        "salvage",
+        "agriculture"
+      ],
+      "categories": [
+        "tools"
+      ],
+      "priceMult": 1.3,
+      "stockMult": 0.5,
+      "reliefStanding": 3,
+      "reliefUnits": 40
+    },
+    {
+      "id": "electronics-shortage",
+      "name": "Board shortage",
+      "kind": "shortage",
+      "tone": "warn",
+      "headline": "{city} lines starved of {category}",
+      "detail": "Boards and chips have run dry on the assembly lines. Electronics are bid up until the shelves refill.",
+      "durationDays": 7,
+      "weight": 9,
+      "industries": [
+        "assembly",
+        "precision",
+        "energy",
+        "machinery"
+      ],
+      "categories": [
+        "electronics"
+      ],
+      "priceMult": 1.3,
+      "stockMult": 0.5,
+      "reliefStanding": 3,
+      "reliefUnits": 30
+    },
+    {
+      "id": "provisions-shortage",
+      "name": "Lean season",
+      "kind": "shortage",
+      "tone": "bad",
+      "headline": "{city} granaries run low on {category}",
+      "detail": "The city is eating through its stores. Provisions sell dear and every sack unloaded is remembered.",
+      "durationDays": 9,
+      "weight": 10,
+      "industries": [
+        "hub",
+        "assembly",
+        "mining",
+        "salvage",
+        "refining",
+        "precision",
+        "electronics",
+        "machinery"
+      ],
+      "categories": [
+        "provisions"
+      ],
+      "priceMult": 1.3,
+      "stockMult": 0.5,
+      "reliefStanding": 4,
+      "reliefUnits": 80,
+      "vitalDeltas": {
+        "peace": -8,
+        "growth": -0.2
+      }
+    },
+    {
+      "id": "energy-shortage",
+      "name": "Brownout",
+      "kind": "shortage",
+      "tone": "warn",
+      "headline": "{city} browns out for want of {category}",
+      "detail": "Cells and fuel are rationed. The whole energy shelf is priced as a shortage.",
+      "durationDays": 6,
+      "weight": 8,
+      "industries": [
+        "hub",
+        "assembly",
+        "refining",
+        "ceramics",
+        "precision",
+        "electronics",
+        "machinery",
+        "medical"
+      ],
+      "categories": [
+        "energy"
+      ],
+      "priceMult": 1.28,
+      "stockMult": 0.55,
+      "reliefStanding": 3,
+      "reliefUnits": 40
+    },
+    {
+      "id": "machinery-glut",
+      "name": "Machine glut",
+      "kind": "glut",
+      "tone": "ok",
+      "headline": "{city} floors overflow with {category}",
+      "detail": "The shops built more than anyone ordered. Parts and drives are cheap until the yard clears.",
+      "durationDays": 7,
+      "weight": 9,
+      "industries": [
+        "machinery"
+      ],
+      "categories": [
+        "machinery"
+      ],
+      "priceMult": 0.82,
+      "stockMult": 1.8
+    },
+    {
+      "id": "metals-glut",
+      "name": "Mill overrun",
+      "kind": "glut",
+      "tone": "ok",
+      "headline": "{city} mills overrun with {category}",
+      "detail": "Steel and stock pile up on the loading bays. Metals go cheap until the surplus is bought down.",
+      "durationDays": 7,
+      "weight": 9,
+      "industries": [
+        "refining",
+        "mining"
+      ],
+      "categories": [
+        "metals"
+      ],
+      "priceMult": 0.85,
+      "stockMult": 1.7
+    },
+    {
+      "id": "ceramics-glut",
+      "name": "Kiln overrun",
+      "kind": "glut",
+      "tone": "ok",
+      "headline": "{city} kilns overrun with {category}",
+      "detail": "Plate and glass stack up past the yard gate. Ceramics go cheap until the heaps move.",
+      "durationDays": 6,
+      "weight": 8,
+      "industries": [
+        "ceramics"
+      ],
+      "categories": [
+        "ceramics"
+      ],
+      "priceMult": 0.85,
+      "stockMult": 1.7
+    }
+  ]
+}
