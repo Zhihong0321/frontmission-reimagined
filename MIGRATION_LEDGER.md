@@ -214,13 +214,16 @@ assigned worktree.
 | `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
 | `PA-ROOT-03` | `VERIFIED` | `ROOT` (Claude Code, per `D-029`) | `f1efe3a` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `codex/pa-root-03-determinism-fixtures` | `tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs`, `SaveFixtureTests.cs`, `Fixtures/**`; `tools/MechaTrader.Fingerprint/**`, `tools/verify-worldjs.ps1`, `tools/verify-api-shape.ps1`, `tools/clean-clone-check.ps1`; `tests/api-fixtures/**`; `check.ps1` (extension only); `MechaTrader.sln`; `coordination/handoffs/PA-ROOT-03.md` | 2026-09-04 |
 | `PC-ROOT-01` | `VERIFIED` | `ROOT` | `6b14d192858bb15bbb5de946d14c353ccfc9f9f8` (Phase B verified integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-01` | `codex/pc-root-01-definitions` | `src/MechaTrader.Core/Model/Definitions.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-01.md` | 2026-09-04 |
+| `PC-ROOT-02` | `ACTIVE` | `ROOT` | `3ec8cc092e15431609a6b16a499c65d5f69a41ea` (verified `PC-ROOT-01` integration tip; product merge `b7e2c8d`) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-02` | `codex/pc-root-02-viewmodels` | `src/MechaTrader.Core/View/ViewModels.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-02.md` | 2026-09-04 |
 
-Phase C (mechanical backend decomposition) begins with the first bounded job
-`PC-ROOT-01`: a pure mechanical file split of `src/MechaTrader.Core/Model/Definitions.cs`
-into cohesive new `.cs` files under `src/MechaTrader.Core/`. Its green base is the
-verified Phase B integration tip `6b14d192`. Write scope is only `Definitions.cs`, the
-new `.cs` files the split creates, and this job's handoff; every other path is prohibited
-(`D-043`). No Phase C item 2 (`ViewModels.cs`) or later item starts in this session.
+Phase C (mechanical backend decomposition) proceeds to the second bounded job
+`PC-ROOT-02`: a pure mechanical file split of `src/MechaTrader.Core/View/ViewModels.cs`
+into cohesive new `.cs` files under `src/MechaTrader.Core/View/`. Its green base is the
+verified `PC-ROOT-01` integration tip `3ec8cc09`. Write scope is only `ViewModels.cs`,
+the new `.cs` files the split creates, and this job's handoff; every other path is
+prohibited (`D-045`). Because `ViewModels.cs` is part of the frontend wire contract,
+Phase C item 2 additionally requires the browser smoke and API-shape gates. No Phase C
+item 3 (`WorldLoader.cs`) or later item starts in this session.
 
 
 `PA-ROOT-03` closed Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
@@ -348,6 +351,7 @@ unverified.
 | `D-042` | 2026-09-04 | Close the Phase B checkpoint: verify the integration state, tag `known-green/consolidated` at `590b25c`, record the closeout in the ledger, mirror the identical ledger blob on both branches, and push and verify the refs | The user explicitly authorized only the Phase B checkpoint closeout with a stop-loss rule (no tag/push after two failed focused repairs) and a hard stop after publishing. All ten required verification items passed on the integration tip `a354ee0`, including the deterministic world.js SHA-256, the full nine-gate `check.ps1`, the browser provenance assertion, the host/static-file byte-provenance and sibling disproof, before/after immutability, and a committed full-history no-sibling clean-clone check. This decision authorizes no Phase C (mechanical backend decomposition), no other Phase B job, no product-code change, no MapLab change, and no deletion, move, rename, or tag retagging; phases C-F remain unauthorized | `ACCEPTED` |
 | `D-043` | 2026-09-04 | Authorize and assign `PC-ROOT-01`, the first bounded Phase C job: mechanical split of `src/MechaTrader.Core/Model/Definitions.cs` only | The user explicitly authorized this single bounded job in a new coordinator session. Green base is the verified integration tip `6b14d192`. The worker may only move code, unchanged in logic and public API, from `Definitions.cs` into cohesive new `.cs` files under `src/MechaTrader.Core/`; namespaces, names, signatures, ordering, visibility, and public entrypoints must be preserved. Prohibited: any semantic cleanup, rename, refactor, behavior change; `data/`, `web/chart/` (generator and output), `D:\FrontMission-MapLab`, tests, and other product files; deletion/move/rename of existing files; history rewriting, force pushes, and any tag creation or movement (`known-green/backend-split` only after the whole phase passes full acceptance); Phase C items 2-7 and phases D-F. The job stops and reports after verification, per the plan's 12-step transaction | `ACCEPTED` |
 | `D-044` | 2026-09-04 | Accept and verify only `PC-ROOT-01` at integration merge `b7e2c8d`; stop before Phase C item 2 | Independent post-merge verification confirmed the assignment mirror `efc9067`, worker implementation `a3c26b4`, handoff `cc4958c`, and integration merges `637a85f` + `b7e2c8d` descend from the verified green base `6b14d192` and change only the assigned split scope plus handoff. Byte-level equivalence proved all 39 type blocks byte-identical with original type order preserved. Release build 0 warnings, 239/239 Core tests, 23/23 determinism/save tests, byte-stable Fingerprint fixtures, world.js SHA-256 `26063b3e...0712a`, all nine `check.ps1` gates, and `git diff --check` passed in the worker worktree and again on the integrated state; port 5080 free, no `MechaTrader.Host` process, no temp clones. `.csproj` needed no change (SDK default wildcard). This decision authorizes no Phase C item 2 (`ViewModels.cs`) or later item, no tag, no deletion beyond the split, and no Phase D-F work | `ACCEPTED` |
+| `D-045` | 2026-09-04 | Authorize and assign `PC-ROOT-02`, the second bounded Phase C job: mechanical split of `src/MechaTrader.Core/View/ViewModels.cs` only | The user explicitly authorized this single bounded job in a new coordinator session. Green base is the verified `PC-ROOT-01` integration tip `3ec8cc09`. The worker may only move code, unchanged in logic and public API, from `ViewModels.cs` into cohesive new `.cs` files under `src/MechaTrader.Core/View/`; namespaces, names, signatures, ordering, visibility, and public entrypoints must be preserved. Prohibited: any semantic cleanup, rename, refactor, behavior change; modifying `PC-ROOT-01`'s `Definitions.cs` split files; `data/`, `web/chart/` (generator and output), `D:\FrontMission-MapLab`, tests, and other product files; deletion/move/rename of existing files; history rewriting, force pushes, and any tag creation or movement (`known-green/backend-split` only after the whole phase passes full acceptance); Phase C items 3-7 and phases D-F. The job also runs the browser smoke and API-shape gates because `ViewModels.cs` is part of the frontend wire contract. It stops and reports after verification, per the plan's 12-step transaction | `ACCEPTED` |
 
 ## Open decisions
 
@@ -467,6 +471,7 @@ At the beginning of every coordinating session:
   build 0 warnings, 239/239 Core tests, 23/23 determinism/save tests, byte-stable
   Fingerprint fixtures, world.js SHA-256 `26063b3e...0712a`, all nine `check.ps1` gates,
   and `git diff --check`; port 5080 free, no `MechaTrader.Host` process, no temp clones;
-  `.csproj` unchanged. Phase C items 2-7 and phases D-F remain unauthorized.
+  `.csproj` unchanged. Phase C item 2 (`ViewModels.cs`) is assigned and `ACTIVE` (`D-045`);
+  Phase C items 3-7 and phases D-F remain unauthorized.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
 - Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
