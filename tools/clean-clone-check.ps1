@@ -1,113 +1,155 @@
 <#
-    Phase A step 7 (MIGRATION_LEDGER.md): verify API and browser behavior from a clean
-    environment reproducing the current two-folder layout — a full, isolated clone with
-    no sibling FrontMission-MapLab and no foreign data/config.json anywhere above it.
+    Phase B PB-ROOT-03: prove the consolidated chart path from a full, isolated clone.
 
-    This clones from a COMMIT, not the working tree, so it only proves what has actually
-    been committed. Run it after committing the change under test.
-
-    A full clone is required, not --depth: /api/build and BuildInfoTests need real git
-    history, and a shallow clone would fail criterion 7 of check.ps1 for environmental
-    reasons that have nothing to do with the product (PA-KIMI-01 section 6).
+    This clones the current commit, deliberately removes representative repository-local
+    generator inputs to prove play.ps1 fails closed, regenerates web/chart/world.js from
+    data/, runs the full nine-gate acceptance suite, and runs the browser smoke separately.
 
     Usage: .\tools\clean-clone-check.ps1
-    Exit 0 if the full nine-gate check.ps1 passes in the clone, /chart/ 404s there
-    (proving no sibling MapLab leaked in), and the post-run diff is only FIGURES.md.
 #>
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$port = 5080
 
 function Fail($message) {
     Write-Host "FAIL  $message" -ForegroundColor Red
     exit 1
 }
 
-# Refuse to run somewhere that would defeat the isolation this check exists to prove.
+function Assert-PortIsFree($context) {
+    $listeners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
+    if ($listeners.Count -gt 0) {
+        Fail "port $port is still listening after $context"
+    }
+}
+
+function Remove-ExactTree($path) {
+    if (-not (Test-Path -LiteralPath $path)) { return }
+    Get-ChildItem -LiteralPath $path -Recurse -Force -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.Attributes = [System.IO.FileAttributes]::Normal }
+    $item = Get-Item -LiteralPath $path -Force
+    $item.Attributes = [System.IO.FileAttributes]::Normal
+    [System.IO.Directory]::Delete($item.FullName, $true)
+}
+
+# Refuse a temp location whose ancestors could defeat the isolation proof.
 $walk = Get-Item $env:TEMP
 while ($walk) {
-    if (Test-Path (Join-Path $walk.FullName 'FrontMission-MapLab\chart.html')) {
-        Fail "%TEMP% ($($env:TEMP)) has a FrontMission-MapLab sibling above it ($($walk.FullName)); this check cannot prove isolation from here."
+    if (Test-Path -LiteralPath (Join-Path $walk.FullName 'FrontMission-MapLab\chart.html')) {
+        Fail "%TEMP% ($($env:TEMP)) has a FrontMission-MapLab tree above it ($($walk.FullName))."
     }
-    if (Test-Path (Join-Path $walk.FullName 'data\config.json')) {
-        Fail "%TEMP% ($($env:TEMP)) has a foreign data/config.json above it ($($walk.FullName)); this check cannot prove isolation from here."
+    if (Test-Path -LiteralPath (Join-Path $walk.FullName 'data\config.json')) {
+        Fail "%TEMP% ($($env:TEMP)) has a foreign data/config.json above it ($($walk.FullName))."
     }
     $walk = $walk.Parent
 }
 
-$cloneRoot = Join-Path $env:TEMP ("clean-clone-check-" + [guid]::NewGuid().ToString('N'))
+$sourceCommit = (& git -C $repoRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $sourceCommit) { Fail 'could not resolve the source commit' }
+
+$cloneRoot = Join-Path $env:TEMP ("pb-root-03-clean-clone-" + [guid]::NewGuid().ToString('N'))
 $clonePath = Join-Path $cloneRoot 'repo'
+$stdoutPath = Join-Path $cloneRoot 'launcher.stdout.log'
+$stderrPath = Join-Path $cloneRoot 'launcher.stderr.log'
+$powershellExe = (Get-Process -Id $PID).Path
 New-Item -ItemType Directory -Path $cloneRoot | Out-Null
 
+function Invoke-LauncherExpectedFailure($label, $pattern) {
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+    $process = Start-Process -FilePath $powershellExe `
+        -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $clonePath 'play.ps1') + '"') `
+        -WorkingDirectory $clonePath -PassThru -Wait -WindowStyle Hidden `
+        -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+
+    if ($process.ExitCode -eq 0) { Fail "$label unexpectedly succeeded" }
+    $output = ''
+    if (Test-Path -LiteralPath $stdoutPath) { $output += Get-Content -LiteralPath $stdoutPath -Raw }
+    if (Test-Path -LiteralPath $stderrPath) { $output += Get-Content -LiteralPath $stderrPath -Raw }
+    if ($output -notmatch $pattern) {
+        Fail "$label did not report the expected failure pattern '$pattern'"
+    }
+    Assert-PortIsFree $label
+    Write-Host "PASS  $label fails closed before host startup" -ForegroundColor Green
+}
+
 try {
-    Write-Host "Cloning $repoRoot -> $clonePath (full history, HEAD only branch)..." -ForegroundColor DarkGray
-    # No `2>&1`: git writes its normal progress to stderr, and in Windows PowerShell 5.1
-    # redirecting a native command's stderr wraps each line as a terminating
-    # NativeCommandError under $ErrorActionPreference = 'Stop', even on exit code 0.
+    Assert-PortIsFree 'clean-clone preflight'
+    Write-Host "Cloning $repoRoot -> $clonePath (full history, committed HEAD)..." -ForegroundColor DarkGray
     & git clone --no-hardlinks $repoRoot $clonePath
-    if ($LASTEXITCODE -ne 0) { Fail 'git clone failed (see output above).' }
+    if ($LASTEXITCODE -ne 0) { Fail 'git clone failed (see output above)' }
+
+    $cloneCommit = (& git -C $clonePath rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $cloneCommit -ne $sourceCommit) {
+        Fail "clone commit $cloneCommit does not match source commit $sourceCommit"
+    }
 
     Push-Location $clonePath
     try {
-        Write-Host 'Running the full nine-gate check.ps1 in the isolated clone...' -ForegroundColor DarkGray
+        $generator = Join-Path $clonePath 'web\chart\make-world.js'
+        $generatorBackup = Join-Path $cloneRoot 'make-world.js.backup'
+        Move-Item -LiteralPath $generator -Destination $generatorBackup
+        try { Invoke-LauncherExpectedFailure 'missing repository-local generator' 'required chart generator not found' }
+        finally { Move-Item -LiteralPath $generatorBackup -Destination $generator }
+
+        $config = Join-Path $clonePath 'data\config.json'
+        $configBackup = Join-Path $cloneRoot 'config.json.backup'
+        Move-Item -LiteralPath $config -Destination $configBackup
+        try { Invoke-LauncherExpectedFailure 'missing repository-local input' 'required chart data file not found' }
+        finally { Move-Item -LiteralPath $configBackup -Destination $config }
+
+        $statusAfterFailures = @(& git status --porcelain)
+        if ($statusAfterFailures.Count -gt 0) {
+            Fail "negative launcher checks left a tracked or untracked diff:`n$($statusAfterFailures -join "`n")"
+        }
+
+        Write-Host 'Regenerating web/chart/world.js from repository-local data/...' -ForegroundColor DarkGray
+        & node '.\web\chart\make-world.js' '.\data'
+        if ($LASTEXITCODE -ne 0) { Fail 'repository-local world generator failed' }
+        & powershell -NoProfile -ExecutionPolicy Bypass -File '.\tools\verify-worldjs.ps1'
+        if ($LASTEXITCODE -ne 0) { Fail 'world.js verifier failed after regeneration' }
+
+        $statusAfterGeneration = @(& git status --porcelain)
+        if ($statusAfterGeneration.Count -gt 0) {
+            Fail "deterministic regeneration changed the clean clone:`n$($statusAfterGeneration -join "`n")"
+        }
+
+        Write-Host 'Running the full nine-gate check.ps1...' -ForegroundColor DarkGray
         & powershell -NoProfile -ExecutionPolicy Bypass -File '.\check.ps1'
-        if ($LASTEXITCODE -ne 0) { Fail 'check.ps1 failed inside the isolated clone (see output above).' }
+        if ($LASTEXITCODE -ne 0) { Fail 'check.ps1 failed inside the isolated clone' }
 
-        # The clone-specific control: with no sibling MapLab anywhere above this path,
-        # /chart/ must not be served at all. This is the expected pre-migration
-        # difference PA-KIMI-01 names, not a regression — Phase B is what makes /chart/
-        # work from a clean clone by importing the frontend into the repository itself.
-        $hostProc = $null
+        Write-Host 'Installing pinned browser dependencies and running the browser smoke...' -ForegroundColor DarkGray
+        Push-Location (Join-Path $clonePath 'tests\browser')
         try {
-            $hostProc = Start-Process -FilePath 'dotnet' `
-                -ArgumentList 'run', '--project', 'src/MechaTrader.Host', '-c', 'Release', '--no-build' `
-                -PassThru -WindowStyle Hidden `
-                -RedirectStandardOutput (Join-Path $env:TEMP 'mt-clean-clone.log') `
-                -RedirectStandardError (Join-Path $env:TEMP 'mt-clean-clone.err')
-
-            $ready = $false
-            foreach ($i in 1..45) {
-                try { Invoke-RestMethod 'http://localhost:5080/api/state' -TimeoutSec 2 -UseBasicParsing | Out-Null; $ready = $true; break }
-                catch { Start-Sleep -Milliseconds 700 }
-            }
-            if (-not $ready) { Fail 'server never became ready in the isolated clone' }
-
-            # Resolved paths as evidence: FindDataDirectory/LocateWebRoot can only have
-            # walked to *something* under $clonePath, because nothing above %TEMP%
-            # contains a data/config.json, a web/index.html, or a FrontMission-MapLab —
-            # the checks above already proved that. A successful boot is the proof.
-            Write-Host "      data/web resolved from inside the clone (no reachable outside tree exists to resolve to instead)" -ForegroundColor DarkGray
-
-            $chartStatus = $null
-            try {
-                $resp = Invoke-WebRequest 'http://localhost:5080/chart/' -UseBasicParsing -ErrorAction Stop
-                $chartStatus = [int]$resp.StatusCode
-            }
-            catch {
-                if ($_.Exception.Response) { $chartStatus = [int]$_.Exception.Response.StatusCode }
-                else { throw }
-            }
-            if ($chartStatus -ne 404) { Fail "expected /chart/ to 404 with no sibling MapLab present; got $chartStatus" }
-            Write-Host "PASS  /chart/ 404s with no sibling MapLab present (isolation proof)" -ForegroundColor Green
+            & npm ci
+            if ($LASTEXITCODE -ne 0) { Fail 'npm ci failed inside the isolated clone' }
+            & npx playwright install chromium
+            if ($LASTEXITCODE -ne 0) { Fail 'Playwright Chromium installation failed inside the isolated clone' }
+            & npm test
+            if ($LASTEXITCODE -ne 0) { Fail 'browser smoke failed inside the isolated clone' }
         }
         finally {
-            if ($hostProc -and -not $hostProc.HasExited) { Stop-Process -Id $hostProc.Id -Force -ErrorAction SilentlyContinue }
+            Pop-Location
         }
 
-        # check.ps1's balance harness regenerates FIGURES.md; nothing else should differ.
-        $statusOut = & git status --porcelain | Out-String
-        $unexpected = ($statusOut -split "`r?`n") | Where-Object { $_.Trim().Length -gt 0 -and $_ -notmatch 'FIGURES\.md$' }
+        Assert-PortIsFree 'browser smoke completion'
+        Remove-ExactTree (Join-Path $clonePath 'tests\browser\node_modules')
+        Remove-ExactTree (Join-Path $clonePath 'tests\browser\test-results')
+        Remove-ExactTree (Join-Path $clonePath 'tests\browser\playwright-report')
+
+        # check.ps1's balance harness regenerates FIGURES.md; no other diff is allowed.
+        $statusOut = @(& git status --porcelain)
+        $unexpected = @($statusOut | Where-Object { $_.Trim().Length -gt 0 -and $_ -notmatch 'FIGURES\.md$' })
         if ($unexpected.Count -gt 0) {
             Fail "unexpected post-run diff in the isolated clone:`n$($unexpected -join "`n")"
         }
 
-        Write-Host 'PASS  clean-clone check: full acceptance green, /chart/ isolation proven, only FIGURES.md changed' -ForegroundColor Green
-        exit 0
+        Write-Host 'PASS  clean clone: deterministic local generation, fatal launcher checks, nine gates, browser provenance, and cleanup' -ForegroundColor Green
     }
     finally {
         Pop-Location
     }
 }
 finally {
-    Remove-Item -Recurse -Force $cloneRoot -ErrorAction SilentlyContinue
+    Remove-ExactTree $cloneRoot
 }

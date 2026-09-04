@@ -61,28 +61,35 @@ function Stop-PreviousInstances {
 # The chart's world.js is generated from data/ — regenerate it on every launch so the
 # front-end can never lag the content files (biomes, roads, off-road rates, cities).
 function Update-ChartData {
-    $mapLab = $null
-    $dir = (Get-Item $PSScriptRoot).Parent
-    while ($dir -and -not $mapLab) {
-        $candidate = Join-Path $dir.FullName 'FrontMission-MapLab'
-        if (Test-Path (Join-Path $candidate 'make-world.js')) { $mapLab = $candidate }
-        $dir = $dir.Parent
-    }
-    if (-not $mapLab) {
-        Write-Host '  FrontMission-MapLab not found - chart data left as-is' -ForegroundColor DarkGray
-        return
-    }
+    $generator = Join-Path $PSScriptRoot 'web\chart\make-world.js'
+    $dataDir = Join-Path $PSScriptRoot 'data'
+    $worldJs = Join-Path $PSScriptRoot 'web\chart\world.js'
+
     if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        Write-Host '  node not found - chart data left as-is' -ForegroundColor DarkGray
-        return
+        throw 'node is required to generate web/chart/world.js'
     }
-    & node (Join-Path $mapLab 'make-world.js') (Join-Path $PSScriptRoot 'data') 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host '  chart data regenerated' -ForegroundColor DarkGray
+    if (-not (Test-Path -LiteralPath $generator -PathType Leaf)) {
+        throw "required chart generator not found: $generator"
     }
-    else {
-        Write-Host '  chart data regen failed - continuing anyway' -ForegroundColor DarkGray
+    if (-not (Test-Path -LiteralPath $dataDir -PathType Container)) {
+        throw "required chart data directory not found: $dataDir"
     }
+    foreach ($name in @('cities.json', 'routes.json', 'terrain.json', 'map.json', 'trucks.json', 'config.json')) {
+        $inputPath = Join-Path $dataDir $name
+        if (-not (Test-Path -LiteralPath $inputPath -PathType Leaf)) {
+            throw "required chart data file not found: $inputPath"
+        }
+    }
+
+    & node $generator $dataDir
+    if ($LASTEXITCODE -ne 0) {
+        throw "chart data generation failed with exit code $LASTEXITCODE"
+    }
+    if (-not (Test-Path -LiteralPath $worldJs -PathType Leaf)) {
+        throw "chart generator produced no output: $worldJs"
+    }
+
+    Write-Host '  chart data regenerated' -ForegroundColor DarkGray
 }
 
 # The front-end files (chart.html, game-bridge.js, world.js) are plain static files;
