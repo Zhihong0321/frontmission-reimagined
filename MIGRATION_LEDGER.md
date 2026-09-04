@@ -96,7 +96,7 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PB_ROOT_03` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `REVIEW_PB_ROOT_03` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
@@ -207,7 +207,7 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
-| `PB-ROOT-03` | `ACTIVE` | `ROOT` | `eb5b5a6` (verified `PB-ROOT-02` integration; product merge `b108789`) | `D:\FrontMission-RIMG-worktrees\PB-ROOT-03` | `codex/pb-root-03-path-switch` | `src/MechaTrader.Host/Program.cs`; `play.ps1`; `tests/browser/smoke.test.js`; `tools/clean-clone-check.ps1`; `coordination/handoffs/PB-ROOT-03.md` | 2026-09-04 |
+| `PB-ROOT-03` | `REVIEW` | `ROOT` | `eb5b5a6` (verified `PB-ROOT-02` integration; product merge `b108789`) | `D:\FrontMission-RIMG-worktrees\PB-ROOT-03` | `codex/pb-root-03-path-switch` | `src/MechaTrader.Host/Program.cs`; `play.ps1`; `tests/browser/smoke.test.js`; `tools/clean-clone-check.ps1`; `coordination/handoffs/PB-ROOT-03.md` | 2026-09-04 |
 | `PB-ROOT-02` | `VERIFIED` | `ROOT` | `2726f58` (verified `PB-ROOT-01` integration; product merge `ec7cc79`) | `D:\FrontMission-RIMG-worktrees\PB-ROOT-02` | `codex/pb-root-02-world-generator` | `web/chart/make-world.js`; `web/chart/world.js`; `tools/verify-worldjs.ps1`; `coordination/handoffs/PB-ROOT-02.md` | 2026-09-04 |
 | `PB-ROOT-01` | `VERIFIED` | `ROOT` | `5ed5949` (`known-green/original`) | `D:\FrontMission-RIMG-worktrees\PB-ROOT-01` | `codex/pb-root-01-maplab-import` | `.gitattributes` (new scoped byte-preservation rule only); `web/chart/**` (new byte-for-byte import only); `coordination/handoffs/PB-ROOT-01.md` | 2026-09-04 |
 | `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
@@ -219,7 +219,8 @@ fixtures, API-shape fixtures, content hashes, `world.js` verification, and an ex
 `PA-CLAUDE-01` coverage-disclosure requirement (`D-016` item 7). It also closed Phase A
 step 7 (clean-environment verification) via the new `tools/clean-clone-check.ps1`.
 `check.ps1` grew from seven gates to nine. Merged to `master` at `a5b390be1a5928162ae9f526b4111c79d51894ad`.
-`PB-ROOT-03` is the only `ACTIVE` job. `PB-ROOT-02` is independently reviewed,
+`PB-ROOT-03` is the only current job and is in coordinator `REVIEW` at implementation
+commit `71d68ec` with handoff tip `d0f4c8e`. `PB-ROOT-02` is independently reviewed,
 integrated, and verified. No other Phase B job has started.
 
 ## Completed manual advisory jobs
@@ -256,6 +257,7 @@ The coordinator launched both jobs; the user did not relay their prompts.
 | 4 | `PA-ROOT-03` | worker branch tip `a5b390be1a5928162ae9f526b4111c79d51894ad` (five commits); fast-forwarded onto `master` at the same hash (linear ancestor, no cherry-pick needed) | `master` during Phase A | 21/21 command-coverage matrix; determinism/save/content fingerprints; API-shape/value fixtures; `world.js` sync; full nine-gate `check.ps1`; `clean-clone-check.ps1`; cross-checkout consistency | `VERIFIED` — closes Phase A steps 6 and 7. Two of the five commits were repairs the coordinator's own re-verification forced: `check.ps1` failed on `master`'s checkout of the identical commit that had passed in the worker's worktree (`F_content` was sensitive to git's line-ending checkout mode, not just JSON content — fixed by normalizing before hashing) and `verify-worldjs.ps1` initially found the live `D:\FrontMission-MapLab\world.js` genuinely stale relative to `data/`, which the user authorized regenerating once (see `D-030`). Full nine-gate suite green on `master` itself and in a fresh isolated clone after both repairs |
 | 5 | `PB-ROOT-01` | import `7517a82306f9a9fa44135082b150ece67068ce69`; handoff tip `da86add`; integration merge `ec7cc79f88b423f9af25acafb78b28e1618264b6` | `integration` during Phase B | Exact 403-file relative-path, byte-count, raw SHA-256, and committed-blob verification; source sibling status unchanged; `git diff --check`; no runtime/path/refactor/deletion changes | `VERIFIED` — 403 files and 293,783,792 bytes matched by relative path, SHA-256, and raw committed blob after integration; integration worktree clean; runtime/config changes zero; sibling unchanged. No dependent job started |
 | 6 | `PB-ROOT-02` | implementation `799c0e43d1aeb8ad6d372887728e6144d9b6fb05`; handoff tip `2aade164cc081b0520f56fce1192d8ba675312d4`; integration merge `b10878934bd2e528adc80f64c1224f108a9534c9` | `integration` during Phase B | Three-line generator-source delta; exact green-base WORLD payload; full-byte generation in distinct clone-shaped paths; verifier source immutability; `node --check`; `git diff --check`; exact scope and sibling status; full-history no-sibling clone | `VERIFIED` — integrated verifier passed twice with identical full SHA-256 `26063b3e...0712a`; payload remained byte-exact to `2726f58` (`edd4be44...79f66`); all six inputs, repository generator/output, and MapLab source/status were immutable; verifier passed again in a clean full-history clone with no sibling MapLab and left it clean |
+| 7 | `PB-ROOT-03` | implementation `71d68ecca4c0d41d168e060a275f1a58190f5c04`; handoff tip `d0f4c8e0589f23e72855328d42e38e3dd74f2947` | `integration` during Phase B | Exact ancestry/scope review; PowerShell and Node parsing; zero-warning Release build; deterministic WORLD verifier; full nine-gate acceptance; browser provenance; full-history isolated clone; fatal launcher controls; port/diff/source-immutability checks | `REVIEW` — worker and committed clean-clone checks are green; independent coordinator integration and post-merge repetition remain required |
 
 ## Verification ledger
 
@@ -325,6 +327,7 @@ verification has run.
 | `D-037` | 2026-09-04 | Accept `PB-ROOT-02` worker commits `799c0e4` + `2aade16` for integration after independent coordinator review | The worker branch descends from committed assignment `8f8315f`, changes only the generator, generated output, dedicated verifier, and handoff, and leaves every prohibited path untouched. The generator differs from the pinned MapLab source at exactly the usage comment, repository-local default, and stable output-header lines. The generated payload is byte-exact to `2726f58`, the verifier is sibling-independent and source-immutable, and the MapLab checkout remains at `df3c1ba` with only its authorized `world.js` delta. Integration verification is still required before the job can become `VERIFIED` | `ACCEPTED` |
 | `D-038` | 2026-09-04 | Accept and verify only `PB-ROOT-02` at integration merge `b108789`; stop before the path-switch job | Post-merge checks repeated deterministic full-byte generation twice, exact green-base payload comparison, source-immutability hashes, source-delta/scope review, and MapLab identity/status. A full-history clone at a separate no-sibling location also passed the repository-local verifier and remained clean. The job changes no host, launcher, serving, browser/runtime path, sibling-discovery logic, input data, or unrelated file. Browser/runtime-path verification is intentionally deferred to the later bounded atomic path-switch transaction | `ACCEPTED` |
 | `D-039` | 2026-09-04 | Assign `PB-ROOT-03` as the atomic repository-local host/launcher path-switch transaction from verified integration commit `eb5b5a6` (`b108789` product merge) | The user explicitly instructed the coordinator to proceed with the next step. This job alone may change `Program.cs` to mount `web/chart/`, remove `LocateMapLab`, change `play.ps1::Update-ChartData` to the in-repository generator/data/output with fatal failures, assert the existing repository-local `world.js` provenance in the browser, and update the dedicated full-history clean-clone check from pre-migration `/chart/` 404 behavior to successful generation, serving, browser, and acceptance verification. The existing `world.js` header/hash is the provenance marker, so no frontend product byte needs to change. Exact worker scope is `src/MechaTrader.Host/Program.cs`, `play.ps1`, `tests/browser/smoke.test.js`, `tools/clean-clone-check.ps1`, and its handoff. MapLab, data, generator/output, unrelated tests/docs/product code, deletion, refactoring, tags, other Phase B jobs, and phases C-F remain prohibited | `ACCEPTED` |
+| `D-040` | 2026-09-04 | Accept `PB-ROOT-03` worker implementation `71d68ec` and handoff tip `d0f4c8e` for integration after independent coordinator review | The worker branch descends from immutable assignment `e981a8e` and changes only the four implementation/check paths plus its handoff. Review confirms the host has no sibling provider or fallback, the launcher uses only repository-local generator/data/output and fails fatally, the browser pins the existing generated header/full hash, and the clean-clone proof exercises fatal missing-generator/input controls, deterministic generation, nine gates, browser provenance, cleanup, and unexpected-diff rejection. Repository `data/` and `web/chart/` are unchanged; MapLab remains read-only at `df3c1ba` with its recorded generated-world delta. Integration verification is still required before `VERIFIED` | `ACCEPTED` |
 
 ## Open decisions
 
@@ -426,7 +429,9 @@ At the beginning of every coordinating session:
 - The next-session reconciliation verified published `master` at `37644b4`, published
   `integration` at `eb5b5a6`, `b108789` and `ec7cc79` in integration ancestry, clean
   current Phase B worktrees, no live worker or unreconciled handoff, and the unchanged
-  MapLab identity/status/hashes. `PB-ROOT-03` is now the sole active job under its
-  committed immutable task packet; no other job or phase is authorized to start.
+  MapLab identity/status/hashes. `PB-ROOT-03` ran as the sole active job under its
+  committed immutable task packet and is now in coordinator review at implementation
+  `71d68ec` and handoff tip `d0f4c8e`; its worker and committed clean-clone checks are
+  green. No other job or phase is authorized to start.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
 - Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
