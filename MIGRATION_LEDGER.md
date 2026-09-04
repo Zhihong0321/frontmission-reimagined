@@ -9,7 +9,7 @@ live state; the plan owns process. Chat is not a source of truth.
 
 ## Control
 
-- Overall status: `PHASE_A_COMPLETE`
+- Overall status: `PHASE_B_ACTIVE`
 - Backup status: `VERIFIED`
 - Ledger owner: `/root` coordinator
 - Canonical plan path: `D:\FrontMission-RIMG\MIGRATION_PLAN.md`
@@ -28,7 +28,8 @@ live state; the plan owns process. Chat is not a source of truth.
 - Known-green tag: `known-green/original` at commit `5ed5949` (CLAUDE.md gate-count fix, direct child of the `PA-ROOT-03` merge `a5b390b`/`d9c7699`)
 - Last full verification: nine-gate `check.ps1` `PASS` directly on `master` at `5ed5949` (CLAUDE.md documentation fix, no code/content change). `check.ps1` grew from seven gates to nine (`PA-ROOT-03`: generated-world sync, API response shape/value baseline). Phase A steps 1-8 are `VERIFIED`; step 9 (integration branch) is `VERIFIED` for the branch itself — see `D-031` for the scope note on worker worktrees
 - Preflight advisory synthesis: `COMPLETE`
-- Execution authorization after synthesis: `PHASE_A_ONLY` (user-authorized 2026-09-03; phases B-F remain unauthorized)
+- Execution authorization after synthesis: `PHASE_B_ONLY` (Phase A authorized 2026-09-03
+  and complete; user authorized Phase B on 2026-09-04; phases C-F remain unauthorized)
 
 ## Disk-first policy
 
@@ -92,7 +93,7 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `IDLE_AWAITING_PHASE_B_AUTHORIZATION` |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `ACTIVE_PB_ROOT_01` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
@@ -169,7 +170,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 |---|---|---|---|
 | `BACKUP` | Remote recovery snapshots for both current folders | None | `VERIFIED` |
 | `A` | Establish known-green original, browser safety net, deterministic and save fixtures | `BACKUP` | `VERIFIED` |
-| `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `PLANNED` |
+| `B` | Consolidate into the main repository without deleting the original MapLab folder | `A` | `ACTIVE` |
 | `C` | Mechanical backend decomposition, one original large file per checkpoint | `B` | `PLANNED` |
 | `D` | Mechanical classic-script frontend decomposition with browser checks after each step | `C` | `PLANNED` |
 | `E` | AI context files, generated codemap, scoped documentation, and verification modes | `C`, `D` | `PLANNED` |
@@ -180,6 +181,11 @@ conversion, semantic backend redesign, Git history rewriting, and LFS migration 
 part of this plan.
 
 ## Active jobs and path ownership
+
+Phase B alone was explicitly authorized by the user on 2026-09-04 (`D-033`). The first
+bounded job imports the finalized frontend bytes without switching any runtime path. Its
+product green base remains `known-green/original` at `5ed5949`; the worker branch starts
+from the committed Phase B authorization and immutable task-packet coordination state.
 
 Both Phase A assignments transitioned `PLANNED -> READY -> ACTIVE` on 2026-09-03 after
 the user authorized Phase A. Their product green base is the coordination-only commit
@@ -192,6 +198,7 @@ assigned worktree.
 
 | Job | Status | Worker | Green base | Worktree | Branch | Write scope | Started |
 |---|---|---|---|---|---|---|---|
+| `PB-ROOT-01` | `ACTIVE` | `ROOT` | `5ed5949` (`known-green/original`) | `D:\FrontMission-RIMG-worktrees\PB-ROOT-01` | `codex/pb-root-01-maplab-import` | `.gitattributes` (new scoped byte-preservation rule only); `web/chart/**` (new byte-for-byte import only); `coordination/handoffs/PB-ROOT-01.md` | 2026-09-04 |
 | `PA-ROOT-02` | `VERIFIED` | `ROOT` (Claude Code completed and integrated per `D-029`) | `5e74f671bdf6925d51ccd51e0bf6bed5ac7aa98f` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-02` | `codex/pa-root-02-browser-redesign` | `tests/browser/**`; `coordination/handoffs/PA-ROOT-02.md` | 2026-09-04 |
 | `PA-ROOT-03` | `VERIFIED` | `ROOT` (Claude Code, per `D-029`) | `f1efe3a` | `D:\FrontMission-RIMG-worktrees\PA-ROOT-03` | `codex/pa-root-03-determinism-fixtures` | `tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs`, `SaveFixtureTests.cs`, `Fixtures/**`; `tools/MechaTrader.Fingerprint/**`, `tools/verify-worldjs.ps1`, `tools/verify-api-shape.ps1`, `tools/clean-clone-check.ps1`; `tests/api-fixtures/**`; `check.ps1` (extension only); `MechaTrader.sln`; `coordination/handoffs/PA-ROOT-03.md` | 2026-09-04 |
 
@@ -201,7 +208,7 @@ fixtures, API-shape fixtures, content hashes, `world.js` verification, and an ex
 `PA-CLAUDE-01` coverage-disclosure requirement (`D-016` item 7). It also closed Phase A
 step 7 (clean-environment verification) via the new `tools/clean-clone-check.ps1`.
 `check.ps1` grew from seven gates to nine. Merged to `master` at `a5b390be1a5928162ae9f526b4111c79d51894ad`.
-No job is currently `ACTIVE`.
+No other job is currently `ACTIVE`.
 
 ## Completed manual advisory jobs
 
@@ -235,6 +242,7 @@ The coordinator launched both jobs; the user did not relay their prompts.
 | 2 | `PA-AGY-01` | worker `a4b9f4b`; integrated report `081f42c`; managed log `47ee7ce` | `master` during Phase A | Scope/diff/report evidence review; secrets-safe log review; `git diff --check`; before/after RIMG and MapLab status | `VERIFIED` — report/handoff only, no product changes; MapLab clean; log scan found no key/token/private-key patterns |
 | 3 | `PA-ROOT-02` | worker `e4adc7b`; integrated `master` commit `6cbcd23284c0d3e86f95ed9b9959bfbf66c0508b`; integration-worktree proof `3530cf1cf215d29c5699720b29385c5e82af2772` | `master` during Phase A | Strict browser assertions from `PA-LUNA-01`; deep-link tile-worker proof; no product changes; targeted browser check x2; full existing acceptance | `VERIFIED` — deep-link (`/chart/?view=14.4,50.1,4`) drives the boot-time `startTileWorker`/`wantTile` prewarm without a synthetic wheel gesture; strict suite green twice in the worker worktree and once more after cherry-pick into an isolated integration worktree; port 5080 confirmed released after every run; post-merge `check.ps1` all seven gates green with only the expected `FIGURES.md` timing-line diff (not committed) |
 | 4 | `PA-ROOT-03` | worker branch tip `a5b390be1a5928162ae9f526b4111c79d51894ad` (five commits); fast-forwarded onto `master` at the same hash (linear ancestor, no cherry-pick needed) | `master` during Phase A | 21/21 command-coverage matrix; determinism/save/content fingerprints; API-shape/value fixtures; `world.js` sync; full nine-gate `check.ps1`; `clean-clone-check.ps1`; cross-checkout consistency | `VERIFIED` — closes Phase A steps 6 and 7. Two of the five commits were repairs the coordinator's own re-verification forced: `check.ps1` failed on `master`'s checkout of the identical commit that had passed in the worker's worktree (`F_content` was sensitive to git's line-ending checkout mode, not just JSON content — fixed by normalizing before hashing) and `verify-worldjs.ps1` initially found the live `D:\FrontMission-MapLab\world.js` genuinely stale relative to `data/`, which the user authorized regenerating once (see `D-030`). Full nine-gate suite green on `master` itself and in a fresh isolated clone after both repairs |
+| 5 | `PB-ROOT-01` | pending worker commit | `integration` during Phase B | Exact 403-file relative-path, byte-count, raw SHA-256, and committed-blob verification; source sibling status unchanged; `git diff --check`; no runtime/path/refactor/deletion changes | `ACTIVE` — immutable packet `coordination/tasks/PB-ROOT-01-maplab-frontend-import.md`; no dependent Phase B job may begin until coordinator review and integration verification complete |
 
 ## Verification ledger
 
@@ -295,6 +303,8 @@ preflight, and Phase A verification.
 | `D-030` | 2026-09-04 | Assign `PA-ROOT-03` (deterministic fingerprints, save/API/`world.js` fixtures) to close Phase A steps 6-7, continuing to let Claude Code act as `ROOT` per `D-029`; separately authorize a one-time regeneration of `D:\FrontMission-MapLab\world.js` | This is the next unstarted Phase A gate named in the plan and was already scoped by the accepted `PA-KIMI-01`/`PA-CLAUDE-01` designs, so it needed no new design review, only user confirmation to start. Mid-job, `tools/verify-worldjs.ps1` found the live `world.js` genuinely stale relative to `data/` (confirmed by hand, not a script bug) — pre-existing, unrelated to this session, and outside the packet's write scope (`D:\FrontMission-MapLab\**` prohibited). The user was asked and chose to authorize a one-time regeneration identical to what `play.ps1::Update-ChartData` already performs automatically on every normal launch, rather than leaving the new gate permanently red or dropping it from `check.ps1` | `ACCEPTED` |
 | `D-031` | 2026-09-04 | Close Phase A steps 8-9: fix `CLAUDE.md`'s stale "seven gates" wording first (open decision 2, below), verify the full nine-gate `check.ps1` directly on the resulting commit `5ed5949`, tag it `known-green/original`, and branch `integration` from that tag. Continuing Claude-Code-as-`ROOT` per `D-029`. Do not create Phase B worker worktrees yet | The `CLAUDE.md` fix is documentation-only and does not touch any gate input, so folding it into the tagged baseline (rather than tagging around it) keeps the known-green commit's own onboarding doc accurate. Per the plan's transaction process (step 2: "coordinator creates an isolated branch and worktree") and concurrency rule 4, worktrees are created per assigned job at `READY`, not speculatively; Phase B has no `READY` job yet and phases B-F remain unauthorized (`D-022`), so step 9 is satisfied for the integration branch itself but worker worktrees are deferred to the first Phase B assignment | `ACCEPTED` |
 | `D-032` | 2026-09-04 | Reconcile the Phase A closeout records and publish plan version 4 without authorizing Phase B | The user instructed the coordinator to proceed with the documentation-only next step after an audit found that plan v3 step 9 required speculative worker worktrees while the accepted ledger process creates them per `READY` job. Version 4 makes the per-job rule explicit and refreshes stale ledger status text; no product code, verification baseline, job authorization, or migration scope changes | `ACCEPTED` |
+| `D-033` | 2026-09-04 | Authorize execution of Phase B only; phases C-F remain unauthorized | The user explicitly instructed the coordinator to start Phase B only after reconciling and publishing pending documentation commit `32a2a72`. The remote `master` was verified at `32a2a72f915b0621d998c5c94a6bd92f720fd730` before this authorization record. Phase B must retain the untouched sibling MapLab directory and follow its bounded-job transaction; this decision grants no cleanup, backend/frontend decomposition, or later-phase authority | `ACCEPTED` |
+| `D-034` | 2026-09-04 | Start Phase B with `PB-ROOT-01`, a byte-for-byte frontend import only, before any generator or path-switch job | The bounded source set is the eight finalized frontend/testbench root files (`_ops-test.html`, `chart-tiles-worker.js`, `chart.html`, `game-bridge.js`, `ops.css`, `ops.js`, `opstest.html`, `world.js`) plus the complete `art/` tree from `D:\FrontMission-MapLab`, for 403 files and 293,783,792 bytes. The sibling checkout must stay at `df3c1baa8a83c2412607353af9994170b988dbe3` with only the previously authorized `world.js` path-separator regeneration delta; the imported `world.js` is the live finalized 8,590-byte file with SHA-256 `6680509cd8cbacc72ab3b8060efd4b8c7d3c328f8646aaeb78ddb1531c3d135c`. A scoped `.gitattributes` rule may be added solely to prevent Git text filters from changing imported bytes. Generator files, launchers, docs, runtime serving/generation paths, refactors, deletions, and sibling writes are prohibited | `ACCEPTED` |
 
 ## Open decisions
 
@@ -330,8 +340,8 @@ At the beginning of every coordinating session:
 - The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
   physical handoffs were reviewed, accepted or accepted with modifications, and retained.
 - Plan version 4 contains the resulting safety changes and the clarified per-`READY`-job
-  worktree rule. Phase A only is authorized; its
-  browser gate is no longer `BLOCKED`. Phases B-F remain unauthorized and gated.
+  worktree rule. Phase A is complete. The user authorized Phase B only on 2026-09-04;
+  phases C-F remain unauthorized and gated (`D-033`).
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
 - The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
@@ -377,7 +387,9 @@ At the beginning of every coordinating session:
   this session is the **generated** `world.js`, regenerated in place under explicit user
   authorization (`D-030`) — the same action `play.ps1` performs automatically on every
   normal launch.
-- Phase A verification is complete and recorded above. Consolidation, cleanup, and
-  refactoring have not started; Phase B remains unauthorized.
+- Phase A verification is complete and recorded above. Phase B has started only with
+  `PB-ROOT-01`, the byte-for-byte import into `web/chart/`; no generator relocation,
+  runtime path switch, refactor, deletion, or later-phase work has started. The sibling
+  MapLab source remains read-only. Phases C-F remain unauthorized.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
 - Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.

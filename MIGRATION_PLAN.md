@@ -10,8 +10,8 @@ Live ownership, job status, commits, checks, and handoffs belong in
 
 - Plan version: `4`
 - Plan status: `APPROVED_PROCESS_EXECUTION_GATED_BY_LEDGER`
-- Execution status: `PHASE_A_COMPLETE` (Phase A steps 1-9 verified; phases B-F remain
-  unauthorized per `MIGRATION_LEDGER.md` `D-022`)
+- Execution status: `PHASE_B_ACTIVE` (Phase A steps 1-9 verified; Phase B only authorized
+  per `MIGRATION_LEDGER.md` `D-033`; phases C-F remain unauthorized)
 - Current known remote recovery points:
   - RIMG: `backup-rimg-20260903` at `29de90387bb2d8fcccf5d6b787def5edac2ca923`
   - MapLab: `backup-maplab-20260903` at `df3c1baa8a83c2412607353af9994170b988dbe3`
