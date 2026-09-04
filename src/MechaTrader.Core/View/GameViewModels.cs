@@ -1,0 +1,27 @@
+namespace MechaTrader.Core.View;
+public sealed record GameView(
+    int Day,
+    long Cash,
+    long NetWorth,
+    bool Bankrupt,
+    LocationView? Location,
+    SiteView? Site,
+    FieldView? Field,
+    TravelView? Travel,
+    ConvoyView Convoy,
+    IReadOnlyList<MarketRowView> Market,
+    IReadOnlyList<CargoRowView> Cargo,
+    IReadOnlyList<RouteView> Routes,
+    IReadOnlyList<TruckOfferView> Shipyard,
+    IReadOnlyList<GearOfferView> Outfitters,
+    StationView Station,
+    CrewView Crew,
+    WarehouseView Warehouse,
+    ContractsView Contracts,
+    ExpoView? Expo,
+    IReadOnlyList<TierView> Tiers,
+    IReadOnlyList<string> EventCityIds,
+    IReadOnlyList<MiningSiteView> MiningSites,
+    CrewBriefView CrewBrief,
+    IReadOnlyList<SellOutlookView> SellOutlook);
+
