@@ -1,0 +1,35 @@
+{
+  "id": "living-pine-stand-20260902-134417-0",
+  "category": "tree",
+  "type": "living-pine-stand",
+  "file": "art/gen/tree/living-pine-stand-20260902-134417-0.png",
+  "sprite": "art/gen/tree/living-pine-stand-20260902-134417-0.s256.png",
+  "prompt": "Top-down orthographic view looking straight down, map view, no perspective, not isometric. Stylized hand-painted strategy-game map asset, painterly but clean, soft edges, readable silhouette, not photoreal, not 3D render. Post-apocalyptic wasteland after a machine invasion: ash, scorch, rust, frost. Muted desaturated palette: ash grey, charcoal, rust brown, bone, dead moss. Low saturation. Overcast light from directly above, flat, no long cast shadow, at most a faint contact shadow. ONE object only, centered, filling about 80% of the frame, no ground plane, no other objects, no people, no text, no watermark, no frame.\n\nSUBJECT: a stand of living pine trees seen from above, dense dark green crowns packed tightly together into one clump, deep shade between them.\nThe background is a perfectly flat, solid, pure green #00FF00 with no gradient and no texture.",
+  "subject": "a stand of living pine trees seen from above, dense dark green crowns packed tightly together into one clump, deep shade between them",
+  "styleVersion": 1,
+  "bg": "chroma",
+  "size": "1024x1024",
+  "quality": "low",
+  "usage": {
+    "input_tokens": 198,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 198
+    },
+    "output_tokens": 2058,
+    "output_tokens_details": {
+      "image_tokens": 2058,
+      "text_tokens": 0
+    },
+    "total_tokens": 2256
+  },
+  "footprintKm": 14,
+  "biomes": [
+    "forest"
+  ],
+  "rotate": true,
+  "kind": "sprite",
+  "approved": true,
+  "created": "2026-09-02T13:45:39",
+  "px": 1271
+}

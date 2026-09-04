@@ -1,0 +1,34 @@
+{
+  "id": "twin-peaks-20260902-115940-0",
+  "category": "mountain",
+  "type": "twin-peaks",
+  "file": "art/gen/mountain/twin-peaks-20260902-115940-0.png",
+  "sprite": "art/gen/mountain/twin-peaks-20260902-115940-0.s256.png",
+  "prompt": "Top-down orthographic view looking straight down, map view, no perspective, not isometric. Stylized hand-painted strategy-game map asset, painterly but clean, soft edges, readable silhouette, not photoreal, not 3D render. Post-apocalyptic wasteland after a machine invasion: ash, scorch, rust, frost. Muted desaturated palette: ash grey, charcoal, rust brown, bone, dead moss. Low saturation. Overcast light from directly above, flat, no long cast shadow, at most a faint contact shadow. ONE object only, centered, filling about 80% of the frame, no ground plane, no other objects, no people, no text, no watermark, no frame.\n\nSUBJECT: two mountain peaks joined by a saddle seen from above, snow on both summits, dark slate flanks.\nThe background is a perfectly flat, solid, pure green #00FF00 with no gradient and no texture.",
+  "subject": "two mountain peaks joined by a saddle seen from above, snow on both summits, dark slate flanks",
+  "styleVersion": 1,
+  "bg": "chroma",
+  "size": "1024x1024",
+  "quality": "low",
+  "usage": {
+    "input_tokens": 193,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 193
+    },
+    "output_tokens": 2058,
+    "output_tokens_details": {
+      "image_tokens": 2058,
+      "text_tokens": 0
+    },
+    "total_tokens": 2251
+  },
+  "footprintKm": 40,
+  "biomes": [
+    "mountain"
+  ],
+  "rotate": true,
+  "approved": true,
+  "created": "2026-09-02T11:59:40",
+  "px": 1352
+}
