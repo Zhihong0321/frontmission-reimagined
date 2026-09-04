@@ -8,8 +8,8 @@ Live ownership, job status, commits, checks, and handoffs belong in
 
 ## Status
 
-- Plan version: `3`
-- Plan status: `APPROVED_FOR_PLANNING_ONLY`
+- Plan version: `4`
+- Plan status: `APPROVED_PROCESS_EXECUTION_GATED_BY_LEDGER`
 - Execution status: `PHASE_A_COMPLETE` (Phase A steps 1-9 verified; phases B-F remain
   unauthorized per `MIGRATION_LEDGER.md` `D-022`)
 - Current known remote recovery points:
@@ -260,7 +260,9 @@ without rewriting published history, and reruns the full checkpoint before worke
 7. Verify both API and browser behavior from a clean environment reproducing the current
    two-folder layout.
 8. Commit and tag `known-green/original`.
-9. Create the integration branch and worker worktrees from that commit.
+9. Create the integration branch from that commit. Create each worker worktree from the
+   current integration known-green base only when its job is `READY`; speculative
+   worktrees are not required.
 
 No structural migration begins until this phase is green.
 

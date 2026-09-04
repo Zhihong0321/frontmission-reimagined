@@ -92,18 +92,17 @@ Only the coordinator changes job status.
 
 | Agent ID | Runtime | Requested configuration | Primary role | State |
 |---|---|---|---|---|
-| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `IDLE_AFTER_PA-ROOT-02` (see `D-029`: Codex exhausted its usage quota mid-job; Claude Code finished and integrated the job under direct user instruction) |
+| `ROOT` | Codex coordinator | Current frontier model | Architecture, assignments, integration, destructive decisions | `IDLE_AWAITING_PHASE_B_AUTHORIZATION` |
 | `LUNA-A` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical backend work | `UNSPAWNED` |
 | `LUNA-B` | Codex subagent | `gpt-5.6-luna`, effort `high` | Mechanical frontend work | `UNSPAWNED` |
 | `LUNA-C` | Codex subagent | `gpt-5.6-luna`, effort `high` | Tests, tooling, generated documentation | `BLOCKED_PA-LUNA-01` |
 | `AGY` | AGY CLI 1.1.25 | `gemini-3.8-flash-high`, effort `high` | Repetitive inventory and migration tasks | `VERIFIED_PA-AGY-01` |
 | `KIMI` | Kimi CLI 0.39.1 | configured default `cmkey/kimi-k3` | Bounded implementation and independent review | `COMPLETED_PREFLIGHT` |
 | `CURSOR` | Cursor 3.18.25 | Grok 4.6 used for preflight; exact CLI selection unverified | User-relayed IDE work until CLI invocation is verified | `COMPLETED_PREFLIGHT` |
-| `CLAUDE` | Claude Code | `sonnet` (self-reported resolved model: Sonnet 5) | Independent architecture and regression review; substituted for `ROOT` on `PA-ROOT-02` per `D-029` | `COMPLETED_PA-ROOT-02` |
+| `CLAUDE` | Claude Code | `sonnet` (self-reported resolved model: Sonnet 5) | Independent architecture and regression review; substituted for `ROOT` on `PA-ROOT-02`, `PA-ROOT-03`, and Phase A closeout per `D-029`-`D-031` | `COMPLETED_PHASE_A_SUBSTITUTION` |
 | `CLAUDE-DESKTOP` | Claude Desktop | Sonnet 5 recorded by preflight handoff | User-relayed review or bounded implementation | `COMPLETED_PREFLIGHT` |
 
-The exact model resolved by the Claude `sonnet` alias must be recorded when the first
-Claude job is launched.
+The Claude `sonnet` alias resolved to Sonnet 5 and is recorded in `D-029`.
 
 ## Concurrency rules
 
@@ -164,7 +163,7 @@ The coordinator verifies the commit and copies the relevant information into thi
 
 ## Planned waves
 
-`MIGRATION_PLAN.md` version 3 is authoritative for wave contents and safety gates.
+`MIGRATION_PLAN.md` version 4 is authoritative for wave contents and safety gates.
 
 | Phase | Purpose | Depends on | Status |
 |---|---|---|---|
@@ -215,18 +214,18 @@ dispositioned; they do not by themselves authorize migration work.
 | `PA-CLAUDE-01` | Claude Desktop Sonnet 5 | `coordination/tasks/PA-CLAUDE-01-adversarial-plan-review.md` | `coordination/handoffs/PA-CLAUDE-01.md` | `VERIFIED` | `ACCEPT` (`D-016`) |
 | `PA-KIMI-01` | Kimi CLI `cmkey/kimi-k3` | `coordination/tasks/PA-KIMI-01-baseline-reproducibility.md` | `coordination/handoffs/PA-KIMI-01.md` | `VERIFIED` | `ACCEPT_WITH_MODIFICATIONS` (`D-015`) |
 
-## Deferred coordinator-managed jobs
+## Completed coordinator-managed Phase A jobs
 
-These workers were reserved until all three manual advisory handoffs were synthesized.
-That evidence gate is satisfied and the user has now authorized Phase A only. The jobs
-below have moved to the active-jobs table with committed packets and exclusive scopes.
+These workers were initially reserved until all three manual advisory handoffs were
+synthesized. Their final states are recorded below. Neither job is active, and their
+results do not authorize Phase B.
 
 | Candidate job | Worker | Intended work | Release condition | Status |
 |---|---|---|---|---|
 | `PA-LUNA-01` | Codex `gpt-5.6-luna`, effort `high` | Implement the standalone browser smoke suite | Diagnostic branch pushed at `f94f2e05267782b2f92e18576a93480d6cb24f26`; prior integration reverted by `a6408fc` + `10b2875`; blocked handoff retained on master | `BLOCKED` |
 | `PA-AGY-01` | AGY `gemini-3.8-flash-high`, effort `high` | Asset, generated-output, archive, and path-reference inventory | Report integrated as `081f42c`; secrets-scanned managed log integrated as `47ee7ce` | `VERIFIED` |
 
-The coordinator launches both jobs. The user does not relay their prompts.
+The coordinator launched both jobs; the user did not relay their prompts.
 
 ## Integration queue
 
@@ -239,7 +238,8 @@ The coordinator launches both jobs. The user does not relay their prompts.
 
 ## Verification ledger
 
-No migration verification has run.
+No Phase B-F structural-migration verification has run. The table below records recovery,
+preflight, and Phase A verification.
 
 | Date | Commit | Scope | Command | Result | Notes |
 |---|---|---|---|---|---|
@@ -294,6 +294,7 @@ No migration verification has run.
 | `D-029` | 2026-09-04 | Let Claude Code finish and integrate `PA-ROOT-02` after the Codex coordinator ran out of usage quota mid-job, resolving the `sonnet`-alias open decision as Sonnet 5 | The `PA-ROOT-02` worktree held the redesign's scaffolding (four implementation files plus `.gitignore`) uncommitted and unchecked when Codex stopped. The user directly instructed Claude Code to continue, and then explicitly authorized it to also perform the coordinator-only integration steps (cherry-pick review, full `check.ps1`, ledger update) that the ledger normally reserves for `ROOT`, given `ROOT` was unavailable. Claude Code self-reports its resolved model as Sonnet 5, settling the second open decision below | `ACCEPTED` |
 | `D-030` | 2026-09-04 | Assign `PA-ROOT-03` (deterministic fingerprints, save/API/`world.js` fixtures) to close Phase A steps 6-7, continuing to let Claude Code act as `ROOT` per `D-029`; separately authorize a one-time regeneration of `D:\FrontMission-MapLab\world.js` | This is the next unstarted Phase A gate named in the plan and was already scoped by the accepted `PA-KIMI-01`/`PA-CLAUDE-01` designs, so it needed no new design review, only user confirmation to start. Mid-job, `tools/verify-worldjs.ps1` found the live `world.js` genuinely stale relative to `data/` (confirmed by hand, not a script bug) — pre-existing, unrelated to this session, and outside the packet's write scope (`D:\FrontMission-MapLab\**` prohibited). The user was asked and chose to authorize a one-time regeneration identical to what `play.ps1::Update-ChartData` already performs automatically on every normal launch, rather than leaving the new gate permanently red or dropping it from `check.ps1` | `ACCEPTED` |
 | `D-031` | 2026-09-04 | Close Phase A steps 8-9: fix `CLAUDE.md`'s stale "seven gates" wording first (open decision 2, below), verify the full nine-gate `check.ps1` directly on the resulting commit `5ed5949`, tag it `known-green/original`, and branch `integration` from that tag. Continuing Claude-Code-as-`ROOT` per `D-029`. Do not create Phase B worker worktrees yet | The `CLAUDE.md` fix is documentation-only and does not touch any gate input, so folding it into the tagged baseline (rather than tagging around it) keeps the known-green commit's own onboarding doc accurate. Per the plan's transaction process (step 2: "coordinator creates an isolated branch and worktree") and concurrency rule 4, worktrees are created per assigned job at `READY`, not speculatively; Phase B has no `READY` job yet and phases B-F remain unauthorized (`D-022`), so step 9 is satisfied for the integration branch itself but worker worktrees are deferred to the first Phase B assignment | `ACCEPTED` |
+| `D-032` | 2026-09-04 | Reconcile the Phase A closeout records and publish plan version 4 without authorizing Phase B | The user instructed the coordinator to proceed with the documentation-only next step after an audit found that plan v3 step 9 required speculative worker worktrees while the accepted ledger process creates them per `READY` job. Version 4 makes the per-job rule explicit and refreshes stale ledger status text; no product code, verification baseline, job authorization, or migration scope changes | `ACCEPTED` |
 
 ## Open decisions
 
@@ -328,7 +329,8 @@ At the beginning of every coordinating session:
   worktrees and have returned durable handoffs.
 - The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
   physical handoffs were reviewed, accepted or accepted with modifications, and retained.
-- Plan version 3 contains the resulting safety changes. Phase A only is authorized; its
+- Plan version 4 contains the resulting safety changes and the clarified per-`READY`-job
+  worktree rule. Phase A only is authorized; its
   browser gate is no longer `BLOCKED`. Phases B-F remain unauthorized and gated.
 - `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
   their immutable physical packets are committed under `coordination/tasks/` before launch.
@@ -375,7 +377,7 @@ At the beginning of every coordinating session:
   this session is the **generated** `world.js`, regenerated in place under explicit user
   authorization (`D-030`) — the same action `play.ps1` performs automatically on every
   normal launch.
-- Phase A verification has started and is recorded above. Consolidation, cleanup, and
-  refactoring have not started.
+- Phase A verification is complete and recorded above. Consolidation, cleanup, and
+  refactoring have not started; Phase B remains unauthorized.
 - Recovery point `backup-rimg-20260903` preserves the current RIMG state.
 - Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
