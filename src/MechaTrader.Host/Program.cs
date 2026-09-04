@@ -6,6 +6,25 @@ using Microsoft.Extensions.FileProviders;
 // The web root lives beside the sources rather than in the build output, so the UI can
 // be edited and reloaded without rebuilding the server.
 var webRoot = LocateWebRoot();
+var chartRoot = Path.Combine(webRoot, "chart");
+var requiredChartFiles = new[]
+{
+    "chart.html",
+    "world.js",
+    "game-bridge.js",
+    "ops.js",
+    "ops.css",
+    "chart-tiles-worker.js",
+    Path.Combine("art", "manifest.js")
+};
+var missingChartFiles = requiredChartFiles
+    .Where(relative => !File.Exists(Path.Combine(chartRoot, relative)))
+    .ToArray();
+if (missingChartFiles.Length > 0)
+{
+    throw new FileNotFoundException(
+        $"Consolidated chart root '{chartRoot}' is incomplete; missing: {string.Join(", ", missingChartFiles)}");
+}
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -31,25 +50,21 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Live player view: Keeper's Chart (FrontMission-MapLab/chart.html), not the archived iso console.
-var mapLab = LocateMapLab(webRoot);
-if (mapLab is not null)
+// Live player view: the consolidated Keeper's Chart below this repository's web root.
+var chartFiles = new PhysicalFileProvider(chartRoot);
+var chartDefaults = new DefaultFilesOptions
 {
-    var files = new PhysicalFileProvider(mapLab);
-    var chart = new DefaultFilesOptions
-    {
-        FileProvider = files,
-        RequestPath = "/chart"
-    };
-    chart.DefaultFileNames.Clear();
-    chart.DefaultFileNames.Add("chart.html");
-    app.UseDefaultFiles(chart);
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = files,
-        RequestPath = "/chart"
-    });
-}
+    FileProvider = chartFiles,
+    RequestPath = "/chart"
+};
+chartDefaults.DefaultFileNames.Clear();
+chartDefaults.DefaultFileNames.Add("chart.html");
+app.UseDefaultFiles(chartDefaults);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = chartFiles,
+    RequestPath = "/chart"
+});
 
 app.MapGet("/api/state", (GameSession session) => Results.Ok(session.Current()));
 
@@ -200,19 +215,6 @@ static string LocateWebRoot()
     }
 
     throw new DirectoryNotFoundException("Could not locate the 'web' folder containing index.html.");
-}
-
-static string? LocateMapLab(string webRoot)
-{
-    var dir = new DirectoryInfo(webRoot);
-    while (dir is not null)
-    {
-        var sibling = Path.Combine(dir.FullName, "FrontMission-MapLab");
-        if (File.Exists(Path.Combine(sibling, "chart.html"))) return sibling;
-        dir = dir.Parent;
-    }
-
-    return null;
 }
 
 static string? ReadArtlabKey(string webRoot)
