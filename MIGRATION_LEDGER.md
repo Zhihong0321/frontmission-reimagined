@@ -218,6 +218,7 @@ assigned worktree.
 | `PC-ROOT-03` | `VERIFIED` | `ROOT` | `000197cd34aacc7ec964b1d737c40ca0a2e0d831` (verified `PC-ROOT-02` integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-03` | `codex/pc-root-03-worldloader` | `src/MechaTrader.Core/World/WorldLoader.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/World/`; `coordination/handoffs/PC-ROOT-03.md` | 2026-09-05 |
 | `PC-ROOT-04` | `VERIFIED` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
 | `PC-ROOT-05` | `VERIFIED` | `ROOT` | `b086e6c063c4dc62385e19beba2fe5654feff55f` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-05` | `codex/pc-root-05-commandprocessor` | `src/MechaTrader.Core/Commands/CommandProcessor.cs` (mechanical split only); new `.cs` files created by the split only under `src/MechaTrader.Core/Commands/`; `coordination/handoffs/PC-ROOT-05.md` | 2026-09-05 |
+| `PC-ROOT-06` | `ACTIVE` | `ROOT` | `900dd254c7003a53fad65068eeab8830941f0bd2` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-06` | `codex/pc-root-06-balancesim` | `tools/MechaTrader.BalanceSim/Program.cs` (mechanical split only); new `.cs` files created by the split only under `tools/MechaTrader.BalanceSim/`; `coordination/handoffs/PC-ROOT-06.md` | 2026-09-05 |
 
 Phase C items 1-5 are VERIFIED. PC-ROOT-04 mechanically split only ViewBuilder.cs
 from green base c954cb350b60ce6239ef6b8d604da5be4c7d162d into eight partial files:
@@ -243,8 +244,48 @@ mechanically"), REVIEW handoff tip dadae0ba5006734264e15b6030844392c206d77d, ord
 no-ff merge 6441f88156292bfcec61c50b69c8c846376fc2ba; full tree 681 = 670 + handoff +
 10 fragments. Both states passed all required gates (D-052); the D-050 dynamic
 build.json exception was reused as pre-authorized, six deterministic fixtures stayed
-identical, final tracked fixture diff zero. Phase C items 6-7 and phases D-F remain
-unauthorized. Stop after this item; no tag.
+identical, final tracked fixture diff zero. Phase C items 6-7 and phases D-F were
+unauthorized in that record; item 6 was subsequently authorized by `D-053` below.
+Stop after that item; no tag.
+
+PC-ROOT-06 authorization (D-053): owner ROOT executes locally without delegation, from
+green base 900dd254c7003a53fad65068eeab8830941f0bd2 (verified PC-ROOT-05 integration
+tip including its ledger mirror). Worktree D:\FrontMission-RIMG-worktrees\PC-ROOT-06,
+branch codex/pc-root-06-balancesim. The single bounded transformation is the mechanical
+split of tools/MechaTrader.BalanceSim/Program.cs (901 lines; `public static class
+Program` with public entrypoint `Main` and private static helpers RunEconomy,
+MeasureTickCost, PrintOpportunities, NaiveHaulProbe, PrintNaiveHauls, AssertNaiveHauls,
+PrintCrew, WriteFigures, RepositoryRoot, RunBots, PrintGlobalFlow, PrintPriceTable,
+PrintBotRow, AssertPlaytest, AppendPlaytest, Median, Header; constants SimulationDays,
+BotDays, BotSeeds, MinPriceRatio, MaxPriceRatio, RequiredSpread, RequiredSpreadGoods,
+PerformanceBudgetMs, FigureSeed, MaxHouseRejectionRate; private nested records
+GoodReport, EconomyReport, NaiveHaul) into `public static partial class Program` per
+the D-048/D-050/D-052 precedent. Main stays whole in the original file; doc comments
+travel with their members; every member byte, order, namespace, name, signature,
+visibility, encoding, CRLF line ending, and whitespace is preserved; the only textual
+deltas allowed are the `partial` keyword and per-fragment file wrappers (usings +
+namespace + partial class declaration). No csproj change (SDK default Compile glob).
+Worker write scope: tools/MechaTrader.BalanceSim/Program.cs, new `.cs` fragments only
+under tools/MechaTrader.BalanceSim/, coordination/handoffs/PC-ROOT-06.md. Prohibited:
+Phase C item 7, phases D-F; prior split outputs PC-ROOT-01/02/03/04/05; other product
+files, tests, `data/`, `web/chart/`, `src/`, MapLab; FIGURES.md, check.ps1,
+performance budgets, assertion thresholds, or constant values (SimulationDays,
+PerformanceBudgetMs etc. byte-preserved); semantic cleanup, renames, abstractions,
+behavior changes; execution/validation/output ordering, randomness, error/output text,
+floating-point changes; deletion/move/rename of existing files; history rewriting,
+force pushes, tag creation or movement. Fixture regeneration limited to the zero-diff
+verification flow plus the D-050-approved dynamic build.json exception (final tracked
+fixture diff zero); BalanceSim rewrites FIGURES.md with timing-line-only changes that
+must be restored and never committed. Required sequential worker AND integration
+checks (no parallel runs): zero-warning Release build; unfiltered 239/239 Core tests;
+10/10 determinism/save filter with pinned F_state/F_view and zero-diff Fingerprint
+regeneration; exact world.js SHA-256; API record-then-restore-verify with zero final
+fixture diff; Chromium browser smoke; full nine-gate check.ps1 (gate 3 is the split
+BalanceSim itself; console output and FIGURES.md content must match pre-split except
+timing lines); git diff --check; port 5080/Host/FIGURES/temp-cleanup checks;
+two-parent merge with full tree count 681 + fragments + handoff. Stop-loss after two
+failed focused repairs; stop after this item; no tag; item 7 and phases D-F remain
+unauthorized.
 
 `PA-ROOT-03` closed Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
 fixtures, API-shape fixtures, content hashes, `world.js` verification, and an explicit
@@ -411,6 +452,7 @@ Phase B and Phase C items 1-5 verification is recorded below. Phase C items 6-7 
 | `D-050` | 2026-09-05 | Accept and verify only PC-ROOT-04 at ordinary integration merge 290615f4551fcd333cd8664380277fdd613aa2b2; stop before item 5 | Eight partial ViewBuilder files preserve all 1299 raw class-body lines, member/doc order, CRLF, namespace and APIs; body SHA-256 41bd5b6759f1ff6af10f34992c2b04ff27e8db9cb6e358774524d4bc866d79e4. Original file 141 lines; seven new fragments and one handoff give full tree count 670. Worker 2f7904b3398ebf9005ead9a34404de4956393f43 and integration both pass 0-warning Release build, unfiltered 239 Core tests, 10 determinism/save tests, zero-diff Fingerprint regeneration, exact world.js SHA-256, API baseline, browser and all nine gates. Literal API record zero-diff initially blocked because existing recorder rewrites build.json runtime metadata. User explicitly replied go to accepting only this exception; original build.json restored, existing shape check passed, six deterministic fixtures and final tracked tests stayed unchanged. Cleanup inspection found 38 old verify-worldjs directories predating this job (left untouched), correcting earlier blanket zero-temp claims; existing verifier also left two generated world.js files after each of this job's four runs. An attempted recursive cleanup was rejected by automatic approval review (blocked by policy); inventory-based exact-file and checked-empty nonrecursive directory deletion succeeded for all four new directories. No verifier/product fix, semantic repair, malformed tree, force push, or integration incident occurred. FIGURES timing restored; no Host or 5080 listener; no new temp clone residue. This accepts item 4 only, authorizes no C items 5-7 or D-F, and creates/moves no tag. | `ACCEPTED` |
 | `D-051` | 2026-09-05 | Authorize only PC-ROOT-05: mechanical CommandProcessor.cs split; owner ROOT | User supplied explicit bounded authorization continuing the D-049 pattern. Green base b086e6c063c4dc62385e19beba2fe5654feff55f; worktree D:\FrontMission-RIMG-worktrees\PC-ROOT-05; branch codex/pc-root-05-commandprocessor; write scope CommandProcessor.cs, new split `.cs` files only under src/MechaTrader.Core/Commands/, and coordination/handoffs/PC-ROOT-05.md. Preserve exact member bytes/order/doc comments, namespace/type/member names, signatures, visibility, entrypoints, original encoding/line endings/whitespace; Execute's full switch stays in the original file; `public static partial class CommandProcessor` per the D-048 precedent; each fragment copies only the original file's using directives; no csproj change (SDK wildcard). Prohibit items 6-7 and phases D-F, prior split outputs, data/, web/chart/, tests, MapLab, deletions/moves/renames, semantic/behavioral changes, ordering changes (dispatch, validation, state writes, events, RNG, iteration, error text, floating point), history rewriting, force pushes, and tags; fixtures limited to the D-050-approved dynamic build.json exception with final zero tracked diff. Required sequential worker and integration gates as listed in the Phase C authorization paragraph; ledger-only mirror via normal file commit; atomic fast-forward push of master/integration/worker with post-push blob parity. Stop after this item; no tag; stop-loss after two failed focused repairs. | `ACCEPTED` |
 | `D-052` | 2026-09-05 | Accept and verify only PC-ROOT-05 at ordinary integration merge 6441f88156292bfcec61c50b69c8c846376fc2ba; stop before item 6 | Ten partial CommandProcessor files preserve all 871 moved member lines plus the retained header, Execute switch, class doc, and closing brace raw-byte-identically in original member/doc order (original file SHA-256 f478a037c73980ce77180ca1fb9222cb5339a5ab6b8b322e0bf3b4812dd7622d; reconstruction byte-identical in worker and merged states; sole textual deltas the `partial` keyword and per-fragment using/namespace wrappers). Assignment packet 7f04962, worker implementation 3c5f014 ("Split CommandProcessor.cs mechanically"), REVIEW handoff tip dadae0b, ordinary two-parent merge 6441f88; worker tree 681 = 670 + handoff + 10 fragments, merged tree 681. Worker 3c5f014 and integration 6441f88 both pass 0-warning Release build, unfiltered 239/239 Core, 10/10 determinism/save, zero-diff Fingerprint regeneration with F_state a96681c1…be99 and F_view 93a94b5c…6626 exactly pinned, exact world.js SHA-256 26063b3e…712a, API record/restore/verify reusing the D-050 user-approved dynamic build.json exception with six deterministic fixtures unchanged and final zero fixture diff, Chromium smoke 1/1 (banner 7f04962 worker / 6441f88 integration), and all nine gates (BalanceSim 151.3 / 199.4 ms). FIGURES timing restored in both states; no Host process or 5080 listener; each state's verifier left exactly 2 verify-worldjs temp dirs, all 8 cleaned by exact-file deletion then verified-empty nonrecursive removal back to the untouched 38-directory pre-existing baseline. Scope review: only CommandProcessor.cs, the ten new Commands/ fragments, and the handoff changed; `.csproj`, tests, data/, web/chart/, MapLab (df3c1ba, exactly M world.js), and PC-ROOT-01/02/03/04 outputs untouched; no history rewrite, no tag, no integration incident. This accepts item 5 only, authorizes no C items 6-7 or D-F, and creates/moves no tag. | `ACCEPTED` |
+| `D-053` | 2026-09-05 | Authorize only PC-ROOT-06: mechanical Balance harness (tools/MechaTrader.BalanceSim/Program.cs) split; owner ROOT | User supplied explicit bounded authorization continuing the D-049/D-051 pattern. Green base 900dd254c7003a53fad65068eeab8830941f0bd2; worktree D:\FrontMission-RIMG-worktrees\PC-ROOT-06; branch codex/pc-root-06-balancesim; write scope Program.cs, new split `.cs` files only under tools/MechaTrader.BalanceSim/, and coordination/handoffs/PC-ROOT-06.md. Main's entire method body stays in the original file; fragments carry consecutive complete member blocks in original order with their doc comments; `public static partial class Program` per the D-048/D-050/D-052 precedent; every member byte, order, namespace, name, signature, visibility, encoding, CRLF ending, and whitespace preserved; sole textual deltas the `partial` keyword and per-fragment wrappers; constants byte-preserved (SimulationDays, PerformanceBudgetMs etc.); no csproj change. Prohibit item 7 and phases D-F, prior split outputs, other product files, tests, data/, web/chart/, src/, MapLab, FIGURES.md, check.ps1, budgets/thresholds/constants, semantic or ordering changes, deletions/moves/renames, history rewriting, force pushes, and tags; fixtures limited to the zero-diff flow plus the D-050-approved dynamic build.json exception with final zero tracked diff; FIGURES.md timing-line-only changes restored, never committed. Required sequential worker and integration gates as in the Phase C authorization paragraph, including gate-3 BalanceSim output equality (console and FIGURES content) versus the pre-split program; ordinary no-ff integration merge, full tree 681 + fragments + handoff; ledger-only mirror via normal file commit; fast-forward push of master/integration/worker with post-push blob parity. Stop after this item; no tag; stop-loss after two failed focused repairs. | `ACCEPTED` |
 
 ## Open decisions
 
