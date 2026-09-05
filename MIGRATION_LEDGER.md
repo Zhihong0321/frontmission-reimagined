@@ -217,7 +217,7 @@ assigned worktree.
 | `PC-ROOT-02` | `VERIFIED` | `ROOT` | `3ec8cc092e15431609a6b16a499c65d5f69a41ea` (verified `PC-ROOT-01` integration tip; product merge `b7e2c8d`) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-02` | `codex/pc-root-02-viewmodels` | `src/MechaTrader.Core/View/ViewModels.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-02.md` | 2026-09-04 |
 | `PC-ROOT-03` | `VERIFIED` | `ROOT` | `000197cd34aacc7ec964b1d737c40ca0a2e0d831` (verified `PC-ROOT-02` integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-03` | `codex/pc-root-03-worldloader` | `src/MechaTrader.Core/World/WorldLoader.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/World/`; `coordination/handoffs/PC-ROOT-03.md` | 2026-09-05 |
 
-| `PC-ROOT-04` | `BLOCKED` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
+| `PC-ROOT-04` | `REVIEW` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
 
 Phase C (mechanical backend decomposition) proceeds to the third bounded job
 `PC-ROOT-03`: a pure mechanical file split of `src/MechaTrader.Core/World/WorldLoader.cs`
@@ -425,6 +425,15 @@ At the beginning of every coordinating session:
 8. Create and commit a physical task packet before every assignment.
 
 ## Current checkpoint
+PC-ROOT-04 authorization clarification (2026-09-05): user replied "go" to the explicit
+request to accept only dynamic build.json metadata regeneration as an exception. The
+coordinator may restore that fixture and use the existing shape-only build check; all
+six deterministic API fixtures must remain unchanged and final tracked fixture diff
+must be zero. The previous authorization HOLD/BLOCKED is resolved. Worker runtime
+verification already passed with unchanged product bytes; accept handoff for ordinary
+no-ff integration and repeat all gates. No broader scope, test/tool change, or later job
+is authorized. This clarification supplements D-049; D-050 remains reserved for verified
+integration closeout.
 
 - PC-ROOT-04 is BLOCKED pending user clarification of the strict API record zero-diff rule.
   All worker runtime gates passed, but -Record changes dynamic build.json metadata only.
