@@ -93,4 +93,102 @@ verified-empty nonrecursive directory removal; never delete unknown directories.
 
 ## Structured handoff (completed after worker checks)
 
-(pending — filled in below after checks and worker commit)
+```text
+JOB_ID: PC-ROOT-05
+STATUS: COMPLETE
+BRANCH: codex/pc-root-05-commandprocessor
+COMMIT: (this commit — "Split CommandProcessor.cs mechanically")
+FILES_CHANGED:
+  - src/MechaTrader.Core/Commands/CommandProcessor.cs
+    (881 member lines moved out; sole textual delta: `public static partial class`;
+    Execute switch, class doc comment, usings, namespace untouched; 39 lines remain)
+  - src/MechaTrader.Core/Commands/CommandProcessorTrade.cs      (orig lines 41-203,  Buy/Sell)
+  - src/MechaTrader.Core/Commands/CommandProcessorTravel.cs     (orig lines 205-298, Depart/DescribeHere/Wait)
+  - src/MechaTrader.Core/Commands/CommandProcessorCrew.cs       (orig lines 300-423, HireCrew/AssignCrew/DismissCrew)
+  - src/MechaTrader.Core/Commands/CommandProcessorTruck.cs      (orig lines 425-505, BuyTruck/SellTruck/UpgradeTruck)
+  - src/MechaTrader.Core/Commands/CommandProcessorGear.cs       (orig lines 507-533, BuyGear)
+  - src/MechaTrader.Core/Commands/CommandProcessorFavor.cs      (orig lines 535-617, Favor)
+  - src/MechaTrader.Core/Commands/CommandProcessorHelpers.cs    (orig lines 619-641, GrantDuePermits/RequireParkedCity)
+  - src/MechaTrader.Core/Commands/CommandProcessorWarehouse.cs  (orig lines 643-759, RentWarehouse/Deposit/Withdraw/SetWarehousePrice)
+  - src/MechaTrader.Core/Commands/CommandProcessorContract.cs   (orig lines 761-850, AcceptContract/DeliverContract)
+  - src/MechaTrader.Core/Commands/CommandProcessorExpo.cs       (orig lines 852-919, ExpoRegister/ExpoList)
+  - coordination/handoffs/PC-ROOT-05.md (this file)
+  .csproj untouched (SDK default Compile glob picked up the new files).
+
+CHECKS_RUN: (sequential, no parallel runs)
+CHECK_RESULTS:
+  - Raw-byte split equivalence: original file SHA-256
+    f478a037c73980ce77180ca1fb9222cb5339a5ab6b8b322e0bf3b4812dd7622d;
+    reconstruction from the new CommandProcessor.cs header (with the `partial`
+    keyword reverted) plus the ten fragment class bodies, joined with the original
+    blank separator lines, is byte-identical (SequenceEqual over raw UTF-8 bytes,
+    no whitespace/token normalization). Per-fragment raw SHA-256:
+      Trade     70d2a45f5127f42d1e9e846da423af4ff502c7e1472aa0149d12a9aac2e8cec0
+      Travel    eb3a2af73ba8af7b2fcf9df5a49c7ad9269a67bb85b4c8bce313ae790a2e287d
+      Crew      cd15540a784030bd6a06c04cbd764a3e67f020a561e8e02e0a4c571d7f13e5b6
+      Truck     da7403b4ce566cd5074ef2e1bde2e53aba591d6fc0d9438f45f9a2385c711f64
+      Gear      c90bead703a8205690d28a1eb3030a3ace8b2f20c73c502fb720b1719d7369d6
+      Favor     a217a65a87d7da6b029c699924c5a3616f7cb2f3f8ac29a022e9859c3ac0819b
+      Helpers   4ca663a84e8fcd4448a8c6fc2d30fb7dd22fdc886e29ac4917ebeb9f7c102fbe
+      Warehouse af1187319548386c35e64cbad0d607a95e82cf1c2cae665e85b4bcdafd10d423
+      Contract  75a03106551d977b53fa92df8b8fdfdd73cdcb5abef59389e39cba07f5feb2c9
+      Expo      19627166651a1b99984eddeca2d0a8093c72e64f0e071634ab43271c1bd360ba
+    New CommandProcessor.cs SHA-256
+    fa68a8aec9907ee84caa382940a3218fa27cd7c66c456ca2e9eeceae5cc6176c.
+    Fragment bodies were also asserted line-by-line against the original line
+    ranges before any overall hash comparison.
+  - git diff --check: clean.
+  - dotnet build MechaTrader.sln -c Release: Build succeeded, 0 Warning(s),
+    0 Error(s) (31.7 s).
+  - Full unfiltered Core tests: 239 passed / 0 failed / 0 skipped (8 s).
+  - Determinism/save filter: 10/10 passed. Fingerprint regeneration: zero tracked
+    diff; F_state a96681c178a462fee913c495428eb5432720edfaad6fb2593663ef5b842bbe99,
+    F_view 93a94b5cca687a89c9408b3c84c8599eb23b6c901c888a37497c376206af6626
+    (both exactly as pinned).
+  - tools/verify-worldjs.ps1: PASS, SHA-256
+    26063b3e3680a190b79843604107977331922c77397dfe2a1bf23a5a3160712a.
+  - API: -Record PASS (7 fixtures, seed 555555); diff inspection showed only
+    tests/api-fixtures/build.json dynamic runtime metadata changed (branch
+    codex/pc-root-05-commandprocessor, commit 7f04962, timestamps, log) — the
+    exact D-050 user-approved exception; the six deterministic fixtures were
+    byte-identical. build.json restored to original Git bytes; verify-api-shape.ps1
+    PASS; final tests/api-fixtures tracked diff zero. No fixture change committed.
+  - Browser: npm ci 3 packages 0 vulnerabilities; Playwright Chromium installed;
+    smoke 1/1 passed (27.0 s total, test 15.6 s; host banner "0.5.0-alpha built
+    3 minutes ago from 7f04962 on codex/pc-root-05-commandprocessor (+11
+    uncommitted)").
+  - Full nine-gate check.ps1: ALPHA 1 ACCEPTED, all gates PASS (BalanceSim
+    151.3 ms; buy-haul-sell 139 Armour Laminate to Wien 10907 cr, illegal move
+    refused; recruitment; city stats/supply; build page banner 7f04962; world.js
+    and API gates green).
+  - Post-run hygiene: port 5080 no LISTEN (TIME_WAIT only excluded — none
+    observed); no MechaTrader.Host process; FIGURES.md showed only the expected
+    timing-line change and was restored via git checkout (never committed);
+    tracked diff after restoration = the split files only.
+  - Temp directory evidence: baseline counted 38 pre-existing verify-worldjs-*
+    directories in %TEMP% (matching D-050; left untouched). This run added
+    exactly 2 (verifier standalone run 10:27:13 + check.ps1 world gate 10:30:00,
+    confirmed by directory and world.js mtimes; the next-newest were 08:54/08:55
+    from PC-ROOT-04). Cleanup per D-050 procedure: 4 exact generated world.js
+    files deleted by absolute path, remaining file count in both trees verified 0,
+    then every subdirectory verified empty and removed non-recursively layer by
+    layer. Final count back to exactly 38; no other temp clones or generator
+    directories created by this run.
+BEHAVIOR_CHANGES: NONE (mechanical split only; validation-before-mutation
+  semantics, dispatch order, member order, error text, and all bytes preserved)
+RISKS: None known. The split adds the C#-sanctioned `partial` keyword and
+  per-fragment using/namespace wrappers; no name, signature, visibility, ordering,
+  or behavior token changed.
+OUT_OF_SCOPE_FINDINGS: None. The split script and original-file backup were kept
+  only in %TEMP% outside the repository and are deleted after use; they are not
+  part of any commit.
+LEDGER_UPDATE_REQUEST: Mark PC-ROOT-05 REVIEW then MERGED/VERIFIED after
+  integration checks; record worker commit, integration merge, and tree count
+  670 + 10 fragments + 1 handoff-related change (handoff already existed; expect
+  681 files) in the integration queue and verification ledger; add D-052.
+```
+
+Note on tree count: the assignment packet commit (7f04962) added this handoff file
+to the 670-file tree (671); the split then replaces one tracked file and adds ten
+fragments, so the worker-tip tree must hold 681 files. The integration merge adds
+no file beyond the worker tip.
