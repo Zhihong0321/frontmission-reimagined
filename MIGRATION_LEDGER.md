@@ -217,7 +217,7 @@ assigned worktree.
 | `PC-ROOT-02` | `VERIFIED` | `ROOT` | `3ec8cc092e15431609a6b16a499c65d5f69a41ea` (verified `PC-ROOT-01` integration tip; product merge `b7e2c8d`) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-02` | `codex/pc-root-02-viewmodels` | `src/MechaTrader.Core/View/ViewModels.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-02.md` | 2026-09-04 |
 | `PC-ROOT-03` | `VERIFIED` | `ROOT` | `000197cd34aacc7ec964b1d737c40ca0a2e0d831` (verified `PC-ROOT-02` integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-03` | `codex/pc-root-03-worldloader` | `src/MechaTrader.Core/World/WorldLoader.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/World/`; `coordination/handoffs/PC-ROOT-03.md` | 2026-09-05 |
 
-| `PC-ROOT-04` | `READY` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
+| `PC-ROOT-04` | `BLOCKED` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
 
 Phase C (mechanical backend decomposition) proceeds to the third bounded job
 `PC-ROOT-03`: a pure mechanical file split of `src/MechaTrader.Core/World/WorldLoader.cs`
@@ -258,6 +258,19 @@ All requested B/C ancestors verified, tree count 662, PC-ROOT-01/02/03 and PB-IN
 All prior handoffs are reconciled in the queue; no ledger-owned active worker remains.
 Existing Kimi web/Claude desktop processes are unrelated app sessions and are left untouched.
 MapLab remains backup/maplab-final-20260903 at df3c1baa8a83c2412607353af9994170b988dbe3, exactly M world.js.
+
+PC-ROOT-04 worker progress: eight partial ViewBuilder files, 1299 raw class-body lines
+reconstruct byte-identically (SHA-256 41bd5b6759f1ff6af10f34992c2b04ff27e8db9cb6e358774524d4bc866d79e4).
+Release build 0 warnings, full Core 239/239, determinism/save 10/10, Fingerprint zero diff,
+world.js exact hash, baseline API verify and browser 1/1 passed. Full nine gates PASS (BalanceSim 308.4 ms), FIGURES timing restored.
+Integration HOLD: API -Record changes only dynamic build.json metadata; six deterministic
+fixtures unchanged. Prompt prohibits any fixture diff, so explicit user exception requested;
+original build.json restored, no fixture change committed. Do not integrate until resolved.
+Cleanup evidence correction: 38 pre-existing verify-worldjs temp directories observed
+(latest 2026-09-05 08:55:51), left untouched. Existing verifier also left two generated
+world.js files for this run; recursive cleanup was rejected by automatic approval review
+(blocked by policy). Exact-file deletion followed by verified-empty nonrecursive directory
+removal succeeded. New task-created residue zero; no Host or port 5080 listener after gates.
 
 ## Completed manual advisory jobs
 
@@ -412,6 +425,15 @@ At the beginning of every coordinating session:
 8. Create and commit a physical task packet before every assignment.
 
 ## Current checkpoint
+
+- PC-ROOT-04 is BLOCKED pending user clarification of the strict API record zero-diff rule.
+  All worker runtime gates passed, but -Record changes dynamic build.json metadata only.
+  No exception assumed; original fixture restored. Product work remains uncommitted in
+  PC-ROOT-04, integration unchanged at c954cb350b60ce6239ef6b8d604da5be4c7d162d.
+  No integration verification, product push or tag occurred. This is an authorization
+  conflict with no in-scope repair, not two failed semantic repair attempts.
+  Phase C items 1-3 remain VERIFIED; item 4 is not VERIFIED; items 5-7 and D-F unauthorized.
+
 
 - The explicitly authorized version-control backup job is complete and remotely verified.
 - Both authorized Phase A workers were launched from committed packets in isolated
