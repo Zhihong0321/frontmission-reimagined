@@ -192,3 +192,31 @@ Note on tree count: the assignment packet commit (7f04962) added this handoff fi
 to the 670-file tree (671); the split then replaces one tracked file and adds ten
 fragments, so the worker-tip tree must hold 681 files. The integration merge adds
 no file beyond the worker tip.
+
+---
+
+## Coordinator REVIEW and merge decision (ROOT, 2026-09-05)
+
+`ACCEPT — proceed to integration merge.`
+
+- Scope: `git diff --name-status b086e6c..3c5f014` touches only
+  `src/MechaTrader.Core/Commands/CommandProcessor.cs`, the ten new
+  `src/MechaTrader.Core/Commands/CommandProcessor*.cs` fragments, and this
+  handoff — exactly the authorized write scope. No prohibited path, no deletion,
+  no move, no rename, no test/data/web/MapLab change, `.csproj` untouched.
+- Ancestry: worker tip `3c5f01413188176f0b0360dc2606d3f5df105cce` descends from
+  assignment `7f04962` and green base `b086e6c063c4dc62385e19beba2fe5654feff55f`.
+- Equivalence evidence: reviewed and accepted — reconstruction from the split
+  output is byte-identical to the original file (SHA-256
+  `f478a037c73980ce77180ca1fb9222cb5339a5ab6b8b322e0bf3b4812dd7622d`), with the
+  sole textual deltas being the `partial` keyword and per-fragment
+  using/namespace wrappers, per the D-048/D-049 precedent.
+- Worker checks: all seven sequential gates green as recorded above; hygiene
+  checks (port, process, FIGURES, temp residue) clean; API fixture handling
+  stayed inside the D-050 dynamic build.json exception with zero final diff.
+- Worker tree: 681 files = 670 base + 1 handoff + 10 fragments.
+- Decision: ordinary `git merge --no-ff codex/pc-root-05-commandprocessor` into
+  `integration` in `D:\FrontMission-RIMG-worktrees\PB-INTEGRATION-01` (per the
+  D-046 lesson: no plumbing, no tree reconstruction), expected two-parent merge,
+  merged tree 681 files, then a full sequential repeat of the worker checks
+  before any ledger update or push. No tag. Stop after this item.
