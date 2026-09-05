@@ -8,10 +8,12 @@ Live ownership, job status, commits, checks, and handoffs belong in
 
 ## Status
 
-- Plan version: `4`
-- Plan status: `APPROVED_PROCESS_EXECUTION_GATED_BY_LEDGER`
-- Execution status: `PHASE_B_ACTIVE` (Phase A steps 1-9 verified; Phase B only authorized
-  per `MIGRATION_LEDGER.md` `D-033`; phases C-F remain unauthorized)
+- Plan version: `5`
+- Plan status: `APPROVED_PROCESS_EXECUTION_GATED_BY_LEDGER` (streamlined 2026-09-05 per
+  `MIGRATION_LEDGER.md` `D-055`; remaining work, checkpoints, and gates follow
+  `coordination/plan-revision-2026-09-05.md`)
+- Execution status: `PHASE_C_ITEMS_1_6_VERIFIED` (Phase A and B verified; Phase C items
+  1-6 verified and item 7 cancelled per `D-055`; phases D-F not started)
 - Current known remote recovery points:
   - RIMG: `backup-rimg-20260903` at `29de90387bb2d8fcccf5d6b787def5edac2ca923`
   - MapLab: `backup-maplab-20260903` at `df3c1baa8a83c2412607353af9994170b988dbe3`
@@ -190,22 +192,25 @@ Controls:
 - No filter-repo, rebase of published recovery history, or LFS history migration.
 - Any future repository-size cleanup gets its own backup and plan.
 
-## Transaction used for every implementation job
+## Transaction used for every checkpoint (revised per `D-055`)
 
-1. Coordinator records the current known-green base commit.
-2. Coordinator creates an isolated branch and worktree.
-3. Coordinator records the job owner, allowed paths, prohibited paths, tests, and stop
-   conditions in the ledger.
-4. Worker reads this plan and the ledger.
-5. Worker performs one bounded transformation.
-6. Worker runs targeted checks and commits.
-7. Worker returns the required structured handoff.
-8. Coordinator reviews the diff and evidence.
-9. Coordinator integrates the commit into the integration branch.
-10. Coordinator runs the required integration checks.
-11. If green, the ledger advances the job and known-green commit.
-12. If red, the integration commit is reverted or the branch is discarded before any
-    dependent job starts.
+1. The checkpoint's scope, prohibited paths, write scope, and Full gate list come from
+   the approved roadmap (`coordination/plan-revision-2026-09-05.md`); the executing
+   session confirms them against the live tree before any product change.
+2. Coordinator records the current known-green base commit and creates or verifies the
+   isolated branch and worktree.
+3. Worker performs the checkpoint's bounded transformation, iterating with `Fast`
+   checks only (zero-warning Release build plus affected tests). Fast never certifies
+   completion. Move-class tasks (moving a class or file) must additionally prove
+   byte-level equivalence of the moved members; other task types rely on the Full
+   battery.
+4. Worker returns one short handoff (results, exceptions, cleanup evidence).
+5. Coordinator reviews the diff against the confirmed scope, integrates with an
+   ordinary merge into the integration branch, and runs the Full battery once at the
+   integration state.
+6. If green, the ledger records one verification row for the checkpoint and advances
+   the known-green commit; if red after two focused repairs, the checkpoint stops,
+   is marked `BLOCKED`, is not pushed, and work resumes from the previous green point.
 
 ## Stop-loss rule
 
@@ -288,61 +293,50 @@ No structural migration begins until this phase is green.
 
 The original `D:\FrontMission-MapLab` directory remains untouched in this phase.
 
-### Phase C — mechanical backend decomposition
+### Phase C — mechanical backend decomposition (closed per `D-055`)
 
-Process one original large file per integration checkpoint. Tentative order:
+Original tentative order, with final disposition:
 
-1. `Definitions.cs`
-2. `ViewModels.cs`
-3. `WorldLoader.cs`
-4. `ViewBuilder.cs`
-5. `CommandProcessor.cs`
-6. Balance harness
-7. Oversized test classes
+1. `Definitions.cs` — verified (`b7e2c8d`)
+2. `ViewModels.cs` — verified (`fa8592a`)
+3. `WorldLoader.cs` — verified (`ff32d4f`)
+4. `ViewBuilder.cs` — verified (`290615f`)
+5. `CommandProcessor.cs` — verified (`6441f88`)
+6. Balance harness — verified (`93a2196`)
+7. Oversized test classes — **CANCELLED** per `D-055` (only `CrewTests.cs`, 695 lines,
+   is materially oversized; the 239-test pin in `check.ps1` remains the tripwire)
 
-For every item:
+Items 1-6 were executed under the version 4 dual-state battery. With item 7 cancelled,
+Phase C is complete at integration `3830abd`; the closeout tag
+`known-green/backend-split` is created at that commit in the CP-0 session with same-run
+Full evidence (revision §2.3). Phase C retains its non-negotiables: mechanical moves
+only, preserved public entrypoints, pinned fingerprints and save fixtures.
 
-- Move code without semantic cleanup.
-- Preserve public entrypoints.
-- Run the full, unfiltered `MechaTrader.Core.Tests` project after each item.
-- Compare deterministic fingerprints and save fixtures.
-- After items 2, 4, and 5, also run the browser smoke and API-shape checks because these
-  files form the frontend wire contract.
-- Integrate only while green.
+### Phase D — mechanical frontend decomposition (revised per `D-055`)
 
-End with the complete acceptance and browser suites, then tag
-`known-green/backend-split`.
+Phase D depends on Phase C's verified checkpoint. The twelve original steps are
+compressed into three checkpoints; the original steps remain the content checklist:
 
-### Phase D — mechanical frontend decomposition
+- `CP-D1`: extract inline CSS without rewriting it and extract inline chart JavaScript
+  into one unchanged classic `chart.js` (steps 1-2); byte-level mechanical moves,
+  execution order unchanged.
+- `CP-D2`: extract pure terrain, rendering, camera/input, routing, HUD, and worker
+  helpers (steps 3-8); each sub-step is committed separately inside the checkpoint so
+  a red state can be bisected without extra Full batteries.
+- `CP-D3`: establish an explicit shared ops namespace, extract ops helpers, extract
+  one ops page at a time, and extract stateful boot code last (steps 9-12).
 
-Phase D depends on Phase C's verified checkpoint, not only on Phase B.
+Each checkpoint runs the Full battery once at the integration state; worker iteration
+uses Fast only. Fail on console or network errors and compare required visible
+behavior. End with the complete acceptance and browser suites, then tag
+`known-green/frontend-split`. Skipping Phase D entirely is not authorized by this
+revision; it would be a separate explicit decision that also relaxes the matching
+completion criterion.
 
-Tentative order:
+### Phase E — AI context and verification workflow (executed before Phase D per `D-055`)
 
-1. Extract inline CSS without rewriting it.
-2. Extract inline chart JavaScript into one classic `chart.js` without rewriting it.
-3. Extract pure terrain helpers.
-4. Extract rendering helpers.
-5. Extract camera and input.
-6. Extract routing.
-7. Extract HUD behavior.
-8. Extract worker interaction.
-9. Establish an explicit shared ops namespace.
-10. Extract ops helpers.
-11. Extract one ops page at a time.
-12. Extract stateful boot code last.
-
-After every step:
-
-- Run the browser smoke suite.
-- Fail on console or network errors.
-- Compare required visible behavior.
-- Keep the integration branch green.
-
-End with the complete acceptance and browser suites, then tag
-`known-green/frontend-split`.
-
-### Phase E — AI context and verification workflow
+Dependency: Phase C only (originally "C, D"); the codemap is regenerated from
+repository facts after Phase D and Phase F complete.
 
 1. Create short canonical agent instructions.
 2. Create a machine-readable feature ownership map.
@@ -355,26 +349,42 @@ End with the complete acceptance and browser suites, then tag
 9. Define `Full` as a strict superset of the original seven `check.ps1` gates plus the
    browser, deterministic, save, API-shape, generated-world, asset, and clean-path checks.
 10. Ensure `Full` remains mandatory at integration checkpoints; `Fast` and feature checks
-   are iteration aids and cannot certify integration.
+    are iteration aids and cannot certify integration.
 11. Tag `known-green/ai-workflow` after verification.
 
-### Phase F — cleanup and retirement
+This phase also lands the `Fast` and `Full` script entrypoints defined under
+"Verification modes" below; every later checkpoint uses them.
 
-Cleanup is deliberately last and split into independent commits:
+### Phase F — cleanup and retirement (revised per `D-055`)
 
-1. Remove dormant ArtLab application code and endpoints as one complete feature removal.
-2. Remove the archived UI.
-3. Quarantine and verify unused screenshots and assets.
-4. Remove verified-unused files.
-5. Test from a fresh clone.
-6. Confirm no code or launcher reads the sibling MapLab path.
-7. Confirm both remote recovery tags still resolve.
-8. Remove `D:\FrontMission-MapLab` from the local disk.
-9. Run full acceptance and browser verification again.
-10. Tag `known-green/final`.
+The ten original steps run as two checkpoints; the steps remain the content checklist:
+
+- `CP-F1` — repository-internal cleanup (steps 1-4): remove dormant ArtLab application
+  code and endpoints as one complete feature removal, remove the archived UI,
+  quarantine and verify unused screenshots and assets, and remove verified-unused
+  files. Each deletion class is its own recoverable commit.
+- `CP-F2` — MapLab retirement (steps 5-10): test from a fresh clone, confirm no code or
+  launcher reads the sibling MapLab path, confirm both remote recovery tags resolve,
+  remove `D:\FrontMission-MapLab` from the local disk, run full acceptance and browser
+  verification again, and tag `known-green/final`.
 
 The coordinator must record exact deletion targets in the ledger before deletion and
 record whether each deletion is recoverable from Git.
+
+## Verification modes (per `D-055`)
+
+- `Fast` = `dotnet build MechaTrader.sln -c Release` with zero warnings plus the
+  affected tests. Fast is an iteration aid only; it can never certify a green or
+  finished state.
+- `Full` = all six gates: zero-warning Release build; complete nine-gate `check.ps1`;
+  `tools/MechaTrader.Fingerprint` regeneration with zero tracked diff and pinned
+  `F_state`/`F_view`; browser smoke 1/1; clean `git diff --check`; hygiene (port 5080
+  free, no `MechaTrader.Host` process, `FIGURES.md` timing-line-only restored,
+  temp-directory baseline compare plus this-run cleanup).
+- Any `MERGED`/`VERIFIED` claim must cite a same-run Full result. The version 4
+  worker-state dual battery is retired; each checkpoint runs Full once at the
+  integration state, and byte-exact reconstruction proofs are limited to move-class
+  tasks.
 
 ## Agent allocation
 

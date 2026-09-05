@@ -487,6 +487,7 @@ Phase B and Phase C items 1-6 verification is recorded below. Phase C item 7 and
 | `D-052` | 2026-09-05 | Accept and verify only PC-ROOT-05 at ordinary integration merge 6441f88156292bfcec61c50b69c8c846376fc2ba; stop before item 6 | Ten partial CommandProcessor files preserve all 871 moved member lines plus the retained header, Execute switch, class doc, and closing brace raw-byte-identically in original member/doc order (original file SHA-256 f478a037c73980ce77180ca1fb9222cb5339a5ab6b8b322e0bf3b4812dd7622d; reconstruction byte-identical in worker and merged states; sole textual deltas the `partial` keyword and per-fragment using/namespace wrappers). Assignment packet 7f04962, worker implementation 3c5f014 ("Split CommandProcessor.cs mechanically"), REVIEW handoff tip dadae0b, ordinary two-parent merge 6441f88; worker tree 681 = 670 + handoff + 10 fragments, merged tree 681. Worker 3c5f014 and integration 6441f88 both pass 0-warning Release build, unfiltered 239/239 Core, 10/10 determinism/save, zero-diff Fingerprint regeneration with F_state a96681c1…be99 and F_view 93a94b5c…6626 exactly pinned, exact world.js SHA-256 26063b3e…712a, API record/restore/verify reusing the D-050 user-approved dynamic build.json exception with six deterministic fixtures unchanged and final zero fixture diff, Chromium smoke 1/1 (banner 7f04962 worker / 6441f88 integration), and all nine gates (BalanceSim 151.3 / 199.4 ms). FIGURES timing restored in both states; no Host process or 5080 listener; each state's verifier left exactly 2 verify-worldjs temp dirs, all 8 cleaned by exact-file deletion then verified-empty nonrecursive removal back to the untouched 38-directory pre-existing baseline. Scope review: only CommandProcessor.cs, the ten new Commands/ fragments, and the handoff changed; `.csproj`, tests, data/, web/chart/, MapLab (df3c1ba, exactly M world.js), and PC-ROOT-01/02/03/04 outputs untouched; no history rewrite, no tag, no integration incident. This accepts item 5 only, authorizes no C items 6-7 or D-F, and creates/moves no tag. | `ACCEPTED` |
 | `D-053` | 2026-09-05 | Authorize only PC-ROOT-06: mechanical Balance harness (tools/MechaTrader.BalanceSim/Program.cs) split; owner ROOT | User supplied explicit bounded authorization continuing the D-049/D-051 pattern. Green base 900dd254c7003a53fad65068eeab8830941f0bd2; worktree D:\FrontMission-RIMG-worktrees\PC-ROOT-06; branch codex/pc-root-06-balancesim; write scope Program.cs, new split `.cs` files only under tools/MechaTrader.BalanceSim/, and coordination/handoffs/PC-ROOT-06.md. Main's entire method body stays in the original file; fragments carry consecutive complete member blocks in original order with their doc comments; `public static partial class Program` per the D-048/D-050/D-052 precedent; every member byte, order, namespace, name, signature, visibility, encoding, CRLF ending, and whitespace preserved; sole textual deltas the `partial` keyword and per-fragment wrappers; constants byte-preserved (SimulationDays, PerformanceBudgetMs etc.); no csproj change. Prohibit item 7 and phases D-F, prior split outputs, other product files, tests, data/, web/chart/, src/, MapLab, FIGURES.md, check.ps1, budgets/thresholds/constants, semantic or ordering changes, deletions/moves/renames, history rewriting, force pushes, and tags; fixtures limited to the zero-diff flow plus the D-050-approved dynamic build.json exception with final zero tracked diff; FIGURES.md timing-line-only changes restored, never committed. Required sequential worker and integration gates as in the Phase C authorization paragraph, including gate-3 BalanceSim output equality (console and FIGURES content) versus the pre-split program; ordinary no-ff integration merge, full tree 681 + fragments + handoff; ledger-only mirror via normal file commit; fast-forward push of master/integration/worker with post-push blob parity. Stop after this item; no tag; stop-loss after two failed focused repairs. | `ACCEPTED` |
 | `D-054` | 2026-09-05 | Accept and verify only PC-ROOT-06 at ordinary integration merge 93a2196c2a69cb142ae23043404239ed4cd93669; stop before item 7 | Nine BalanceSim files preserve all member bytes in original order with doc comments attached (original 901-line file SHA-256 a2d7f855df3a10946be3487dcca92dce5c079a3a0de9688af5078c62e2ce7dc8 reconstructed byte-identically from the split output in worker and merged states; slimmed original keeps header, class doc, constants, and the whole public Main; eight fragments Reports/Probes/Crew/Figures/Bots/Printers/Playtest/Helpers carry consecutive member blocks in original order; sole textual deltas the `partial` keyword and per-fragment using/namespace wrappers). Assignment packet e59fd7c, worker implementation 1a04180 ("Split BalanceSim Program.cs mechanically"), REVIEW handoff tip aa958e9, ordinary two-parent merge 93a2196 (parents 900dd25 + aa958e9); worker tree 690 = 681 + 8 fragments + 1 handoff, merged tree 690. Both states pass 0-warning Release build, unfiltered 239/239 Core, 10/10 determinism/save, zero-diff Fingerprint regeneration with F_state a96681c1…be99 and F_view 93a94b5c…6626 exactly pinned, exact world.js SHA-256 26063b3e…712a, API record/restore/verify reusing the D-050 user-approved dynamic build.json exception with six deterministic fixtures unchanged and final zero fixture diff, Chromium smoke 1/1 (banners e59fd7c worker / 93a2196 integration), and all nine gates (BalanceSim tick 177.6 / 378.7 ms, in budget; identical gameplay figures). Runtime equivalence independently proven: pre-split (e59fd7c) vs split console output identical except the `tick time:` line; FIGURES.md timing-line-only in every run, restored, never committed, and re-captured to a file in the merged state for direct confirmation. Each verification phase left exactly 2 verify-worldjs temp dirs, all 4 cleaned by exact-file deletion then verified-empty nonrecursive removal back to the untouched 38-directory pre-existing baseline. Scope review: only Program.cs, the eight new fragments, and the handoff changed; `.csproj`, tests, data/, web/chart/, src/, MapLab (df3c1ba, exactly M world.js), and PC-ROOT-01/02/03/04/05 outputs untouched; no history rewrite, no tag, no integration incident. Environmental incident disclosed: the initial worktree creation failed with D: disk exhaustion and was cleanly rolled back by Git (stranded branch reused after the user freed 10+ GB); a verification-script defect briefly overwrote a job-scoped %TEMP% backup copy with split-state bytes during a failed run — the script aborted before any repository write, and all temp scripts are deleted at job end. This accepts item 6 only, authorizes no C item 7 or D-F, and creates/moves no tag. | `ACCEPTED` |
+| `D-055` | 2026-09-05 | Adopt the 2026-09-05 process-streamlining revision (coordination/plan-revision-2026-09-05.md) for all remaining migration work: Phase C item 7 CANCELLED (only CrewTests.cs, 695 lines, materially oversized; the 239-test pin in check.ps1 stays as the tripwire); known-green/backend-split to be created at the Phase C completion point (integration 3830abd) in a separate authorized CP-0 session, with a fresh Full battery first if the D-054 evidence is stale by then; Phase E re-sequenced before Phase D with dependency reduced to Phase C (codemap regenerated after later phases); Phase D compressed from twelve steps to three checkpoints (CP-D1/2/3); Phase F merged from ten steps into two checkpoints (CP-F1/CP-F2); two-tier Fast/Full verification entrypoints defined, with Full as the only basis for any VERIFIED claim; per-checkpoint single integration-state Full battery replaces the version 4 dual-state battery, byte-exact reconstruction proofs limited to move-class jobs, and per-task packets/decisions replaced by one short handoff plus one verification row per checkpoint | User concluded the remaining process was too heavy (48+ hours; items 1-5 repeated the same motion five times under dual-state batteries) and requested a written revision; ROOT drafted plan-revision-2026-09-05.md and the user approved it verbatim; MIGRATION_PLAN.md advances to version 5 with this decision. Non-negotiable baselines unchanged: every checkpoint still runs the full nine-gate check.ps1, Fingerprint regeneration with zero tracked diff, browser smoke, and git diff --check; behavior-sensitive surfaces still require pinned fingerprints and fixtures; no history rewriting, no force pushes, no moving recovery tags; MapLab untouched until Phase F execution; VERIFIED claims require same-run evidence. Known consequence: this ledger revision is committed on master only, so ledger blob parity between master and integration intentionally diverges until the next integration checkpoint mirrors it. This decision authorizes no immediate migration execution: CP-0 through CP-F2 each still require their own session and scope confirmation per the roadmap. No tag created by this decision. | `ACCEPTED` |
 
 ## Open decisions
 
@@ -516,45 +517,35 @@ At the beginning of every coordinating session:
 
 ## Current checkpoint
 
-- Phase C items 1-6 VERIFIED; item 7 and Phase D-F remain unauthorized.
-- PC-ROOT-06 is complete at product merge 93a2196c2a69cb142ae23043404239ed4cd93669,
-  worker implementation 1a0418068a030281778ea4900ddc16176b125569 ("Split BalanceSim
-  Program.cs mechanically"), REVIEW handoff tip aa958e929ce02eeb9b7434325a917e0fc6223f7f,
-  from green base 900dd254c7003a53fad65068eeab8830941f0bd2. It contains only the
-  mechanical split of tools/MechaTrader.BalanceSim/Program.cs (901 lines) into
-  `public static partial class Program` (slimmed 119-line original keeps header,
-  class doc, constants, and the whole public `Main`; eight new fragment files under
-  tools/MechaTrader.BalanceSim/ carry the private helpers and nested records in
-  original order) plus its handoff; tree count 690. Assignment packet e59fd7c.
-- Worker and integration verification passed as recorded above (D-054). The original
-  file SHA-256 a2d7f855df3a10946be3487dcca92dce5c079a3a0de9688af5078c62e2ce7dc8 was
-  reconstructed byte-identically from the split output in both states; pre-split vs
-  split console output and FIGURES.md content matched except timing lines. The D-050
-  dynamic build.json exception was reused as pre-authorized; no fixture change
-  committed; final tracked fixture diff zero in both states.
-- Historical: PC-ROOT-05 is complete at product merge 6441f88156292bfcec61c50b69c8c846376fc2ba,
-  worker implementation 3c5f01413188176f0b0360dc2606d3f5df105cce, REVIEW handoff tip
-  dadae0ba5006734264e15b6030844392c206d77d, from green base b086e6c063c4dc62385e19beba2fe5654feff55f
-  (verified in D-052; tree count 681 at that checkpoint, superseded by the PC-ROOT-06
-  merge).
+- The 2026-09-05 process-streamlining revision is approved (`D-055`). The remaining
+  roadmap, checkpoint list, Full gate definitions, and execution boundaries are
+  governed by `coordination/plan-revision-2026-09-05.md`; MIGRATION_PLAN.md is at
+  version 5 and defers to that file where they overlap.
+- Phase C items 1-6 VERIFIED: items 1-5 (Definitions, ViewModels, WorldLoader,
+  ViewBuilder, CommandProcessor) through product merge
+  6441f88156292bfcec61c50b69c8c846376fc2ba; item 6 (BalanceSim Program.cs) at product
+  merge 93a2196c2a69cb142ae23043404239ed4cd93669 (worker 1a04180, REVIEW tip aa958e9,
+  D-054). Phase C item 7 is CANCELLED; Phase C is complete at integration
+  3830abd6611ae18cc05c333526b837143e4e34e5 (tree 690). The closeout tag
+  known-green/backend-split is to be created at 3830abd in the CP-0 session with
+  same-run Full evidence (revision §2.3); no tag has been created by this decision.
+- Remaining work order per the revision: CP-0 (Phase C closeout), CP-E1 (Phase E,
+  dependency reduced to Phase C, includes the Fast/Full script entrypoints), CP-D1/2/3
+  (Phase D compressed from twelve steps), CP-F1/CP-F2 (Phase F merged from ten steps,
+  ending with known-green/final after MapLab retirement). None of these checkpoints
+  has started; each requires its own session and scope confirmation.
 - Phase A and Phase B remain verified. known-green/consolidated is unchanged:
   annotated tag e31ceb71e5e87ce6b29ec4baab661bb14bc3fe23, target
-  590b25c808951d1fb3cb94bb3fa6bb17bb479d5f. No new or moved tag.
-- Master remains frozen for product changes; its PC-ROOT-06 changes are coordination
-  only (authorization record + this ledger). This identical final ledger is mirrored
-  via a normal file-only commit on integration, preserving the full 690-file product
-  tree. Both branches and the worker branch are pushed fast-forward (atomic where
-  possible), and local/remote ref identities plus ledger blob parity are verified at
-  publication.
+  590b25c808951d1fb3cb94bb3fa6bb17bb479d5f. Recovery tags backup-rimg-20260903 and
+  backup-maplab-20260903 remain unchanged. No history rewriting, no force pushes.
+- Master remains frozen for product changes; master carries coordination records only.
+  Known consequence of `D-055`: this ledger revision is committed on master only, so
+  ledger blob parity between master and integration intentionally diverges until the
+  next integration checkpoint mirrors it.
 - No active worker or unreconciled handoff remains. Port 5080 free, no Host process,
-  FIGURES timing restored, no new temporary residue: the worker and integration
-  verification phases each left exactly 2 verify-worldjs temp directories, all four
-  cleaned by exact-file deletion and verified-empty nonrecursive removal; the 38
-  older world-verifier temp directories remain untouched. Environmental incident this
-  job: D: disk exhaustion failed the initial worktree creation (cleanly rolled back
-  by Git; user freed space before work began).
-- MapLab remains backup/maplab-final-20260903 at df3c1baa8a83c2412607353af9994170b988dbe3,
-  exactly M world.js; no sibling edits. Existing PC-ROOT-01/02/03/04/05 and
-  PB-INTEGRATION-01 worktrees remain clean; PC-ROOT-06 worktree clean at its handoff tip.
-- Stop here. Phase C as a whole and the overall migration are NOT complete.
-- Recovery tags backup-rimg-20260903 and backup-maplab-20260903 remain unchanged.
+  FIGURES timing restored, the 38 pre-existing verify-worldjs temp directories remain
+  untouched. MapLab remains backup/maplab-final-20260903 at
+  df3c1baa8a83c2412607353af9994170b988dbe3, exactly M world.js. All task worktrees
+  (PC-ROOT-01..06, PB-INTEGRATION-01) are tracked clean.
+- Stop here. Nothing beyond the separately-prompted CP-0 is authorized. Phase C is
+  complete pending the CP-0 closeout record; the overall migration is NOT complete.
