@@ -216,23 +216,20 @@ assigned worktree.
 | `PC-ROOT-01` | `VERIFIED` | `ROOT` | `6b14d192858bb15bbb5de946d14c353ccfc9f9f8` (Phase B verified integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-01` | `codex/pc-root-01-definitions` | `src/MechaTrader.Core/Model/Definitions.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-01.md` | 2026-09-04 |
 | `PC-ROOT-02` | `VERIFIED` | `ROOT` | `3ec8cc092e15431609a6b16a499c65d5f69a41ea` (verified `PC-ROOT-01` integration tip; product merge `b7e2c8d`) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-02` | `codex/pc-root-02-viewmodels` | `src/MechaTrader.Core/View/ViewModels.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-02.md` | 2026-09-04 |
 | `PC-ROOT-03` | `VERIFIED` | `ROOT` | `000197cd34aacc7ec964b1d737c40ca0a2e0d831` (verified `PC-ROOT-02` integration tip) | `D:\FrontMission-RIMG-worktrees\PC-ROOT-03` | `codex/pc-root-03-worldloader` | `src/MechaTrader.Core/World/WorldLoader.cs` (mechanical split only); new `.cs` files created by the split inside `src/MechaTrader.Core/World/`; `coordination/handoffs/PC-ROOT-03.md` | 2026-09-05 |
+| `PC-ROOT-04` | `VERIFIED` | `ROOT` | `c954cb350b60ce6239ef6b8d604da5be4c7d162d` | `D:\FrontMission-RIMG-worktrees\PC-ROOT-04` | `codex/pc-root-04-viewbuilder` | `src/MechaTrader.Core/View/ViewBuilder.cs`; new split `.cs` files only under `src/MechaTrader.Core/`; `coordination/handoffs/PC-ROOT-04.md` | 2026-09-05 |
 
-Phase C (mechanical backend decomposition) proceeds to the third bounded job
-`PC-ROOT-03`: a pure mechanical file split of `src/MechaTrader.Core/World/WorldLoader.cs`
-(1021 lines) into cohesive new `.cs` files under `src/MechaTrader.Core/World/`. Its green
-base is the verified `PC-ROOT-02` integration tip `000197cd`. Write scope is only
-`WorldLoader.cs`, the new `.cs` files the split creates inside
-`src/MechaTrader.Core/World/`, and this job's handoff; every other path is prohibited
-(`D-047`). The split must preserve namespaces, names, signatures, ordering, visibility,
-and public entrypoints (the public `WorldLoader` class with its constants, `RequiredKeys`,
-`JsonOptions`, and `Load` method) byte-identically; doc comments must travel with their
-owning members; and the type-block order within the file must match the original. Because
-`WorldLoader.cs` is part of the frontend wire contract (it produces the `WorldData` object
-that backs the host/API responses and the seeded save fixtures), Phase C item 3 requires
-the browser smoke and API-shape gates in addition to the standard Core/determinism/save/
-world.js/check.ps1 gates. Phase C item 3 is complete and verified (`D-048`); no Phase C
-item 4 (`ViewBuilder.cs`) or later item starts until separately authorized.
-
+Phase C items 1-4 are VERIFIED. PC-ROOT-04 mechanically split only ViewBuilder.cs
+from green base c954cb350b60ce6239ef6b8d604da5be4c7d162d into eight partial files:
+ViewBuilder.cs, ViewBuilderMarket.cs, ViewBuilderRoutes.cs, ViewBuilderCity.cs,
+ViewBuilderCrew.cs, ViewBuilderMap.cs, ViewBuilderStation.cs, ViewBuilderContracts.cs.
+All 1299 class-body lines remain raw-byte-identical in original member/doc order, with
+CRLF preserved; only partial and original-header wrappers added. Worker commit
+2f7904b3398ebf9005ead9a34404de4956393f43 merged normally at
+290615f4551fcd333cd8664380277fdd613aa2b2; full tree 670 = 662 + 7 fragments + handoff.
+Both states passed all required gates (D-050). User explicitly approved restoring only
+dynamic build.json metadata after -Record, then applying the existing shape verification;
+six deterministic fixtures stayed identical and final tracked fixture diff was zero.
+Phase C items 5-7 and phases D-F remain unauthorized. Stop after this item; no tag.
 
 `PA-ROOT-03` closed Phase A step 6 (`MIGRATION_PLAN.md`): deterministic fingerprints, save
 fixtures, API-shape fixtures, content hashes, `world.js` verification, and an explicit
@@ -243,6 +240,32 @@ step 7 (clean-environment verification) via the new `tools/clean-clone-check.ps1
 `PB-ROOT-03` is independently reviewed, integrated, and verified at merge `590b25c`.
 `PB-ROOT-01` and `PB-ROOT-02` remain verified. No Phase B job is active, and no other
 Phase B job has started.
+
+Historical PC-ROOT-04 assignment/resume evidence (completed; D-049/D-050):
+Owner ROOT executes locally without delegation, from green base c954cb350b60ce6239ef6b8d604da5be4c7d162d.
+Its committed task packet is coordination/handoffs/PC-ROOT-04.md (assignment first,
+completed handoff before the worker commit). All Phase C items 5-7 and phases D-F remain unauthorized.
+Resume checks: local/remote master 3ea2cae5edefb80d2260447d84a79ae34aab1b1f,
+integration c954cb350b60ce6239ef6b8d604da5be4c7d162d, ledger blob
+5f3ba44b932cf6ce7e08191040f5049bdcde1112 match; consolidated annotated tag
+e31ceb71e5e87ce6b29ec4baab661bb14bc3fe23 still peels to 590b25c808951d1fb3cb94bb3fa6bb17bb479d5f.
+All requested B/C ancestors verified, tree count 662, PC-ROOT-01/02/03 and PB-INTEGRATION-01 clean.
+All prior handoffs are reconciled in the queue; no ledger-owned active worker remains.
+Existing Kimi web/Claude desktop processes are unrelated app sessions and are left untouched.
+MapLab remains backup/maplab-final-20260903 at df3c1baa8a83c2412607353af9994170b988dbe3, exactly M world.js.
+
+PC-ROOT-04 worker progress: eight partial ViewBuilder files, 1299 raw class-body lines
+reconstruct byte-identically (SHA-256 41bd5b6759f1ff6af10f34992c2b04ff27e8db9cb6e358774524d4bc866d79e4).
+Release build 0 warnings, full Core 239/239, determinism/save 10/10, Fingerprint zero diff,
+world.js exact hash, baseline API verify and browser 1/1 passed. Full nine gates PASS (BalanceSim 308.4 ms), FIGURES timing restored.
+Resolved historical integration HOLD: API -Record changed only dynamic build.json metadata; six deterministic
+fixtures unchanged. Prompt prohibits any fixture diff, so explicit user exception requested;
+original build.json restored, no fixture change committed. User later approved this exact exception with "go"; hold resolved before integration.
+Cleanup evidence correction: 38 pre-existing verify-worldjs temp directories observed
+(latest 2026-09-05 08:55:51), left untouched. Existing verifier also left two generated
+world.js files for this run; recursive cleanup was rejected by automatic approval review
+(blocked by policy). Exact-file deletion followed by verified-empty nonrecursive directory
+removal succeeded. New task-created residue zero; no Host or port 5080 listener after gates.
 
 ## Completed manual advisory jobs
 
@@ -282,12 +305,10 @@ The coordinator launched both jobs; the user did not relay their prompts.
 | 8 | `PC-ROOT-01` | worker implementation `a3c26b42993d98451c1e910d273c444ad2e29d3c`; handoff `cc4958cb792354c7b9a5d0ec055e0824bbac8905`; assignment on `integration` `efc90677ced06da1a12664ff062a67964160c32b`; integration merge `b7e2c8d00b98ce608f6080565bf43f4371c8adf4` | `integration` during Phase C | Byte-level split equivalence (39/39 type blocks byte-identical, type order preserved); `git diff --check`; zero-warning Release build; full unfiltered Core tests; determinism/save fingerprint tests and `tools/MechaTrader.Fingerprint` fixture regeneration; `tools/verify-worldjs.ps1`; full nine-gate `check.ps1`; port/process/FIGURES checks | `VERIFIED` — worker and merged-state checks all green; Release build 0 warnings; 239/239 Core tests; 23/23 determinism/save tests; save fixtures regenerated byte-identically; world.js SHA-256 stayed `26063b3e...0712a`; all nine gates PASS in worker worktree and again on the integrated `b7e2c8d`; only `FIGURES.md` timing line changed and was reverted; port 5080 free; no `MechaTrader.Host` process; no temp clones; `data/`, `web/chart/`, tests, and MapLab untouched |
 | 9 | `PC-ROOT-02` | worker implementation+handoff `d0a801a` ("Split ViewModels.cs mechanically"); assignment mirror `489ee87` (defective tree, see `D-046`); tree repair `057dfd9` (fast-forward, no force push); integration merge `fa8592a` | `integration` during Phase C | Byte-level split equivalence (52/52 type blocks byte-identical, type order preserved, leading doc comments attached); `git diff --check`; zero-warning Release build; full unfiltered Core tests; determinism/save tests; `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1`; browser smoke (`npm ci` + Playwright Chromium); full nine-gate `check.ps1`; port/process/FIGURES checks; ledger blob parity `master`↔`integration` | `VERIFIED` — worker worktree and integrated `fa8592a` both green: Release build 0 warnings; 239/239 Core tests; 23/23 determinism/save tests; world.js SHA-256 stayed `26063b3e...0712a`; API-shape fixtures unchanged; browser smoke 1/1 in both states; all nine gates PASS twice; only `FIGURES.md` timing line changed and was reverted each time; port 5080 free; no `MechaTrader.Host` process; `.csproj` untouched (SDK wildcard); `data/`, `web/chart/`, tests, and MapLab untouched. The coordinator's malformed assignment mirror `489ee87` (tree held only the ledger) was repaired by descendant commit `057dfd9` restoring the full 643-file tree, pushed as a fast-forward |
 | 10 | `PC-ROOT-03` | worker implementation+handoff `e7c4a83` ("Split WorldLoader.cs mechanically"); integration merge `ff32d4f` (normal `git merge --no-ff`, per the `D-046` lesson — no plumbing, no tree reconstruction) | `integration` during Phase C | Byte-level split equivalence (875/875 normalized class-body lines byte-identical, member order and every doc comment preserved; sole textual delta the required `partial` keyword and per-fragment `using` directives copied from the original header); `git diff --check`; zero-warning Release build; full unfiltered Core tests; determinism/save tests; `tools/MechaTrader.Fingerprint` fixture regeneration (zero tracked diff); `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1`; browser smoke (`npm ci` + Playwright Chromium); full nine-gate `check.ps1`; port/process/FIGURES/MapLab checks; ledger blob parity `master`↔`integration`; integration tree file count 662 = 657 base + 5 new files | `VERIFIED` — worker worktree `e7c4a83` and integrated `ff32d4f` both green: Release build 0 warnings; 239/239 Core tests; 10/10 determinism/save filter tests; save fixtures regenerated byte-identically; world.js SHA-256 stayed `26063b3e...0712a` in both states; API-shape fixtures matched with zero diff in both states; browser smoke 1/1 in both states; all nine gates PASS twice (BalanceSim 180.6 ms worker / 144.4 ms integrated); `git diff --check` clean; only the expected `FIGURES.md` timing line changed after each acceptance run and was reverted; port 5080 free (TIME_WAIT remnants only, no listener); no `MechaTrader.Host` process; no temp clones; `data/`, `web/chart/`, tests, `.csproj`, PC-ROOT-01/02 split files, and MapLab (`df3c1ba`, exactly ` M world.js`) untouched |
-
+| 11 | `PC-ROOT-04` | worker `2f7904b3398ebf9005ead9a34404de4956393f43`; ordinary no-ff merge `290615f4551fcd333cd8664380277fdd613aa2b2` | `integration` during Phase C | Raw-byte equivalence; Release build; full Core tests; determinism/save and Fingerprint; world.js; API record/restore/verify under explicit dynamic build.json exception; Chromium smoke; nine gates; diff/FIGURES/port/process/new-temp cleanup; full-tree and ledger parity | `VERIFIED` — both states green: 0 warnings, 239/239 Core, 10/10 filter, zero final fixture diff, world.js pinned SHA-256, browser 1/1 (38.7 s worker / 25.5 s integration), nine gates (BalanceSim 308.4 / 295.5 ms). Tree 670. No product/test/data changes outside split. No history rewrite, tag, or integration incident. Recorder exception and historical/new temp cleanup facts are disclosed in D-050. |
 ## Verification ledger
 
-Phase B job-specific verification is recorded below, followed by the Phase C item 1
-(`PC-ROOT-01`) verification. Phase C items 2-7 and phases D-F remain unauthorized and
-unverified.
+Phase B and Phase C items 1-4 verification is recorded below. Phase C items 5-7 and phases D-F remain unauthorized.
 
 | Date | Commit | Scope | Command | Result | Notes |
 |---|---|---|---|---|---|
@@ -314,7 +335,8 @@ unverified.
 | 2026-09-04 | `a3c26b4` (worker implementation); integrated at `b7e2c8d` | `PC-ROOT-01` mechanical split of `src/MechaTrader.Core/Model/Definitions.cs` in worker worktree `D:\FrontMission-RIMG-worktrees\PC-ROOT-01` | Byte-level split equivalence (39/39 type blocks byte-identical to the original, type order preserved, full-file reconstruction match); `git diff --check`; `dotnet build MechaTrader.sln -c Release`; full unfiltered `dotnet test`; determinism/save fingerprint filter; `dotnet run --project tools/MechaTrader.Fingerprint`; `tools/verify-worldjs.ps1`; full nine-gate `check.ps1`; port 5080 / process / temp-clone checks | `PASS` | Worker worktree and integrated `integration` tip `b7e2c8d` both green: Release build 0 warnings; 239/239 Core tests; 23/23 determinism/save tests; save fixtures regenerated byte-identically by the Fingerprint tool with no tracked diff; world.js SHA-256 stayed `26063b3e...0712a`; all nine gates PASS in the worker worktree and again after integration; `git diff --check` clean; only the expected `FIGURES.md` timing line changed and was reverted; port 5080 free; no `MechaTrader.Host` process; no temp clones; `data/`, `web/chart/`, tests, MapLab (still `df3c1ba`, exactly ` M world.js`), and `.csproj` untouched |
 | 2026-09-04 | `d0a801a` (worker implementation); integrated at `fa8592a` | `PC-ROOT-02` mechanical split of `src/MechaTrader.Core/View/ViewModels.cs` in worker worktree `D:\FrontMission-RIMG-worktrees\PC-ROOT-02`, then re-verified on the integrated state in `D:\FrontMission-RIMG-worktrees\PB-INTEGRATION-01` | Byte-level split equivalence (52/52 `public sealed record` blocks byte-identical, type order preserved, every `/// <summary>` doc comment attached to its type); `git diff --check`; `dotnet build MechaTrader.sln -c Release`; full unfiltered `dotnet test`; determinism/save filter; `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1`; `node --check tests/browser/smoke.test.js`; `npm ci --prefix tests/browser` + Playwright Chromium + `npm test --prefix tests/browser`; full nine-gate `check.ps1`; port 5080 / process / temp-clone checks | `PASS` | Worker worktree `d0a801a` and integrated `integration` tip `fa8592a` both green: Release build 0 warnings; 239/239 Core tests; 23/23 determinism/save tests; world.js SHA-256 stayed `26063b3e...0712a` in both states; API-shape fixtures matched with zero diff in both states; browser smoke 1/1 in the worker worktree (21.9 s, host banner `3ec8cc0 on codex/pc-root-02-viewmodels`) and again on the merged state (18.5 s, banner `fa8592a on integration`); all nine acceptance gates PASS in both states (BalanceSim 291.7 ms worker / 120.2 ms integrated); `git diff --check` clean; only the expected `FIGURES.md` timing line changed after each acceptance run and was reverted; port 5080 free and no `MechaTrader.Host` process after every run; `.csproj` untouched; `data/`, `web/chart/`, tests, and MapLab untouched. Integration-path incident recorded in `D-046`: the coordinator's plumbing-built assignment mirror `489ee87` carried only `MIGRATION_LEDGER.md` in its tree (643 files missing); it was repaired without force push by descendant commit `057dfd9` restoring the full tree and pushed as a fast-forward before any dependent work |
 | 2026-09-05 | `e7c4a83` (worker implementation); integrated at `ff32d4f` | `PC-ROOT-03` mechanical split of `src/MechaTrader.Core/World/WorldLoader.cs` in worker worktree `D:\FrontMission-RIMG-worktrees\PC-ROOT-03`, then re-verified on the integrated state in `D:\FrontMission-RIMG-worktrees\PB-INTEGRATION-01` | Byte-level split equivalence (875/875 normalized class-body lines byte-identical between the original single-file body and the concatenated `partial` fragment bodies; member order preserved; every doc comment attached to its member; sole textual delta the required `partial` keyword on the class declaration and per-fragment `using` directives copied from the original header); `git diff --check`; `dotnet build MechaTrader.sln -c Release`; full unfiltered `dotnet test`; determinism/save filter; `dotnet run --project tools/MechaTrader.Fingerprint`; `tools/verify-worldjs.ps1`; `tools/verify-api-shape.ps1`; `npm ci --prefix tests/browser` + Playwright Chromium + `npm test --prefix tests/browser`; full nine-gate `check.ps1`; port 5080 / process / temp-clone / MapLab checks | `PASS` | Worker worktree `e7c4a83` and integrated `integration` tip `ff32d4f` both green: Release build 0 warnings; 239/239 Core tests; 10/10 determinism/save filter tests; save fixtures regenerated byte-identically with zero tracked diff; world.js SHA-256 stayed `26063b3e...0712a` in both states; API-shape fixtures matched with zero diff in both states; browser smoke 1/1 in the worker worktree (10.2 s, banner `000197c on codex/pc-root-03-worldloader (+5 uncommitted)`) and again on the merged state (12.1 s, build page banner `ff32d4f on integration`); all nine acceptance gates PASS in both states (BalanceSim 180.6 ms worker / 144.4 ms integrated); `git diff --check` clean; only the expected `FIGURES.md` timing line changed after each acceptance run and was reverted; port 5080 free (TIME_WAIT remnants only, no listener) and no `MechaTrader.Host` process after every run; integration tree file count 662 = 657 base + 4 new `.cs` files + 1 handoff, verified by `git ls-tree -r` after a normal `git merge --no-ff` (no plumbing, per the `D-046` lesson); `.csproj` untouched; `data/`, `web/chart/`, tests, PC-ROOT-01/02 split files, and MapLab (`df3c1ba`, exactly ` M world.js`) untouched |
-
+| 2026-09-05 | `2f7904b3398ebf9005ead9a34404de4956393f43` (worker) | `PC-ROOT-04` worker worktree | Raw-byte reconstruction; dotnet build MechaTrader.sln -c Release; unfiltered Core dotnet test; DeterminismFingerprint/SaveFixture filter; Fingerprint all; verify-worldjs; API -Record then restore approved dynamic build.json and baseline verify; npm ci + Chromium + npm test; nine-gate check.ps1; scope/diff/cleanup | `PASS` | 1299 raw body lines identical, SHA-256 `41bd5b6759f1ff6af10f34992c2b04ff27e8db9cb6e358774524d4bc866d79e4`; Release 0 warnings/errors; Core 239/239; filter 10/10; Fingerprint regeneration zero diff (F_state `a96681c178a462fee913c495428eb5432720edfaad6fb2593663ef5b842bbe99`, F_view `93a94b5cca687a89c9408b3c84c8599eb23b6c901c888a37497c376206af6626`); world.js `26063b3e3680a190b79843604107977331922c77397dfe2a1bf23a5a3160712a`; six deterministic API fixtures identical, build.json dynamic-only exception explicitly approved by user; final tests diff zero; browser 1/1 in 38.7 s (test 30.1 s); nine gates PASS, BalanceSim 308.4 ms; FIGURES timing restored; port free/no Host/new temp residue zero. Product bytes unchanged between checks and worker commit. |
+| 2026-09-05 | `290615f4551fcd333cd8664380277fdd613aa2b2` (integration merge) | `PC-ROOT-04` integrated state in PB-INTEGRATION-01 | Repeat every worker gate sequentially; raw class-body SHA-256; source identity against worker; full-tree/parent/scope check; MapLab and old worktree inspection | `PASS` | Release 0 warnings/errors; full Core 239/239; filter 10/10; Fingerprint values and save fixtures identical to worker with zero tracked diff; world.js exact full pinned SHA-256; API record changes only approved dynamic build.json, restored before successful original-fixture verification (final zero diff); browser 1/1 in 25.5 s (test 18.8 s, banner 290615f on integration); all nine gates PASS (BalanceSim 295.5 ms; host buy-haul-sell/rejected move, recruitment, city stats/supply, build page, world and API gates green); FIGURES timing restored. Raw body hash identical, no forbidden path diff. Ordinary two-parent merge, 670-file tree. No Host/5080 listener, new temp residue zero; 38 pre-existing world-verifier directories left untouched; MapLab df3c1ba exactly M world.js with original recorded hashes; PC-ROOT-01/02/03/04 clean. Full-history clean-clone acceptance was not rerun in item 4; generator used isolated clone-shaped layouts, then all task-created residue was removed. |
 ## Decision log
 
 | ID | Date | Decision | Reason | Status |
@@ -367,7 +389,8 @@ unverified.
 | `D-046` | 2026-09-04 | Accept and verify only `PC-ROOT-02` at integration merge `fa8592a`; stop before Phase C item 3 | Byte-level equivalence proved all 52 `public sealed record` blocks of the 641-line `ViewModels.cs` byte-identical with original type order preserved (14 new cohesive `.cs` files under `src/MechaTrader.Core/View/`, including `GameViewModels.cs` which carries the original file-level intro doc); the file-level comment and every type doc comment survived. Release build 0 warnings, 239/239 Core tests, 23/23 determinism/save tests, world.js SHA-256 `26063b3e...0712a`, API-shape fixtures unchanged, browser smoke 1/1, and all nine `check.ps1` gates passed in the worker worktree and again on the integrated state; port 5080 free, no `MechaTrader.Host` process, `.csproj` untouched. Incident recorded: the coordinator's plumbing-built assignment mirror `489ee87` accidentally carried only `MIGRATION_LEDGER.md` in its tree; because it had already been pushed, it was repaired by descendant commit `057dfd9` restoring the full 643-file tree (fast-forward push, no force push, no published-history rewrite), and the incident is recorded here and in the integration queue. This decision authorizes no Phase C item 3 (`WorldLoader.cs`) or later item, no tag, no deletion beyond the split, and no Phase D-F work | `ACCEPTED` |
 | `D-047` | 2026-09-05 | Authorize and assign `PC-ROOT-03`, the third bounded Phase C job: mechanical split of `src/MechaTrader.Core/World/WorldLoader.cs` only | The user explicitly authorized this single bounded job in a new coordinator session. Green base is the verified `PC-ROOT-02` integration tip `000197cd34aacc7ec964b1d737c40ca0a2e0d831`. The worker may only move code, unchanged in logic and public API, from `WorldLoader.cs` (1021 lines, single public static `WorldLoader` class with its string constants, `RequiredKeys`, `JsonOptions`, `Load`, and the suite of private helpers; seven private nested DTOs at the bottom) into cohesive new `.cs` files under `src/MechaTrader.Core/World/`; namespaces, names, signatures, ordering, visibility, and public entrypoints must be preserved. Doc comments must travel with their owning members; the order of type members within the file and the order of statements inside each method must remain byte-identical. Prohibited: any semantic cleanup, rename, refactor, behavior change; modifying `PC-ROOT-01` or `PC-ROOT-02` split files; `data/`, `web/chart/` (generator and output), `D:\FrontMission-MapLab`, tests, and other product files; deletion/move/rename of existing files; history rewriting, force pushes, and any tag creation or movement (`known-green/backend-split` only after the whole phase passes full acceptance); Phase C items 4-7 and phases D-F. Because `WorldLoader.cs` builds the `WorldData` object consumed by the API/wire contract, the job also runs the browser smoke and API-shape gates in addition to the standard Core/determinism/save/world.js/check.ps1 gates. Integration must follow the lesson of `D-046`: use a normal `git merge --no-ff` of the worker branch into `integration`; if a plumbing-style mirror commit is unavoidable, read the full base tree first, only swap the ledger blob, and verify `git ls-tree -r <tree> | wc -l` matches the source tree's file count (657) before pushing. It stops and reports after verification, per the plan's 12-step transaction | `ACCEPTED` |
 | `D-048` | 2026-09-05 | Accept and verify only `PC-ROOT-03` at integration merge `ff32d4f`; stop before Phase C item 4 | Token-level equivalence proved all 875 normalized class-body lines of the 1021-line `WorldLoader.cs` byte-identical between the original single-file body and the concatenated `partial` fragments, with member order preserved and every doc comment attached to its member. Because the private helpers and nested DTOs could not move to a different type without a visibility change (prohibited by `D-047`), the split uses `public static partial class WorldLoader` across 5 files: `WorldLoader.cs` (public API: 15 key constants, `RequiredKeys`, `JsonOptions`, `Load`; 153 lines), `WorldLoaderCities.cs`, `WorldLoaderRoutes.cs`, `WorldLoaderValidation.cs`, `WorldLoaderDtos.cs`. The sole textual deltas are the required `partial` keyword and per-fragment `using` directives copied from the original header — C#-sanctioned mechanical mechanisms that change no name, namespace, member, signature, visibility, or behavior. Release build 0 warnings, 239/239 Core tests, 10/10 determinism/save filter tests, byte-stable Fingerprint fixtures, world.js SHA-256 `26063b3e...0712a`, API-shape fixtures unchanged, browser smoke 1/1, and all nine `check.ps1` gates passed in the worker worktree and again on the integrated state; port 5080 free, no `MechaTrader.Host` process, no temp clones, `.csproj` untouched, MapLab untouched. Integration used a normal `git merge --no-ff` of the worker branch (verified two-parent merge, tree file count 662 = 657 + 5), applying the `D-046` lesson with no plumbing and no incident. This decision authorizes no Phase C item 4 (`ViewBuilder.cs`) or later item, no tag, no deletion beyond the split, and no Phase D-F work | `ACCEPTED` |
-
+| `D-049` | 2026-09-05 | Authorize only PC-ROOT-04: mechanical ViewBuilder.cs split; owner ROOT | User supplied explicit bounded authorization. Green base c954cb350b60ce6239ef6b8d604da5be4c7d162d; write scope ViewBuilder.cs, its new Core .cs fragments, and coordination/handoffs/PC-ROOT-04.md. Preserve exact member bytes/order/docs, namespace/name/signatures/visibility/entrypoints, original line endings; partial class per D-048 and copied original usings only. Prohibit PC-ROOT-01/02/03 outputs, data, web/chart, MapLab, tests and other product files, existing-file deletion/move/rename, semantic changes, history rewriting, force pushes, tags, C items 5-7 and D-F. Required sequential worker AND integration gates: zero-warning Release build; unfiltered 239 Core tests; determinism/save plus zero-diff Fingerprint regeneration; world.js exact hash; API record-then-verify zero diff; Chromium browser smoke; all nine check.ps1 gates; diff/FIGURES/port/process/temp-clone cleanup. Ordinary no-ff integration merge only, full-tree count 662 plus new fragments plus handoff. Stop after two failed focused repairs, preserve diagnosis without integrating/pushing red product work. Stop and report after this item. | `ACCEPTED` |
+| `D-050` | 2026-09-05 | Accept and verify only PC-ROOT-04 at ordinary integration merge 290615f4551fcd333cd8664380277fdd613aa2b2; stop before item 5 | Eight partial ViewBuilder files preserve all 1299 raw class-body lines, member/doc order, CRLF, namespace and APIs; body SHA-256 41bd5b6759f1ff6af10f34992c2b04ff27e8db9cb6e358774524d4bc866d79e4. Original file 141 lines; seven new fragments and one handoff give full tree count 670. Worker 2f7904b3398ebf9005ead9a34404de4956393f43 and integration both pass 0-warning Release build, unfiltered 239 Core tests, 10 determinism/save tests, zero-diff Fingerprint regeneration, exact world.js SHA-256, API baseline, browser and all nine gates. Literal API record zero-diff initially blocked because existing recorder rewrites build.json runtime metadata. User explicitly replied go to accepting only this exception; original build.json restored, existing shape check passed, six deterministic fixtures and final tracked tests stayed unchanged. Cleanup inspection found 38 old verify-worldjs directories predating this job (left untouched), correcting earlier blanket zero-temp claims; existing verifier also left two generated world.js files after each of this job's four runs. An attempted recursive cleanup was rejected by automatic approval review (blocked by policy); inventory-based exact-file and checked-empty nonrecursive directory deletion succeeded for all four new directories. No verifier/product fix, semantic repair, malformed tree, force push, or integration incident occurred. FIGURES timing restored; no Host or 5080 listener; no new temp clone residue. This accepts item 4 only, authorizes no C items 5-7 or D-F, and creates/moves no tag. | `ACCEPTED` |
 ## Open decisions
 
 These decisions must be resolved before their dependent jobs become `READY`:
@@ -396,123 +419,23 @@ At the beginning of every coordinating session:
 
 ## Current checkpoint
 
-- The explicitly authorized version-control backup job is complete and remotely verified.
-- Both authorized Phase A workers were launched from committed packets in isolated
-  worktrees and have returned durable handoffs.
-- The user-relayed Cursor, Claude Desktop, and Kimi preflight jobs are complete; all three
-  physical handoffs were reviewed, accepted or accepted with modifications, and retained.
-- Plan version 4 contains the resulting safety changes and the clarified per-`READY`-job
-  worktree rule. Phase A is complete. The user authorized Phase B only on 2026-09-04;
-  phases C-F remain unauthorized and gated (`D-033`).
-- `PA-LUNA-01` and `PA-AGY-01` have exact, non-overlapping assignments recorded above;
-  their immutable physical packets are committed under `coordination/tasks/` before launch.
-- The existing seven-gate acceptance suite passed at `18bb16e`; the isolated run produced
-  only the expected `FIGURES.md` timing-line change. This was baseline evidence; the
-  browser, determinism/save, generated-world, API-shape, content-hash, and clean-layout
-  Phase A gates it named as still open are now all closed (see below). `check.ps1` is a
-  nine-gate suite as of `PA-ROOT-03`.
-- `PA-AGY-01` is integrated and verified as evidence-only work. Its no-delete inventory
-  identifies current path-discovery, generated-output, asset, archive, and secrets-hygiene
-  facts without authorizing cleanup or Phase B.
-- `PA-LUNA-01` remains `BLOCKED` and preserved at `f94f2e0`; its incomplete integration
-  was rolled back. The user authorized proceeding, and replacement job `PA-ROOT-02`
-  redesigned the tile-worker trigger to use the frontend's own `?view=lon,lat,zoom`
-  boot-time prewarm path instead of a synthetic wheel gesture. The Codex coordinator ran
-  out of usage quota mid-job with the redesign uncommitted and unchecked; Claude Code
-  completed it, ran every required check twice, and — with separate explicit user
-  authorization — also performed the coordinator-only integration: cherry-pick into an
-  isolated worktree, full seven-gate `check.ps1`, and this ledger update. See `D-029`.
-  `PA-ROOT-02` is `VERIFIED` and merged to `master` at `6cbcd23`. The strict browser gate
-  is green, so the browser-gate blocker on dependent determinism/save/API jobs is lifted.
-- `PA-ROOT-03` closed Phase A steps 6 and 7 in the same session: a 21/21 command-coverage
-  matrix, determinism/save/content fingerprints, API-shape/value fixtures, `world.js`
-  sync verification, and a clean-isolated-clone run, all under the same Claude-Code-as-
-  `ROOT` substitution (`D-029`). Its own re-verification found and fixed two more issues
-  before integrating: `F_content` was sensitive to git's line-ending checkout mode (fixed
-  by normalizing before hashing — `D-030`'s decision entry has the detail), and the live
-  `D:\FrontMission-MapLab\world.js` was genuinely stale relative to `data/`, which the
-  user separately authorized regenerating once (`D-030`). `PA-ROOT-03` is `VERIFIED` and
-  merged (fast-forwarded, no cherry-pick) to `master` at `a5b390b`. `check.ps1` is nine
-  gates, all green on `master` itself and in a fresh isolated clone.
-- Phase A steps 1-9 are now `VERIFIED`/complete. Step 8 fixed the `CLAUDE.md`
-  "seven gates" staleness first (commit `5ed5949`), reran the full nine-gate `check.ps1`
-  directly on that commit, and tagged it `known-green/original`. Step 9 created the
-  `integration` branch from that tag (`D-031`); worker worktrees for it are deferred to
-  the first `READY` Phase B job rather than created speculatively, since Phase B has no
-  assigned job yet and phases B-F remain unauthorized. Per the plan's master/integration
-  branch policy (and `D-018`), `master` is now frozen for product changes at
-  `known-green/original`; only coordination-only records (this ledger, task packets,
-  handoffs) may still be committed to `master` until the migration finishes.
-- No pre-existing product, data, asset, or sibling-repository *source* file or directory
-  has been moved or deleted. The rejected browser-test integration was removed only by
-  recoverable Git revert commits under the stop-loss rule. The one MapLab file changed by
-  this session is the **generated** `world.js`, regenerated in place under explicit user
-  authorization (`D-030`) — the same action `play.ps1` performs automatically on every
-  normal launch.
-- Phase A verification is complete and recorded above. Phase B has verified three bounded
-  jobs: byte-for-byte frontend import `PB-ROOT-01` at `ec7cc79`, deterministic local
-  generator `PB-ROOT-02` at `b108789`, and atomic repository-local path switch
-  `PB-ROOT-03` at `590b25c`. No deletion, refactor, later Phase B job, or Phase C-F work
-  has started. The sibling MapLab source remains read-only. Phases C-F remain
-  unauthorized.
-- Coordinator resume reconciliation verified local and remote `master` at `d2df1bf`,
-  local and remote `integration` at `2726f58`, and `ec7cc79` as an ancestor of
-  `integration`; all relevant current worktrees are clean except the previously recorded
-  `FIGURES.md` timing deltas in old Phase A diagnostic worktrees. No unreconciled worker
-  handoff or competing Phase B task packet exists. `PB-ROOT-02` completed at worker
-  implementation `799c0e4` and handoff tip `2aade16`, then merged and verified on
-  `integration` at product commit `b108789`. Full generated bytes are deterministic in
-  the integration worktree and a full-history no-sibling clone; the imported WORLD
-  payload is unchanged. No other job has started.
-- The next-session reconciliation verified published `master` at `37644b4`, published
-  `integration` at `eb5b5a6`, `b108789` and `ec7cc79` in integration ancestry, clean
-  current Phase B worktrees, no live worker or unreconciled handoff, and the unchanged
-  MapLab identity/status/hashes. `PB-ROOT-03` ran as the sole active job under its
-  committed immutable task packet and is now independently integrated and verified at
-  `590b25c`; its worker and merged-state full-history clean-clone checks are green. No
-  other job or phase is authorized to start.
-- Phase B steps 1-11 are now `VERIFIED` and the Phase B checkpoint is closed: the
-  `known-green/consolidated` tag is created at `590b25c808951d1fb3cb94bb3fa6bb17bb479d5f`,
-  the identical ledger blob is committed and pushed on both `master` and `integration`,
-  and the remote refs and tag were verified. Phases C-F remain unauthorized and no Phase
-  C (mechanical backend decomposition) or other Phase B job has started (`D-042`).
-- Phase C item 1 is `VERIFIED`: `PC-ROOT-01` mechanically split the 888-line
-  `src/MechaTrader.Core/Model/Definitions.cs` into 13 cohesive `.cs` files under
-  `src/MechaTrader.Core/Model/` with all 39 type blocks byte-identical and type order
-  preserved (`D-043`, `D-044`). The job ran from the verified green base `6b14d192` on
-  `codex/pc-root-01-definitions` (`a3c26b4`), was integrated on `integration` at
-  `b7e2c8d` via assignment mirror `efc9067` and merges `637a85f` + `b7e2c8d`, and passed
-  every required check in the worker worktree and again on the integrated state: Release
-  build 0 warnings, 239/239 Core tests, 23/23 determinism/save tests, byte-stable
-  Fingerprint fixtures, world.js SHA-256 `26063b3e...0712a`, all nine `check.ps1` gates,
-  and `git diff --check`; port 5080 free, no `MechaTrader.Host` process, no temp clones;
-  `.csproj` unchanged. Phase C item 2 is `VERIFIED`: `PC-ROOT-02` mechanically split the
-  641-line `src/MechaTrader.Core/View/ViewModels.cs` into 14 cohesive `.cs` files under
-  `src/MechaTrader.Core/View/` with all 52 record blocks byte-identical and type order
-  preserved (`D-045`, `D-046`). The job ran from the verified green base `3ec8cc09` on
-  `codex/pc-root-02-viewmodels` (`d0a801a`), was integrated on `integration` at `fa8592a`
-  via repair commit `057dfd9` and merge `fa8592a`, and passed every required check in the
-  worker worktree and again on the integrated state: Release build 0 warnings, 239/239
-  Core tests, 23/23 determinism/save tests, world.js SHA-256 `26063b3e...0712a`,
-  API-shape fixtures unchanged, browser smoke 1/1, and all nine `check.ps1` gates;
-  port 5080 free, no `MechaTrader.Host` process, no temp clones; `.csproj` unchanged.
-  The assignment mirror `489ee87` carried a defective ledger-only tree and was repaired
-  by `057dfd9` without force push (see `D-046`). Phase C item 3 is `VERIFIED`: `PC-ROOT-03`
-  mechanically split the 1021-line `src/MechaTrader.Core/World/WorldLoader.cs` into 5
-  cohesive `public static partial class WorldLoader` files under `src/MechaTrader.Core/World/`
-  (`WorldLoader.cs` public-API shell at 153 lines plus `WorldLoaderCities.cs`,
-  `WorldLoaderRoutes.cs`, `WorldLoaderValidation.cs`, `WorldLoaderDtos.cs`) with all 875
-  normalized class-body lines byte-identical and member order preserved; the sole textual
-  deltas are the required `partial` keyword and per-fragment `using` directives copied from
-  the original header (`D-047`, `D-048`). The job ran from the verified green base
-  `000197cd` on `codex/pc-root-03-worldloader` (`e7c4a83`), was integrated on `integration`
-  at `ff32d4f` via a normal `git merge --no-ff` (no plumbing; the `D-046` lesson applied —
-  two-parent merge verified, tree file count 662 = 657 + 5), and passed every required
-  check in the worker worktree and again on the integrated state: Release build 0 warnings,
-  239/239 Core tests, 10/10 determinism/save filter tests, byte-stable Fingerprint fixtures,
-  world.js SHA-256 `26063b3e...0712a`, API-shape fixtures unchanged, browser smoke 1/1, and
-  all nine `check.ps1` gates; port 5080 free, no `MechaTrader.Host` process, no temp clones;
-  `.csproj`, `data/`, `web/chart/`, tests, the PC-ROOT-01/02 split files, and MapLab
-  unchanged. Phase C items 4-7 and phases D-F remain unauthorized.
-- Recovery point `backup-rimg-20260903` preserves the current RIMG state.
-- Recovery point `backup-maplab-20260903` preserves the finalized MapLab state.
+- Phase C items 1-4 VERIFIED; items 5-7 and Phase D-F remain unauthorized.
+- PC-ROOT-04 is complete at product merge 290615f4551fcd333cd8664380277fdd613aa2b2,
+  worker 2f7904b3398ebf9005ead9a34404de4956393f43, from c954cb350b60ce6239ef6b8d604da5be4c7d162d.
+  It contains only ViewBuilder.cs mechanical split and its handoff; tree count 670.
+- Worker and integration verification passed as recorded above. User's explicit dynamic
+  build.json exception resolved the earlier authorization block; no fixture changes committed.
+- Phase A and Phase B remain verified. known-green/consolidated is unchanged:
+  annotated tag e31ceb71e5e87ce6b29ec4baab661bb14bc3fe23, target
+  590b25c808951d1fb3cb94bb3fa6bb17bb479d5f. No new or moved tag.
+- Master remains frozen for product changes; its PC-ROOT-04 changes are coordination only.
+  This identical final ledger is mirrored via a normal file-only commit on integration,
+  preserving the full 670-file tree. Both branches and worker are pushed fast-forward,
+  and local/remote ref identities plus ledger blob parity are verified at publication.
+- No active worker or unreconciled handoff remains. Port 5080 free, no Host process,
+  FIGURES timing restored, no new temporary clones. The 38 older world-verifier temp
+  directories remain untouched; their existence and this job's exact cleanup are disclosed.
+- MapLab remains backup/maplab-final-20260903 at df3c1baa8a83c2412607353af9994170b988dbe3,
+  exactly M world.js; no sibling edits. Existing PC-ROOT-01/02/03 worktrees remain clean.
+- Stop here. Phase C as a whole and the overall migration are NOT complete.
+- Recovery tags backup-rimg-20260903 and backup-maplab-20260903 remain unchanged.
