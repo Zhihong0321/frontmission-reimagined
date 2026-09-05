@@ -1,7 +1,7 @@
 # PC-ROOT-04 assignment / handoff
 
 JOB_ID: PC-ROOT-04
-STATUS: BLOCKED (awaiting explicit API build.json exception)
+STATUS: COMPLETE
 OWNER: ROOT (coordinator executes in isolated worker worktree; no delegated worker)
 GREEN_BASE: c954cb350b60ce6239ef6b8d604da5be4c7d162d
 BRANCH: codex/pc-root-04-viewbuilder
@@ -51,9 +51,9 @@ build.json restored before verification, and no fixture changes will be committe
 ## Structured worker result
 
 JOB_ID: PC-ROOT-04
-STATUS: BLOCKED
+STATUS: COMPLETE
 BRANCH: codex/pc-root-04-viewbuilder
-COMMIT: Not created; product work remains uncommitted pending strict fixture-gate clarification.
+COMMIT: The worker commit containing this handoff (exact identity recorded by coordinator in ledger).
 FILES_CHANGED: ViewBuilder.cs plus ViewBuilderMarket.cs, ViewBuilderRoutes.cs,
 ViewBuilderCity.cs, ViewBuilderCrew.cs, ViewBuilderMap.cs, ViewBuilderStation.cs,
 ViewBuilderContracts.cs; this handoff only.
@@ -84,3 +84,13 @@ LEDGER_UPDATE_REQUEST: Await user clarification of dynamic build.json exception.
 allowed, record authorization first, commit green worker, normal no-ff integration and
 all integration gates remain to be completed. If strict zero-diff is retained, preserve
 this diagnosis and do not integrate. C items 5-7 and D-F remain unauthorized.
+
+## Authorization resolved and final handoff
+
+User replied "go" to the explicit dynamic build.json exception request on 2026-09-05.
+The preceding blockage paragraphs are historical evidence, superseded by this approval.
+Six deterministic API fixtures remained byte-identical; original build.json restored;
+existing shape-only build verification passed; final tracked fixture diff zero. All
+worker gates are accepted under this explicit exception. Product bytes have not changed
+since the successful checks. Coordinator may commit and integrate normally, then repeat
+all required checks on integration. Phase C items 5-7 and D-F remain unauthorized.
