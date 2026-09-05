@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "description": "Machine-readable feature ownership map. Each feature names the paths it owns, the tests and entrypoints that guard it, and its docs. An agent assigned to a feature works inside its paths; anything else is an expansion request.",
+  "featureNotesDir": "docs/features",
+  "features": [
+    {
+      "name": "core-simulation",
+      "summary": "The pure deterministic simulation: content DTOs, price model, day tick, crew, standing, city stats, events, contracts, expos, warehouses, mining, AI policies.",
+      "owns": [
+        "src/MechaTrader.Core/Game.cs",
+        "src/MechaTrader.Core/Model/",
+        "src/MechaTrader.Core/Sim/",
+        "src/MechaTrader.Core/State/",
+        "src/MechaTrader.Core/Events/",
+        "src/MechaTrader.Core/Ai/"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/EconomyTests.cs",
+        "tests/MechaTrader.Core.Tests/CityStatsTests.cs",
+        "tests/MechaTrader.Core.Tests/StandingTests.cs",
+        "tests/MechaTrader.Core.Tests/EventTests.cs",
+        "tests/MechaTrader.Core.Tests/WarehouseTests.cs",
+        "tests/MechaTrader.Core.Tests/QualityTests.cs",
+        "tests/MechaTrader.Core.Tests/MapTests.cs",
+        "tests/MechaTrader.Core.Tests/ProductTests.cs",
+        "tests/MechaTrader.Core.Tests/StationTests.cs",
+        "tests/MechaTrader.Core.Tests/CrewBriefTests.cs",
+        "tests/MechaTrader.Core.Tests/SimulationInvariantTests.cs",
+        "tests/MechaTrader.Core.Tests/PlaytestTests.cs"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature economy", "tools/verify-feature.ps1 -Feature balance"],
+      "docs": ["docs/features/core-simulation.md"],
+      "invariants": ["Core purity (no I/O, no clock, no unseeded randomness)", "seed + commands = identical state", "content lives in data/, never in C#"]
+    },
+    {
+      "name": "commands-and-state",
+      "summary": "The command boundary: command records, the single state-changing processor, and command validation semantics.",
+      "owns": [
+        "src/MechaTrader.Core/Commands/"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/CommandTests.cs",
+        "tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs",
+        "tests/MechaTrader.Core.Tests/SaveFixtureTests.cs"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature commands", "tools/verify-feature.ps1 -Feature determinism", "tools/verify-feature.ps1 -Feature save"],
+      "docs": ["docs/features/commands-and-saves.md"],
+      "invariants": ["state changes only through CommandProcessor", "rejected commands leave state untouched", "F_state/F_view pins and save fixtures must stay byte-stable"]
+    },
+    {
+      "name": "world-and-content",
+      "summary": "Loading data/ into a validated WorldData: terrain painting, route graph, city profiles, and the generated map world.",
+      "owns": [
+        "src/MechaTrader.Core/World/",
+        "src/MechaTrader.Content/",
+        "data/"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/WorldLoaderTests.cs"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature world"],
+      "docs": ["docs/features/world-and-content.md"],
+      "invariants": ["every data/ JSON referenced by the loader stays listed in MinimalWorld.Files", "world.js is generated only by make-world.js and pinned by tools/verify-worldjs.ps1"]
+    },
+    {
+      "name": "view-layer",
+      "summary": "State-to-display snapshots: view models and ViewBuilder, the wire contract consumed by both front-ends.",
+      "owns": [
+        "src/MechaTrader.Core/View/"
+      ],
+      "tests": [
+        "tests/api-fixtures/"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature api"],
+      "docs": ["docs/features/view-and-api.md"],
+      "invariants": ["the frontend never computes a rule; derive it in ViewBuilder and put it on a view model", "API fixture baselines (except build.json dynamic metadata) are byte-stable"]
+    },
+    {
+      "name": "host-api",
+      "summary": "The thin ASP.NET adapter: five endpoints, static file serving, the running game session, build info.",
+      "owns": [
+        "src/MechaTrader.Host/"
+      ],
+      "tests": [
+        "tests/api-fixtures/",
+        "tests/MechaTrader.Core.Tests/BuildInfoTests.cs"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature api", "tools/verify-feature.ps1 -Feature host"],
+      "docs": ["docs/features/view-and-api.md"],
+      "invariants": ["no rule lives in the host", "port 5080 must be released after every verification run"]
+    },
+    {
+      "name": "frontend-chart",
+      "summary": "The player view served at /chart/: Keeper's Chart, game bridge, ops shell pages/tabs, tile worker, generated world.",
+      "owns": [
+        "web/chart/chart.html",
+        "web/chart/game-bridge.js",
+        "web/chart/ops.js",
+        "web/chart/ops.css",
+        "web/chart/chart-tiles-worker.js",
+        "web/chart/art/",
+        "web/index.html",
+        "tests/browser/"
+      ],
+      "tests": [
+        "tests/browser/smoke.test.js"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature browser"],
+      "docs": ["docs/features/frontend-chart.md"],
+      "invariants": ["the shell never computes a rule", "bump ?v=N in chart.html on any script you change", "web/archive/ is dead code; do not revive it", "world.js bytes are generated, not hand-edited"]
+    },
+    {
+      "name": "balance-harness",
+      "summary": "The headless economy gate and FIGURES.md generator: bot policies, budgets, and the published figures.",
+      "owns": [
+        "tools/MechaTrader.BalanceSim/",
+        "FIGURES.md"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/PlaytestTests.cs"
+      ],
+      "entrypoints": ["dotnet run --project tools/MechaTrader.BalanceSim -c Release", "tools/verify-feature.ps1 -Feature balance"],
+      "docs": ["docs/features/balance-harness.md"],
+      "invariants": ["FIGURES.md is generated; timing-line-only diffs are restored, never committed", "skill must beat luck; the tick budget in the harness is authoritative"]
+    },
+    {
+      "name": "verification-and-fixtures",
+      "summary": "Everything that proves the product: the nine-gate acceptance suite, Fast/feature/Full entrypoints, determinism fixtures, API baselines, browser smoke, clean-clone proof.",
+      "owns": [
+        "check.ps1",
+        "tools/verify-fast.ps1",
+        "tools/verify-feature.ps1",
+        "tools/verify-full.ps1",
+        "tools/Generate-Codemap.ps1",
+        "tools/verify-worldjs.ps1",
+        "tools/verify-api-shape.ps1",
+        "tools/clean-clone-check.ps1",
+        "tools/MechaTrader.Fingerprint/",
+        "tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs",
+        "tests/MechaTrader.Core.Tests/SaveFixtureTests.cs",
+        "tests/api-fixtures/",
+        "tests/browser/"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/DeterminismFingerprintTests.cs",
+        "tests/MechaTrader.Core.Tests/SaveFixtureTests.cs"
+      ],
+      "entrypoints": ["tools/verify-fast.ps1", "tools/verify-full.ps1"],
+      "docs": ["docs/features/verification.md", "docs/decisions/0002-verification-fast-full.md"],
+      "invariants": ["Fast and feature checks never certify a green state", "the existing nine check.ps1 gates may be added to but never weakened", "F_state/F_view pins are immutable without an explicit re-baseline decision"]
+    },
+    {
+      "name": "launcher-and-build",
+      "summary": "Launching, the desktop shortcut, the version string, and the solution layout.",
+      "owns": [
+        "play.ps1",
+        "Play.cmd",
+        "install-launcher.ps1",
+        "Install-Launcher.cmd",
+        "VERSION",
+        "MechaTrader.sln"
+      ],
+      "tests": [
+        "tests/MechaTrader.Core.Tests/BuildInfoTests.cs"
+      ],
+      "entrypoints": ["tools/verify-feature.ps1 -Feature host"],
+      "docs": ["docs/features/view-and-api.md"],
+      "invariants": ["VERSION is the one place the version string is set; the build page and acceptance gate 7 read it", "the launcher rebuilds before serving so it cannot start a stale build"]
+    },
+    {
+      "name": "agent-docs-and-process",
+      "summary": "AI-facing context and coordination records: canonical instructions, ownership map, codemap, feature notes, glossary, ADRs, and the migration control documents.",
+      "owns": [
+        "docs/",
+        "coordination/",
+        "MIGRATION_PLAN.md",
+        "MIGRATION_LEDGER.md",
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "tests": [],
+      "entrypoints": ["tools/Generate-Codemap.ps1"],
+      "docs": ["docs/agents.md"],
+      "invariants": ["docs/codemap.md is generated; regenerate, never hand-edit", "the ledger is single-writer (coordinator only)", "chat is notification, not a source of truth"]
+    }
+  ]
+}
